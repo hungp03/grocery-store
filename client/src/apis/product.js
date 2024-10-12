@@ -24,10 +24,21 @@ export const apiGetProduct = async (pid) =>
 export const apiGetRecommendedProducts = async (pid) =>
     axiosInstanceRecommended({
         url: `/similar-products/${pid}`,
-        method: 'get'
-    })
+        method: 'get',
+    });
 
+export const apiDeleteProduct = async (pid)=>
+    axiosInstance({
+        url: `/products/${pid}`,
+        method: 'delete',
+    });
 
+export const apiUpdateProduct = async (product) =>
+    axiosInstance({
+        url: `/products`,
+        method: 'put',
+    });
+    
 export const apiRatings = async (data) =>
     axiosInstance({
         url: `/product/ratings`,
@@ -48,5 +59,4 @@ export const apiGetMaxPrice = async (category, productName) =>
         method: "get",
         params: { category, productName },
     });
-
 
