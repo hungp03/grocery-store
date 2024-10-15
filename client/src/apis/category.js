@@ -1,61 +1,18 @@
 import axiosInstance from "../utils/axios";
 import axiosInstanceRecommended from "../utils/recommendedAxios";
-export const apiGetProducts = async (params) =>
+export const apiGetCategory = async (cid) =>
     axiosInstance({
-        url: "/products",
-        method: "get",
-        params,
-        paramsSerializer: {
-            encode: (value) => value,
-            serialize: (params) => {
-                return Object.entries(params)
-                    .map(([key, value]) => `${key}=${value}`)
-                    .join('&');
-            }
-        }
-    });
-
-export const apiGetProduct = async (pid) =>
-    axiosInstance({
-        url: `/products/${pid}`,
+        url: `/categories/${cid}`,
         method: "get",
     });
 
-export const apiGetRecommendedProducts = async (pid) =>
-    axiosInstanceRecommended({
-        url: `/similar-products/${pid}`,
-        method: 'get',
-    });
-
-export const apiDeleteProduct = async (pid)=>
+export const apiDeleteCategory = async (cid) =>
     axiosInstance({
-        url: `/products/${pid}`,
-        method: 'delete',
+        url: `/categories/${cid}`,
+        method:"delete",
     });
 
-    
-export const apiRatings = async (data) =>
-    axiosInstance({
-        url: `/product/ratings`,
-        method: "put",
-        data
-    });
-
-export const apiGetRatingsPage = async (pid, params) =>
-    axiosInstance({
-        url: `/product/ratings/${pid}`,
-        method: "get",
-        params,
-    });
-
-export const apiGetMaxPrice = async (category, productName) =>
-    axiosInstance({
-        url: `/products/max-price`,
-        method: "get",
-        params: { category, productName },
-    });
-
-export const apiCreateProduct = async (product, image, folder) => {
+export const apiUpdateCategory = async (category, image, folder) => {
     // Tạo một đối tượng FormData
     const formData = new FormData();
     
@@ -80,25 +37,24 @@ export const apiCreateProduct = async (product, image, folder) => {
             });
             imageName = response.data.fileName; // Lưu tên file hình ảnh
         }
-        console.log(imageName)
         // Gửi yêu cầu tạo sản phẩm
-        const productResponse = await axiosInstance({
-            url: `/products`,
-            method: "post",
+        const categoryResponse = await axiosInstance({
+            url: `/categories`,
+            method: "put",
             data: {
-                ...product, // Sao chép các thuộc tính từ product
-                imageUrl: imageName || null  // Thêm imageUrl vào dữ liệu sản phẩm, nếu không có thì để là null
+                ...category, // Sao chép các thuộc tính từ category
+                imageUrl: imageName || category.imageUrl // Thêm imageUrl vào dữ liệu sản phẩm, nếu không có thì để là null
             },
         });
 
-        return productResponse.data; // Trả về dữ liệu phản hồi từ server
+        return categoryResponse.data; // Trả về dữ liệu phản hồi từ server
     } catch (error) {
         console.error("Có lỗi xảy ra khi tạo sản phẩm:", error);
         throw error; // Ném lỗi để xử lý ở nơi gọi hàm
     }
 };
 
-export const apiUpdateProduct = async (product, image, folder) => {
+export const apiCreateCategory = async (category, image, folder) => {
     // Tạo một đối tượng FormData
     const formData = new FormData();
     
@@ -123,18 +79,17 @@ export const apiUpdateProduct = async (product, image, folder) => {
             });
             imageName = response.data.fileName; // Lưu tên file hình ảnh
         }
-        console.log(imageName)
         // Gửi yêu cầu tạo sản phẩm
-        const productResponse = await axiosInstance({
-            url: `/products`,
-            method: "put",
+        const categoryResponse = await axiosInstance({
+            url: `/categories`,
+            method: "post",
             data: {
-                ...product, // Sao chép các thuộc tính từ product
-                imageUrl: imageName || product.imageUrl // Thêm imageUrl vào dữ liệu sản phẩm, nếu không có thì để là null
+                ...category, // Sao chép các thuộc tính từ category
+                imageUrl: imageName || null // Thêm imageUrl vào dữ liệu sản phẩm, nếu không có thì để là null
             },
         });
 
-        return productResponse.data; // Trả về dữ liệu phản hồi từ server
+        return categoryResponse.data; // Trả về dữ liệu phản hồi từ server
     } catch (error) {
         console.error("Có lỗi xảy ra khi tạo sản phẩm:", error);
         throw error; // Ném lỗi để xử lý ở nơi gọi hàm

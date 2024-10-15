@@ -56,6 +56,14 @@ export const apiLogout = async () =>
         withCredentials: true,
     });
 
+
+export const apiGetAllUser = async (params) =>
+    axiosInstance({
+        url: "/users",
+        method: "get",
+        params,
+    });
+
 export const apiUpdateCurrentUser = async (formData) =>
     axiosInstance({
         url: "/auth/account",
@@ -140,3 +148,11 @@ export const apiAddWishList = async (pid) => {
         }
     })
 }
+
+export const apiSetStatusUser = async (user) => {
+    return axiosInstance({
+        url: "/users",
+        method: 'put',
+        data: user
+    });
+};

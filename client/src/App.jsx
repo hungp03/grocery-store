@@ -1,3 +1,5 @@
+
+
 import React, { useEffect } from 'react'
 import path from '@/utils/path'
 import { Route, Routes, useLocation } from "react-router-dom";
@@ -8,6 +10,7 @@ import { getCategories } from "@/store/app/asyncActions";
 import { Bounce, ToastContainer } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
 import {Modal } from '@/components';
+import { Admin } from "./pages/admin";
 const App = () => {
   const dispatch = useDispatch();
   const { isShowModal, modalChildren } = useSelector(state => state.app)
@@ -36,6 +39,9 @@ const App = () => {
           <Route path={path.WISHLIST} element={<Wishlist />}></Route>
         </Route>
         <Route path={path.LOGIN} element={<Login />}></Route>
+        <Route path='/admin/*' element={<Admin/>}>
+          {/* <Route path='Overview' element={<Overview/>}></Route> */}
+        </Route>
       </Routes>
       <ToastContainer
         position="bottom-right"
