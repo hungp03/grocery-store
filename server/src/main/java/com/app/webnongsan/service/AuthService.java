@@ -12,6 +12,7 @@ import com.app.webnongsan.domain.response.user.ResLoginDTO;
 import com.app.webnongsan.repository.VerificationRepository;
 import com.app.webnongsan.util.SecurityUtil;
 import com.app.webnongsan.util.exception.AuthException;
+import com.app.webnongsan.util.exception.DuplicateResourceException;
 import com.app.webnongsan.util.exception.ResourceInvalidException;
 import com.app.webnongsan.util.exception.UserNotFoundException;
 import lombok.AllArgsConstructor;
@@ -39,7 +40,6 @@ import java.util.Random;
 
 @Service
 @AllArgsConstructor
-@Slf4j
 public class AuthService {
     private static final long OTP_EXPIRY_MINUTES = 5;
     private final AuthenticationManagerBuilder authenticationManagerBuilder;
@@ -56,29 +56,24 @@ public class AuthService {
         authOTP.setOtp(otp);
         authOTP.setEmail(email);
         authOTP.setExpiryTime(LocalDateTime.now().plusMinutes(OTP_EXPIRY_MINUTES));
-        log.info("Store OTP {} for user {}", otp, email);
         this.verificationRepository.save(authOTP);
     }
 
     public boolean isOTPValid(String otp, String email){
-        log.info("Check OTP for user {}", email);
         VerificationCode authOTP = this.verificationRepository.findByOtpAndEmail(otp, email);
         return authOTP != null && authOTP.getExpiryTime().isAfter(LocalDateTime.now());
     }
 
     @Transactional
     public void deleteOtp(String otp, String email){
-        log.info("Delete OTP for user {}", email);
         this.verificationRepository.deleteByOtpAndEmail(otp, email);
     }
 
-    public ResLoginDTO.UserGetAccount getAccount() throws UserNotFoundException, AuthException {
+    public ResLoginDTO.UserGetAccount getAccount(){
         String email = SecurityUtil.getCurrentUserLogin().isPresent() ? SecurityUtil.getCurrentUserLogin().get() : "";
-        log.info("User {} is requesting account information", email);
         // Lấy thông tin người dùng trong db
         User currentUserDB = this.userService.getUserByUsername(email);
         if (currentUserDB != null && currentUserDB.getStatus() == 0) {
-            log.warn("User {} has been banned", email);
             throw new AuthException("Tài khoản của bạn đã bị khóa.");
         }
 
@@ -93,37 +88,30 @@ public class AuthService {
             userGetAccount.setUser(userLogin);
             userGetAccount.setCartLength(cartService.countProductInCart(currentUserDB.getId()));
         }
-        log.info("User {} retrieved account information successfully", email);
         return userGetAccount;
     }
 
-    public void logout() throws ResourceInvalidException, UserNotFoundException {
+    public void logout(){
         String email = SecurityUtil.getCurrentUserLogin().isPresent() ? SecurityUtil.getCurrentUserLogin().get() : "";
         if (email.isEmpty()) {
-            log.warn("Logout attempt failed due to invalid access token");
             throw new ResourceInvalidException("Accesstoken không hợp lệ");
         }
         this.userService.updateUserToken(null, email);
     }
 
-    public CreateUserDTO register(User user) throws ResourceInvalidException {
-        log.info("User {} is attempting to register", user.getEmail());
+    public CreateUserDTO register(User user){
         if (this.userService.isExistedEmail(user.getEmail())) {
-            log.warn("Registration failed: Email {} already exists", user.getEmail());
-            throw new ResourceInvalidException("Email " + user.getEmail() + " đã tồn tại");
+            throw new DuplicateResourceException("Email " + user.getEmail() + " đã tồn tại");
         }
         Role r = new Role();
         r.setId(2);
         user.setRole(r);
         User newUser = this.userService.create(user);
-        log.info("User {} register successfully", user.getEmail());
         return this.userService.convertToCreateDTO(newUser);
     }
 
-    public void forgotPassword(String email) throws UserNotFoundException {
-        log.info("User {} requesting password reset", email);
+    public void forgotPassword(String email){
         if (!userService.isExistedEmail(email)) {
-            log.warn("Request failed: {} does not exist in database", email);
             throw new UserNotFoundException("Email " + email + " không tồn tại");
         }
         String otp = String.format("%06d", new Random().nextInt(1000000));
@@ -134,24 +122,19 @@ public class AuthService {
     // Không gọi trực tiếp deleteOtp() vì @Transactional không hoạt động khi gọi trong cùng một class
     // Lấy bean từ ApplicationContext để Spring áp dụng proxy và quản lý transaction đúng cách
     // No EntityManager with actual transaction available for current thread - cannot reliably process 'remove' call
-    public Map<String, String> verifyOtp(OTPDto request) throws ResourceInvalidException {
-        log.info("Verifying OTP for email: {}", request.getEmail());
+    public Map<String, String> verifyOtp(OTPDto request){
         if (this.isOTPValid(request.getOtp(), request.getEmail())) {
             String tempToken = securityUtil.createResetToken(request.getEmail());
             context.getBean(AuthService.class).deleteOtp(request.getOtp(), request.getEmail());
-            log.info("Verify OPT successfully for user {}", request.getEmail());
             return Map.of("tempToken", tempToken);
         } else {
             throw new ResourceInvalidException("Mã OTP không hợp lệ hoặc đã hết hạn.");
         }
     }
 
-    public void resetPassword(String token, ResetPasswordDTO request) throws ResourceInvalidException, UserNotFoundException {
-        log.info("Processing password reset request for token {}", token);
+    public void resetPassword(String token, ResetPasswordDTO request){
         Jwt decodedToken = this.securityUtil.checkValidToken(token);
-        log.debug("Decoded token successfully: {}", token);
         if (!request.getNewPassword().equals(request.getConfirmPassword())) {
-            log.warn("Password and confirm password not match!");
             throw new ResourceInvalidException("Mật khẩu xác nhận không khớp.");
         }
         String email = decodedToken.getSubject();
@@ -160,25 +143,16 @@ public class AuthService {
             throw new ResourceInvalidException("Token không hợp lệ.");
         }
         this.userService.resetPassword(email, request.getNewPassword());
-        log.info("Resetting password for user {}", email);
-        log.info("Token {} deleted after password reset", token);
-        log.info("Password reset successfully for user {}", email);
     }
 
-    public Map<String, Object> login(LoginDTO loginDTO) throws UserNotFoundException, AuthException {
-        log.info("User {} started login process", loginDTO.getEmail());
-        log.debug("Fetching user details from database for {}", loginDTO.getEmail());
+    public Map<String, Object> login(LoginDTO loginDTO){
         User currentUserDB = this.userService.getUserByUsername(loginDTO.getEmail());
         this.userService.checkAccountBanned(currentUserDB);
-
-        log.debug("Authenticating user {}", loginDTO.getEmail());
         UsernamePasswordAuthenticationToken authenticationToken =
                 new UsernamePasswordAuthenticationToken(loginDTO.getEmail(), loginDTO.getPassword());
 
         Authentication authentication = authenticationManagerBuilder.getObject().authenticate(authenticationToken);
         SecurityContextHolder.getContext().setAuthentication(authentication);
-
-        log.debug("Generating response for {}", loginDTO.getEmail());
         ResLoginDTO res = new ResLoginDTO();
 
         assert currentUserDB != null;
@@ -188,12 +162,8 @@ public class AuthService {
                 currentUserDB.getName(),
                 currentUserDB.getRole());
         res.setUser(userLogin);
-
-        log.debug("Creating access token for {}", loginDTO.getEmail());
         String accessToken = this.securityUtil.createAccessToken(authentication.getName(), res);
         res.setAccessToken(accessToken);
-
-        log.debug("Creating refresh token for {}", loginDTO.getEmail());
         String refreshToken = this.securityUtil.createRefreshToken(loginDTO.getEmail(), res);
         this.userService.updateUserToken(refreshToken, loginDTO.getEmail());
         return Map.of(
@@ -202,20 +172,16 @@ public class AuthService {
         );
     }
 
-    public Map<String, Object> getNewRefreshToken(String refreshToken) throws UserNotFoundException, ResourceInvalidException, AuthException {
+    public Map<String, Object> getNewRefreshToken(String refreshToken) {
         if (refreshToken.equals("none")) {
-            log.warn("Refresh token is missing from the request");
             throw new ResourceInvalidException("Vui lòng đăng nhập");
         }
 
         // Check RFtoken hợp lệ
         Jwt decodedToken = this.securityUtil.checkValidToken(refreshToken);
         String email = decodedToken.getSubject();
-        log.info("User {} is requesting a new refresh token", email);
-        log.debug("Fetching user by refresh token and email: {}", email);
         User currentUser = this.userService.getUserByRFTokenAndEmail(email, refreshToken);
         if (currentUser == null) {
-            log.warn("Invalid RF token from user {}", email);
             throw new ResourceInvalidException("Refresh token không hợp lệ");
         }
         this.userService.checkAccountBanned(currentUser);
@@ -236,16 +202,14 @@ public class AuthService {
 
         // update user
         this.userService.updateUserToken(new_refresh_token, email);
-        log.info("User {} successfully obtained a new refresh token", email);
         return Map.of(
                 "userInfo", res,
                 "refreshToken", new_refresh_token
         );
     }
 
-    public Map<String, Object> loginGoogle(GoogleTokenRequest request) throws UserNotFoundException, GeneralSecurityException, IOException, AuthException {
+    public Map<String, Object> loginGoogle(GoogleTokenRequest request) throws IOException, GeneralSecurityException {
         // Xử lý token từ Google
-        log.info("Processing Google login for token: {}", request.getIdToken());
         OAuth2User oauth2User = oAuth2UserService.processOAuth2User(request.getIdToken());
         String email = oauth2User.getAttribute("email");
         User currentUserDB = userService.getUserByUsername(email);
@@ -254,7 +218,6 @@ public class AuthService {
         //trong khi đăng nhập Google không có sẵn
         List<GrantedAuthority> authorities = new ArrayList<>();
         authorities.add(new SimpleGrantedAuthority("ROLE_" + currentUserDB.getRole().getRoleName()));
-        log.info("User {} has role {}", email, currentUserDB.getRole().getRoleName());
         // Tạo UserDetails sử dụng User của Spring Security
         UserDetails userDetails = new org.springframework.security.core.userdetails.User(
                 email,
@@ -286,7 +249,6 @@ public class AuthService {
         // Tạo refresh token
         String refresh_token = securityUtil.createRefreshToken(email, res);
         userService.updateUserToken(refresh_token, email);
-        log.info("Google login successful for email: {}", email);
         return Map.of(
                 "userInfo", res,
                 "refreshToken", refresh_token

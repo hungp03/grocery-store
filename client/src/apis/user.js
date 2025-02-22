@@ -78,7 +78,7 @@ export const apiGetAllUser = async (params) =>
 
 export const apiUpdateCurrentUser = async (formData) =>
     axiosInstance({
-        url: "/auth/account",
+        url: "/users/account",
         method: 'put',
         data: formData,
         headers: {

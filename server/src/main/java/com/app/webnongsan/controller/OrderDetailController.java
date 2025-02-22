@@ -20,7 +20,6 @@ import org.springframework.data.domain.Pageable;
 @AllArgsConstructor
 public class OrderDetailController {
     private final OrderDetailService orderDetailService;
-    private final OrderService orderService;
 
     @GetMapping("OrderDetails/{orderId}")
     @ApiMessage("Get all Order Details by Order ID")

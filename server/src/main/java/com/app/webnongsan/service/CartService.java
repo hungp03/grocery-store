@@ -12,6 +12,7 @@ import com.app.webnongsan.repository.UserRepository;
 import com.app.webnongsan.util.PaginationHelper;
 import com.app.webnongsan.util.SecurityUtil;
 import com.app.webnongsan.util.exception.ResourceInvalidException;
+import com.app.webnongsan.util.exception.UserNotFoundException;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -23,25 +24,21 @@ import java.util.Optional;
 
 @Service
 @AllArgsConstructor
-@Slf4j
 public class CartService {
     private final CartRepository cartRepository;
-    private final ProductRepository productRepository;
+    private final ProductService productService;
     private final UserRepository userRepository;
     private final PaginationHelper paginationHelper;
 
-    public Cart addOrUpdateCart(Cart cart) throws ResourceInvalidException {
+    public Cart addOrUpdateCart(Cart cart){
         String email = SecurityUtil.getCurrentUserLogin().isPresent() ? SecurityUtil.getCurrentUserLogin().get() : "";
-        log.info("Start processing add product to cart for user {}", email);
         User u = this.userRepository.findByEmail(email);
         if (u == null) {
-            log.warn("User {} not found", email);
-            throw new ResourceInvalidException("User không tồn tại");
+            throw new UserNotFoundException("User không tồn tại");
         }
-        Product p = this.productRepository.findById(cart.getId().getProductId()).orElseThrow(() -> new ResourceInvalidException("Product không tồn tại"));
+        Product p = this.productService.findById(cart.getId().getProductId());
 
         if (cart.getQuantity() > p.getQuantity()) {
-            log.warn("Product {} is out of stock", p.getId());
             throw new ResourceInvalidException("Số lượng hàng không đủ");
         }
 
@@ -50,76 +47,61 @@ public class CartService {
             Cart cartItem = existingCart.get();
             int newQuantity = cartItem.getQuantity() + cart.getQuantity();
             if (newQuantity < 0){
-                log.warn("Invalid quantity for product {}", p.getId());
                 throw new ResourceInvalidException("Số lượng sản phẩm không hợp lệ");
             }
             if (newQuantity > p.getQuantity()) {
-                log.warn("Product {} is out of stock", p.getId());
                 throw new ResourceInvalidException("Số lượng hàng trong kho không đủ");
             }
             cartItem.setQuantity(newQuantity);
-            log.info("Product {} is add to cart of user {} successfully, new quantity: {}", p.getId(), email, newQuantity);
             return this.cartRepository.save(cartItem);
         } else {
             cart.setUser(u);
             cart.setProduct(p);
-            log.info("Product {} is add to cart of user {} successfully", p.getId(), email);
             return this.cartRepository.save(cart);
         }
 
     }
 
-    public void deleteFromCart(long productId) throws ResourceInvalidException {
+    public void deleteFromCart(long productId){
         String email = SecurityUtil.getCurrentUserLogin().isPresent() ? SecurityUtil.getCurrentUserLogin().get() : "";
-        log.info("Start processing delete product {} from {}'s cart", productId, email);
         User user = this.userRepository.findByEmail(email);
 
         if (user == null) {
-            log.warn("User {} not found", email);
-            throw new ResourceInvalidException("User không tồn tại");
+            throw new UserNotFoundException("User không tồn tại");
         }
 
         boolean exists = this.cartRepository.existsById(new CartId(user.getId(), productId));
         if (!exists) {
-            log.warn("Product {} not found in {}'s cart", productId, email);
             throw new ResourceInvalidException("Sản phẩm không tồn tại trong giỏ hàng");
         }
 
         CartId cartId = new CartId(user.getId(), productId);
-        log.info("Delete product {} from {}'s cart successfully", productId, email);
         this.cartRepository.deleteById(cartId);
     }
 
-    public PaginationDTO getCartByCurrentUser(Pageable pageable) throws ResourceInvalidException {
+    public PaginationDTO getCartByCurrentUser(Pageable pageable){
         String email = SecurityUtil.getCurrentUserLogin().isPresent() ? SecurityUtil.getCurrentUserLogin().get() : "";
-        log.info("Starting get cart items of user {}", email);
         User user = this.userRepository.findByEmail(email);
 
         if (user == null) {
-            log.warn("User {} not found", email);
             throw new ResourceInvalidException("User không tồn tại");
         }
 
         Page<CartItemDTO> cartItems = this.cartRepository.findCartItemsByUserId(user.getId(), pageable);
-        log.info("Get cart items of user {} successfully", email);
         return this.paginationHelper.fetchAllEntities(cartItems);
     }
 
-    public List<CartItemDTO> getCartItemsByProductIds(List<Long> productIds, Pageable pageable) throws ResourceInvalidException{
+    public List<CartItemDTO> getCartItemsByProductIds(List<Long> productIds, Pageable pageable){
         String email = SecurityUtil.getCurrentUserLogin().isPresent() ? SecurityUtil.getCurrentUserLogin().get() : "";
-        log.info("Starting get selected items in cart of user {}", email);
         User user = this.userRepository.findByEmail(email);
 
         if (user == null) {
-            log.warn("User {} not found", email);
             throw new ResourceInvalidException("User không tồn tại");
         }
-        log.info("Get selected items in cart of user {} successfully", email);
         return this.cartRepository.findCartItemsByUserIdAndProductId(user.getId(),productIds, pageable);
     }
 
     public long countProductInCart(long userId){
-        log.info("Count product in cart of user {}", userId);
         return this.cartRepository.countProductsByUserId(userId);
     }
 }

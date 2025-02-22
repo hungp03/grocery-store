@@ -2,6 +2,7 @@ package com.app.webnongsan.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Min;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -27,6 +28,7 @@ public class Cart {
     @JsonIgnore
     private Product product;
 
+    @Min(value = 1)
     private int quantity;
 
     private Instant timestamp;

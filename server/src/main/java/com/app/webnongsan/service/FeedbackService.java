@@ -11,6 +11,7 @@ import com.app.webnongsan.repository.ProductRepository;
 import com.app.webnongsan.repository.UserRepository;
 import com.app.webnongsan.util.SecurityUtil;
 import com.app.webnongsan.util.exception.ResourceInvalidException;
+import com.app.webnongsan.util.exception.UserNotFoundException;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -29,12 +30,9 @@ public class FeedbackService {
     private final ProductRepository productRepository;
     private final UserRepository userRepository;
 
-    public Feedback addFeedback(FeedbackDTO feedbackDTO) throws ResourceInvalidException {
-        User u = userRepository.findById(feedbackDTO.getUserId()).orElseThrow(() -> new ResourceInvalidException("User không tồn tại"));
-        if (u == null) throw new ResourceInvalidException("User không tồn tại");
-
+    public Feedback addFeedback(FeedbackDTO feedbackDTO) {
+        User u = userRepository.findById(feedbackDTO.getUserId()).orElseThrow(() -> new UserNotFoundException("User không tồn tại"));
         Product p = productRepository.findById(feedbackDTO.getProductId()).orElseThrow(() -> new ResourceInvalidException("Sản phẩm không tồn tại"));
-
         boolean exists = this.feedbackRepository.existsByUserIdAndProductId(u.getId(), p.getId());
 
         Feedback f;
@@ -44,14 +42,12 @@ public class FeedbackService {
             f.setUser(u);
             f.setDescription(feedbackDTO.getDescription());
             f.setStatus(0);
-            f.setRatingStar(feedbackDTO.getRatingStar());
-            this.feedbackRepository.save(f);
         } else {
             f = feedbackRepository.findByUserIdAndProductId(u.getId(), p.getId());
             f.setDescription(feedbackDTO.getDescription());
-            f.setRatingStar(feedbackDTO.getRatingStar());
-            this.feedbackRepository.save(f);
         }
+        f.setRatingStar(feedbackDTO.getRatingStar());
+        this.feedbackRepository.save(f);
         double averageRating = feedbackRepository.calculateAverageRatingByProductId(p.getId());
         p.setRating(averageRating);
         productRepository.save(p);
@@ -62,16 +58,18 @@ public class FeedbackService {
     public boolean checkValidFeedbackId(long id) {
         return this.feedbackRepository.existsById(id);
     }
-    public long getTotalFeedbacksByProductId(Long productId){
+
+    public long getTotalFeedbacksByProductId(Long productId) {
         return this.feedbackRepository.countByProductId(productId);
     }
-    public PaginationDTO getAll(Specification<Feedback> spec, Pageable pageable){
-        Page<Feedback> feedbackPage = this.feedbackRepository.findAll(spec,pageable);
+
+    public PaginationDTO getAll(Specification<Feedback> spec, Pageable pageable) {
+        Page<Feedback> feedbackPage = this.feedbackRepository.findAll(spec, pageable);
 
         PaginationDTO p = new PaginationDTO();
         PaginationDTO.Meta meta = new PaginationDTO.Meta();
 
-        meta.setPage(pageable.getPageNumber()+1);
+        meta.setPage(pageable.getPageNumber() + 1);
         meta.setPageSize(pageable.getPageSize());
         meta.setPages(feedbackPage.getTotalPages());
         meta.setTotal(feedbackPage.getTotalElements());
@@ -85,7 +83,7 @@ public class FeedbackService {
     }
 
     public PaginationDTO getBySortAndFilter(Pageable pageable, Integer status, String sort) {
-        if(sort != null){
+        if (sort != null) {
             pageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(sort).descending());
         }
         Page<Feedback> feedbackPage = this.feedbackRepository.findByStatus(status, pageable);
@@ -106,14 +104,14 @@ public class FeedbackService {
         return p;
     }
 
-    public FeedbackDTO hideFeedback(Long id) throws ResourceInvalidException {
+    public FeedbackDTO hideFeedback(Long id){
 
         Optional<Feedback> feedbackOptional = feedbackRepository.findById(id);
-        Feedback f = new Feedback();
+        Feedback f;
         FeedbackDTO feedbackDTO = new FeedbackDTO();
         if (feedbackOptional.isPresent()) {
             f = feedbackOptional.get();
-            if(f.getStatus() == 0) f.setStatus(1);
+            if (f.getStatus() == 0) f.setStatus(1);
             else f.setStatus(0);
             this.feedbackRepository.save(f);
             feedbackDTO.setId(f.getId());
@@ -129,33 +127,28 @@ public class FeedbackService {
             feedbackDTO.setRatingStar(f.getRatingStar());
             feedbackDTO.setUpdatedAt(f.getUpdatedAt());
         }
-
-
         return feedbackDTO;
     }
 
     public PaginationDTO getByProductId(Long productId, Pageable pageable) {
         Page<Feedback> feedbackPage = this.feedbackRepository.findByProductId(productId, pageable);
-
         PaginationDTO p = new PaginationDTO();
         PaginationDTO.Meta meta = new PaginationDTO.Meta();
-
         meta.setPage(pageable.getPageNumber() + 1);
         meta.setPageSize(pageable.getPageSize());
         meta.setPages(feedbackPage.getTotalPages());
         meta.setTotal(feedbackPage.getTotalElements());
-
         p.setMeta(meta);
-
         List<FeedbackDTO> listFeedback = feedbackPage.getContent().stream()
                 .map(this::convertToFeedbackDTO).toList();
         p.setResult(listFeedback);
         return p;
     }
+
     public FeedbackDTO convertToFeedbackDTO(Feedback feedback) {
         FeedbackDTO feedbackDTO = new FeedbackDTO();
         Optional<User> optionalUser = userRepository.findById(feedback.getUser().getId());
-        if (optionalUser.isPresent()){
+        if (optionalUser.isPresent()) {
             User u = optionalUser.get();
 
             feedbackDTO.setId(feedback.getId());

@@ -37,25 +37,19 @@ import java.util.*;
 
 @RestController
 @RequestMapping("api/v2")
-@Slf4j
 public class AuthController {
-    private final UserService userService;
-    private final FileService fileService;
+
     private final AuthService authService;
-    private final CartService cartService;
     @Value("${jwt.refreshtoken-validity-in-seconds}")
     private long refreshTokenExpiration;
 
-    public AuthController(UserService userService, AuthService authService, CartService cartService, FileService fileService) {
-        this.userService = userService;
+    public AuthController(AuthService authService) {
         this.authService = authService;
-        this.fileService = fileService;
-        this.cartService = cartService;
     }
 
     @PostMapping("auth/login")
     @ApiMessage("Login")
-    public ResponseEntity<ResLoginDTO> login(@Valid @RequestBody LoginDTO loginDTO) throws AuthException, UserNotFoundException {
+    public ResponseEntity<ResLoginDTO> login(@Valid @RequestBody LoginDTO loginDTO){
         Map<String, Object> response = this.authService.login(loginDTO);
         ResponseCookie responseCookie = ResponseCookie.from("refresh_token", (String) response.get("refreshToken"))
                 .httpOnly(true)
@@ -65,7 +59,6 @@ public class AuthController {
                 .sameSite("Lax")
                 .build();
 
-        log.info("User {} logged in successfully", loginDTO.getEmail());
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, responseCookie.toString())
                 .body((ResLoginDTO) response.get("userInfo"));
@@ -74,13 +67,13 @@ public class AuthController {
 
     @GetMapping("auth/account")
     @ApiMessage("Get user")
-    public ResponseEntity<ResLoginDTO.UserGetAccount> getAccount() throws AuthException, UserNotFoundException {
+    public ResponseEntity<ResLoginDTO.UserGetAccount> getAccount(){
         return ResponseEntity.ok(this.authService.getAccount());
     }
 
     @GetMapping("auth/refresh")
     @ApiMessage("Get new token")
-    public ResponseEntity<ResLoginDTO> getNewRefreshToken(@CookieValue(name = "refresh_token", defaultValue = "none") String refreshToken) throws ResourceInvalidException, AuthException, UserNotFoundException {
+    public ResponseEntity<ResLoginDTO> getNewRefreshToken(@CookieValue(name = "refresh_token", defaultValue = "none") String refreshToken){
         Map<String, Object> response = this.authService.getNewRefreshToken(refreshToken);
         // set cookies
         ResponseCookie resCookies = ResponseCookie
@@ -97,7 +90,7 @@ public class AuthController {
 
     @PostMapping("auth/logout")
     @ApiMessage("Logout")
-    public ResponseEntity<Void> logout() throws ResourceInvalidException, UserNotFoundException {
+    public ResponseEntity<Void> logout(){
         this.authService.logout();
         ResponseCookie deleteCookie = ResponseCookie
                 .from("refresh_token", "")
@@ -114,20 +107,20 @@ public class AuthController {
 
     @PostMapping("auth/register")
     @ApiMessage("Register a user")
-    public ResponseEntity<CreateUserDTO> register(@Valid @RequestBody User user) throws ResourceInvalidException {
+    public ResponseEntity<CreateUserDTO> register(@Valid @RequestBody User user){
         return ResponseEntity.status(HttpStatus.CREATED).body(this.authService.register(user));
     }
 
     @PostMapping("auth/forgot")
     @ApiMessage("Forgot password - OTP")
-    public ResponseEntity<Void> forgotPassword(@Valid @RequestBody EmailRequestDTO emailRequest) throws UserNotFoundException {
+    public ResponseEntity<Void> forgotPassword(@Valid @RequestBody EmailRequestDTO emailRequest){
         this.authService.forgotPassword(emailRequest.getEmail());
         return ResponseEntity.ok(null);
     }
 
     @PostMapping("auth/validate-otp")
     @ApiMessage("Validate OTP")
-    public ResponseEntity<Map<String, String>> verifyOtp(@RequestBody OTPDto request) throws ResourceInvalidException {
+    public ResponseEntity<Map<String, String>> verifyOtp(@RequestBody OTPDto request){
         return ResponseEntity.ok(this.authService.verifyOtp(request));
     }
 
@@ -135,69 +128,14 @@ public class AuthController {
     @ApiMessage("Reset password")
     public ResponseEntity<Void> resetPassword(
             @RequestParam("token") String token,
-            @RequestBody ResetPasswordDTO request) throws ResourceInvalidException, UserNotFoundException {
+            @RequestBody ResetPasswordDTO request){
         this.authService.resetPassword(token, request);
         return ResponseEntity.ok(null);
     }
 
-    @PutMapping("auth/account")
-    @ApiMessage("Update user information")
-    public ResponseEntity<ResLoginDTO.UserGetAccount> updateUser(
-            @RequestParam("name") String name,
-            @RequestParam("email") String email,
-            @RequestParam("phone") String phone,
-            @RequestParam("address") String address,
-            @RequestParam(value = "avatarUrl", required = false) MultipartFile avatar) throws IOException, UserNotFoundException {
-
-        String emailLoggedIn = SecurityUtil.getCurrentUserLogin().orElse("");
-        log.info("User {} is updating their information", emailLoggedIn);
-
-        // Kiểm tra người dùng có tồn tại không
-        User currentUserDB = userService.getUserByUsername(emailLoggedIn);
-
-        log.debug("Updating user: name={}, email={}, phone={}, address={}, hasAvatar={}",
-                name, email, phone, address, (avatar != null && !avatar.isEmpty()));
-
-        // Cập nhật thông tin người dùng
-        currentUserDB.setName(name);
-        currentUserDB.setEmail(email);
-        currentUserDB.setPhone(phone);
-        currentUserDB.setAddress(address);
-
-        // Nếu có avatar mới, lưu ảnh vào server
-        if (avatar != null && !avatar.isEmpty()) {
-            try {
-                String avatarUrl = fileService.store(avatar, "avatar");
-                currentUserDB.setAvatarUrl(avatarUrl);
-                log.info("User {} uploaded a new avatar: {}", emailLoggedIn, avatarUrl);
-            } catch (IOException e) {
-                log.error("Error while saving avatar for user {}: {}", emailLoggedIn, e.getMessage(), e);
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-            }
-        }
-
-        // Lưu thông tin cập nhật vào DB
-        userService.update(currentUserDB);
-        log.info("User {} updated their profile successfully", emailLoggedIn);
-
-        // Chuẩn bị dữ liệu phản hồi
-        ResLoginDTO.UserLogin userLogin = new ResLoginDTO.UserLogin(
-                currentUserDB.getId(),
-                currentUserDB.getEmail(),
-                currentUserDB.getName(),
-                currentUserDB.getRole());
-
-        ResLoginDTO.UserGetAccount userGetAccount = new ResLoginDTO.UserGetAccount();
-        userGetAccount.setUser(userLogin);
-        userGetAccount.setCartLength(cartService.countProductInCart(currentUserDB.getId()));
-
-        return ResponseEntity.ok(userGetAccount);
-    }
-
-
     @PostMapping("auth/signin/google")
     @ApiMessage("Login with Google")
-    public ResponseEntity<ResLoginDTO> loginWithGoogle(@RequestBody GoogleTokenRequest request) throws AuthException, GeneralSecurityException, IOException, UserNotFoundException {
+    public ResponseEntity<ResLoginDTO> loginWithGoogle(@RequestBody GoogleTokenRequest request) throws GeneralSecurityException, IOException{
         Map<String, Object> response = this.authService.loginGoogle(request);
         // Tạo cookie cho refresh token
         ResponseCookie responseCookie = ResponseCookie.from("refresh_token", (String) response.get("refreshToken"))

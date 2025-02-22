@@ -11,6 +11,7 @@ import com.app.webnongsan.util.PaginationHelper;
 import com.app.webnongsan.util.exception.ResourceInvalidException;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.criteria.*;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -38,6 +39,9 @@ public class ProductService {
     }
 
     public Product create(Product p) {
+        if (!this.checkValidCategoryId(p.getCategory().getId())){
+            throw new ResourceInvalidException("Category không tồn tại");
+        }
         return this.productRepository.save(p);
     }
 
@@ -45,11 +49,10 @@ public class ProductService {
         return this.productRepository.existsById(id);
     }
 
-    public Product get(long id) {
-        return this.productRepository.findById(id).orElse(null);
-    }
-
     public void delete(long id) {
+        if (!this.checkValidProductId(id)){
+            throw new ResourceInvalidException("Product id = " + id + " không tồn tại");
+        }
         this.productRepository.deleteById(id);
     }
 
@@ -83,24 +86,42 @@ public class ProductService {
     }
 
     public Product findById(long id) {
-        return this.productRepository.findById(id).orElse(null);
+        return this.productRepository.findById(id)
+                .orElseThrow(() -> {
+                    return new ResourceInvalidException("Product id = " + id + " không tồn tại");
+                });
     }
 
     public Product update(Product p) {
         Product curr = this.findById(p.getId());
-        if (curr != null) {
-            curr.setProductName(p.getProductName());
-            curr.setPrice(p.getPrice());
-            curr.setImageUrl(p.getImageUrl());
-            curr.setDescription(p.getDescription());
-            curr.setQuantity(p.getQuantity());
-            curr.setUnit(p.getUnit());
+        if (curr == null) {
+            throw new ResourceInvalidException("Product id = " + p.getId() + " không tồn tại");
         }
-        assert curr != null;
+        curr.setProductName(p.getProductName());
+        curr.setPrice(p.getPrice());
+        curr.setImageUrl(p.getImageUrl());
+        curr.setDescription(p.getDescription());
+        curr.setQuantity(p.getQuantity());
+        curr.setUnit(p.getUnit());
         return this.productRepository.save(curr);
     }
 
-    public double getMaxPrice(String category, String productName) throws ResourceInvalidException {
+    public Product updateQuantity(long id, int quantity) {
+        Product p = this.productRepository.findById(id)
+                .orElseThrow(() -> new ResourceInvalidException("Product id = " + id + " không tồn tại"));
+
+        if (quantity > p.getQuantity()) {
+            throw new ResourceInvalidException("Product id = " + id + " không đủ số lượng tồn kho");
+        }
+
+        p.setQuantity(p.getQuantity() - quantity);
+        p.setSold(p.getSold() + quantity);
+        return this.productRepository.save(p);
+    }
+
+
+
+    public double getMaxPrice(String category, String productName) {
         if (category != null && !category.isEmpty() && !this.categoryRepository.existsByName(category)) {
             throw new ResourceInvalidException("Category không tồn tại");
         }

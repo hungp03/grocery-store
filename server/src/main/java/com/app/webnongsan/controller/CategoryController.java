@@ -22,40 +22,33 @@ public class CategoryController {
 
     @PostMapping("categories")
     @ApiMessage("Create category")
-    public ResponseEntity<Category> create(@Valid @RequestBody Category category) throws ResourceInvalidException {
-        if (this.categoryService.isCategoryExisted(category.getName())) {
-            throw new ResourceInvalidException("Category đã tồn tại");
-        }
+    public ResponseEntity<Category> create(@Valid @RequestBody Category category) {
         return ResponseEntity.status(HttpStatus.CREATED).body(this.categoryService.create(category));
     }
 
     @PutMapping("categories")
     @ApiMessage("Update category")
-    public ResponseEntity<Category> update(@Valid @RequestBody Category category) throws ResourceInvalidException {
-        if (!this.categoryService.isCategoryNameUnique(category.getId(), category.getName())) {
-            throw new ResourceInvalidException("Category bị trùng");
-        }
+    public ResponseEntity<Category> update(@Valid @RequestBody Category category) {
         return ResponseEntity.ok(this.categoryService.update(category));
     }
 
     @GetMapping("categories/{id}")
     @ApiMessage("Get a category")
-    public ResponseEntity<Category> get(@PathVariable("id") long id) throws ResourceInvalidException {
+    public ResponseEntity<Category> get(@PathVariable("id") long id) {
         Category c = this.categoryService.findById(id);
-        if (c == null) throw new ResourceInvalidException("Category id = " + id + " không tồn tại");
         return ResponseEntity.ok(c);
     }
 
-        @DeleteMapping("categories/{id}")
-        @ApiMessage("Delete category")
-        public ResponseEntity<Void> delete(@PathVariable("id") long id) throws ResourceInvalidException {
-            this.categoryService.delete(id);
-            return ResponseEntity.ok(null);
-        }
+    @DeleteMapping("categories/{id}")
+    @ApiMessage("Delete category")
+    public ResponseEntity<Void> delete(@PathVariable("id") long id){
+        this.categoryService.delete(id);
+        return ResponseEntity.ok(null);
+    }
 
     @GetMapping("categories")
     @ApiMessage("Get all categories")
-    public ResponseEntity<PaginationDTO> getAll(@Filter Specification<Category> spec, Pageable page){
+    public ResponseEntity<PaginationDTO> getAll(@Filter Specification<Category> spec, Pageable page) {
         return ResponseEntity.ok(this.categoryService.fetchAllCategories(spec, page));
     }
 }

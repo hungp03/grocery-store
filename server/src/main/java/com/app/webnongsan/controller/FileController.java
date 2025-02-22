@@ -23,6 +23,7 @@ import java.time.Instant;
 import java.util.Base64;
 import java.util.List;
 import java.util.Arrays;
+
 @RestController
 @RequestMapping("api/v2")
 public class FileController {
@@ -38,9 +39,9 @@ public class FileController {
     @PostMapping("files")
     @ApiMessage("Upload single file")
     public ResponseEntity<ResUploadFileDTO> upload(@RequestParam(name = "file", required = false) MultipartFile file,
-                                                   @RequestParam("folder") String folder ) throws URISyntaxException, IOException, StorageException {
+                                                   @RequestParam("folder") String folder) throws URISyntaxException, IOException{
         //Validate empty file
-        if (file == null || file.isEmpty()){
+        if (file == null || file.isEmpty()) {
             throw new StorageException("File is empty. Please choose a file");
         }
 
@@ -51,7 +52,7 @@ public class FileController {
             assert fileName != null;
             return fileName.toLowerCase().endsWith(item);
         });
-        if (!isValid){
+        if (!isValid) {
             throw new StorageException("File not allowed! Please use file " + allowedExtensions.toString());
         }
         //create folder if not exist

@@ -29,7 +29,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("api/v2")
-@Slf4j
 public class ProductController {
     private final ProductService productService;
     private final DataExportService dataExportService;
@@ -41,30 +40,19 @@ public class ProductController {
 
     @PostMapping("products")
     @ApiMessage("Create product")
-    public ResponseEntity<Product> create(@Valid @RequestBody Product p) throws ResourceInvalidException {
-        if (!this.productService.checkValidCategoryId(p.getCategory().getId())){
-            throw new ResourceInvalidException("Category không tồn tại");
-        }
+    public ResponseEntity<Product> create(@Valid @RequestBody Product p){
         return ResponseEntity.status(HttpStatus.CREATED).body(this.productService.create(p));
     }
 
     @GetMapping("products/{id}")
     @ApiMessage("Get product")
     public ResponseEntity<Product> get(@PathVariable("id") long id) throws ResourceInvalidException {
-        if (!this.productService.checkValidProductId(id)){
-            log.warn("Product id = {} does not exist", id);
-            throw new ResourceInvalidException("Product id = " + id + " không tồn tại");
-        }
-        log.info("Fetched product with id: {}", id);
-        return ResponseEntity.ok(this.productService.get(id));
+        return ResponseEntity.ok(this.productService.findById(id));
     }
 
     @DeleteMapping("products/{id}")
     @ApiMessage("Delete product")
     public ResponseEntity<Void> delete(@PathVariable("id") long id) throws ResourceInvalidException {
-        if (!this.productService.checkValidProductId(id)){
-            throw new ResourceInvalidException("Product id = " + id + " không tồn tại");
-        }
         this.productService.delete(id);
         return ResponseEntity.ok(null);
     }
@@ -77,11 +65,7 @@ public class ProductController {
 
     @PutMapping("products")
     @ApiMessage("Update product")
-    public ResponseEntity<Product> update(@Valid @RequestBody Product p) throws ResourceInvalidException {
-        boolean check = this.productService.checkValidProductId(p.getId());
-        if (!check){
-            throw new ResourceInvalidException("Product id = " + p.getId() + " không tồn tại");
-        }
+    public ResponseEntity<Product> update(@Valid @RequestBody Product p) {
         return ResponseEntity.ok(this.productService.update(p));
     }
 
@@ -89,7 +73,7 @@ public class ProductController {
     @ApiMessage("Get max price")
     public ResponseEntity<Double> getMaxPrice(
             @RequestParam(value = "category", required = false) String category,
-            @RequestParam(value = "productName", required = false) String productName) throws ResourceInvalidException {
+            @RequestParam(value = "productName", required = false) String productName){
         return ResponseEntity.ok(this.productService.getMaxPrice(category, productName));
     }
 
@@ -100,18 +84,9 @@ public class ProductController {
     }
     @PutMapping("products/quantity/{id}")
     @ApiMessage("Update quantity product")
-    public ResponseEntity<Product> updateQuantity(@PathVariable("id") long id, @RequestParam("quantity") int quantity) throws ResourceInvalidException {
-        boolean check = this.productService.checkValidProductId(id);
-        if (!check){
-            throw new ResourceInvalidException("Product id = " + id + " không tồn tại");
-        }
-        Product p = this.productService.get(id);
-        if(quantity > p.getQuantity()){
-            throw new ResourceInvalidException("Product id = " + p.getId() + " không đủ số lượng tồn kho");
-        }
-        p.setQuantity(p.getQuantity() - quantity);
-        p.setSold(p.getSold()+quantity);
-        return ResponseEntity.ok(this.productService.update(p));
+    public ResponseEntity<Product> updateQuantity(@PathVariable("id") long id, @RequestParam("quantity") int quantity) {
+
+        return ResponseEntity.ok(this.productService.updateQuantity(id, quantity));
     }
 
     @GetMapping("products/exportExcel")

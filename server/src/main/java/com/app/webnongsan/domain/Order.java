@@ -19,6 +19,7 @@ public class Order {
 
     private Instant deliveryTime;
 
+    @Column(nullable = false)
     private int status;
 
     private String paymentMethod;
@@ -33,8 +34,17 @@ public class Order {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
+
+    @PreUpdate
+    public void validateStatus() {
+        if (status < 0 || status > 3) {
+            throw new IllegalArgumentException("Status must be between 0 and 3");
+        }
+    }
+
     @PrePersist
     public void handleBeforeCreate() {
+        validateStatus();
         this.orderTime = Instant.now();
     }
 }

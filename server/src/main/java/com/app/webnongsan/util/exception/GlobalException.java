@@ -1,7 +1,8 @@
 package com.app.webnongsan.util.exception;
 
-
 import com.app.webnongsan.domain.response.RestResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
@@ -9,7 +10,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.validation.BindingResult;
-import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -22,106 +22,69 @@ import java.util.stream.Collectors;
 
 @RestControllerAdvice
 public class GlobalException {
-    //Handle all exception
+    private static final Logger log = LoggerFactory.getLogger(GlobalException.class);
+
+    @ExceptionHandler({UsernameNotFoundException.class, BadCredentialsException.class})
+    public ResponseEntity<RestResponse<Object>> handleCredentialException(RuntimeException ex) {
+        return buildResponse(-2, "Authentication error", ex.getMessage(), HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<RestResponse<Object>> handleValidationError(MethodArgumentNotValidException ex) {
+        BindingResult result = ex.getBindingResult();
+        List<String> errors = result.getFieldErrors().stream()
+                .map(DefaultMessageSourceResolvable::getDefaultMessage)
+                .collect(Collectors.toList());
+        return buildResponse(HttpStatus.BAD_REQUEST.value(), "Validation Error",
+                errors.size() > 1 ? errors : errors.get(0), HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(StorageException.class)
+    public ResponseEntity<RestResponse<Object>> handleFileUploadException(StorageException ex) {
+        return buildResponse(-3, "Upload file exception!", ex.getMessage(), HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(AuthException.class)
+    public ResponseEntity<RestResponse<Object>> handleAuthException(AuthException ex) {
+        return buildResponse(-4, "Authentication failed!", ex.getMessage(), HttpStatus.FORBIDDEN);
+    }
+
+    @ExceptionHandler(ResourceInvalidException.class)
+    public ResponseEntity<RestResponse<Object>> handleResourceException(ResourceInvalidException ex) {
+        return buildResponse(-5, "Resource not found", ex.getMessage(), HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(UserNotFoundException.class)
+    public ResponseEntity<RestResponse<Object>> handleUserNotFoundException(UserNotFoundException ex) {
+        return buildResponse(-6, "User not found in system", ex.getMessage(), HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(DuplicateResourceException.class)
+    public ResponseEntity<RestResponse<Object>> handleDuplicateResourceException(DuplicateResourceException ex) {
+        return buildResponse(-7, "Duplicate resource", ex.getMessage(), HttpStatus.CONFLICT);
+    }
+
+    @ExceptionHandler(CannotDeleteException.class)
+    public ResponseEntity<RestResponse<Object>> handleCannotDeleteException(CannotDeleteException ex) {
+        return buildResponse(-8, "Resources that should not be deleted", ex.getMessage(), HttpStatus.CONFLICT);
+    }
+
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<RestResponse<Object>> handleNotFoundException(NoResourceFoundException ex) {
+        return buildResponse(HttpStatus.NOT_FOUND.value(), "404 Not Found. URL may not exist...",
+                ex.getMessage(), HttpStatus.NOT_FOUND);
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<RestResponse<Object>> handleAllException(Exception ex) {
-        RestResponse<Object> res = new RestResponse<Object>();
-        res.setStatusCode(-1);
-        res.setMessage(ex.getMessage());
-        res.setError("Internal Server Error");
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(res);
+        return buildResponse(-1, "Internal Server Error", ex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
-    @ExceptionHandler(value = {
-            UsernameNotFoundException.class,
-            BadCredentialsException.class
-    })
-    public ResponseEntity<RestResponse<Object>> handleCredientialException(Exception ex) {
-        RestResponse<Object> res = new RestResponse<Object>();
-        res.setStatusCode(-2);
-        res.setError("Exception occurs...");
-        res.setMessage(ex.getMessage());
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(res);
-    }
-
-    // Bắt lỗi not valid
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<RestResponse<Object>> validationError(MethodArgumentNotValidException ex) {
-        BindingResult result = ex.getBindingResult();
-        final List<FieldError> fieldErrors = result.getFieldErrors();
-
-        RestResponse<Object> res = new RestResponse<Object>();
-        res.setStatusCode(HttpStatus.BAD_REQUEST.value());
-        res.setError(ex.getBody().getDetail());
-
-        List<String> errors = fieldErrors.stream().map(DefaultMessageSourceResolvable::getDefaultMessage).collect(Collectors.toList());
-        res.setMessage(errors.size() > 1 ? errors : errors.get(0));
-
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(res);
-    }
-
-    @ExceptionHandler(value = {
-            StorageException.class
-    })
-    public ResponseEntity<RestResponse<Object>> handleFileUploadException(Exception ex) {
-        RestResponse<Object> res = new RestResponse<Object>();
-        res.setStatusCode(-3);
-        res.setError("Upload file exception!");
-        res.setMessage(ex.getMessage());
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(res);
-    }
-
-    @ExceptionHandler(value = {
-            AuthException.class
-    })
-    public ResponseEntity<RestResponse<Object>> handleAuthException(Exception ex) {
-        RestResponse<Object> res = new RestResponse<Object>();
-        res.setStatusCode(-4);
-        res.setError("Authentication failed!");
-        res.setMessage(ex.getMessage());
-
-        ResponseCookie deleteSpringCookie = ResponseCookie
-                .from("refresh_token", "")
-                .httpOnly(true)
-                .secure(true)
-                .path("/")
-                .maxAge(0)
-                .build();
-
-        return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                .header(HttpHeaders.SET_COOKIE, deleteSpringCookie.toString())
-                .body(res);
-    }
-
-    @ExceptionHandler(value = {
-            ResourceInvalidException.class
-    })
-    public ResponseEntity<RestResponse<Object>> handleResourceException(Exception ex) {
-        RestResponse<Object> res = new RestResponse<Object>();
-        res.setStatusCode(-5);
-        res.setError("Resource not found");
-        res.setMessage(ex.getMessage());
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(res);
-    }
-
-    @ExceptionHandler(value = {UserNotFoundException.class})
-    public ResponseEntity<RestResponse<Object>> handleUserNotFoundException(Exception ex){
-        RestResponse<Object> res = new RestResponse<Object>();
-        res.setStatusCode(-6);
-        res.setError("User not found in system");
-        res.setMessage(ex.getMessage());
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(res);
-    }
-
-    //404 not found
-    @ExceptionHandler (value = {
-            NoResourceFoundException.class,
-    })
-    public ResponseEntity<RestResponse<Object>> handleNotFoundException (Exception ex) {
-        RestResponse<Object> res = new RestResponse<Object>();
-        res.setStatusCode(HttpStatus.NOT_FOUND.value());
-        res.setError("404 Not Found. URL may not exist...");
-        res.setMessage(ex.getMessage());
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(res);
+    private ResponseEntity<RestResponse<Object>> buildResponse(int statusCode, String error, Object message, HttpStatus status) {
+        RestResponse<Object> response = new RestResponse<>();
+        response.setStatusCode(statusCode);
+        response.setError(error);
+        response.setMessage(message);
+        return ResponseEntity.status(status).body(response);
     }
 }

@@ -3,11 +3,12 @@ package com.app.webnongsan.service;
 import com.app.webnongsan.domain.User;
 import com.app.webnongsan.domain.response.PaginationDTO;
 import com.app.webnongsan.domain.response.user.CreateUserDTO;
+import com.app.webnongsan.domain.response.user.ResLoginDTO;
 import com.app.webnongsan.domain.response.user.UpdateUserDTO;
 import com.app.webnongsan.domain.response.user.UserDTO;
 import com.app.webnongsan.repository.UserRepository;
-import com.app.webnongsan.util.exception.AuthException;
-import com.app.webnongsan.util.exception.UserNotFoundException;
+import com.app.webnongsan.util.SecurityUtil;
+import com.app.webnongsan.util.exception.*;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -15,18 +16,24 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
 @AllArgsConstructor
-@Slf4j
 public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final FileService fileService;
+    private final CartService cartService;
 
     public User create(User user) {
+        if (this.isExistedEmail(user.getEmail())){
+            throw new DuplicateResourceException("Email " + user.getEmail() + " đã tồn tại");
+        }
         //hash password
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         user.setStatus(1);
@@ -119,7 +126,7 @@ public class UserService {
         return u;
     }
 
-    public User getUserByUsername(String username) throws UserNotFoundException {
+    public User getUserByUsername(String username){
         User u =  this.userRepository.findByEmail(username);
         if (u == null){
             throw new UserNotFoundException("User không tồn tại");
@@ -127,7 +134,7 @@ public class UserService {
         return u;
     }
 
-    public void updateUserToken(String token, String email) throws UserNotFoundException {
+    public void updateUserToken(String token, String email){
         User currentUser = this.getUserByUsername(email);
         if (currentUser != null) {
             currentUser.setRefreshToken(token);
@@ -139,17 +146,56 @@ public class UserService {
         return this.userRepository.findByEmailAndRefreshToken(email, token);
     }
 
-    public void resetPassword(String email, String newPassword) throws UserNotFoundException {
+    public void resetPassword(String email, String newPassword) {
         User user = getUserByUsername(email);
         user.setPassword(passwordEncoder.encode(newPassword));
         this.userRepository.save(user);
     }
 
-    public void checkAccountBanned(User user) throws AuthException {
+    public void checkAccountBanned(User user){
         if (user != null && user.getStatus() == 0) {
-            log.warn("User {} has been banned from logging in", user.getEmail());
             throw new AuthException("Tài khoản của bạn đã bị khóa.");
         }
+    }
+
+    public ResLoginDTO.UserGetAccount updateUser(
+            String name, String email, String phone, String address, MultipartFile avatar) {
+
+        String emailLoggedIn = SecurityUtil.getCurrentUserLogin().orElseThrow(
+                () -> new AuthException("User is not authenticated"));
+        User currentUserDB = getUserByUsername(emailLoggedIn);
+
+        // Cập nhật thông tin người dùng
+        currentUserDB.setName(name);
+        currentUserDB.setEmail(email);
+        currentUserDB.setPhone(phone);
+        currentUserDB.setAddress(address);
+
+        // Nếu có avatar mới, lưu ảnh vào server
+        if (avatar != null && !avatar.isEmpty()) {
+            try {
+                String avatarUrl = fileService.store(avatar, "avatar");
+                currentUserDB.setAvatarUrl(avatarUrl);
+            } catch (IOException e) {
+                throw new StorageException("Failed to store avatar file");
+            }
+        }
+
+        // Lưu thông tin cập nhật vào DB
+        userRepository.save(currentUserDB);
+
+        // Chuẩn bị dữ liệu phản hồi
+        ResLoginDTO.UserLogin userLogin = new ResLoginDTO.UserLogin(
+                currentUserDB.getId(),
+                currentUserDB.getEmail(),
+                currentUserDB.getName(),
+                currentUserDB.getRole());
+
+        ResLoginDTO.UserGetAccount userGetAccount = new ResLoginDTO.UserGetAccount();
+        userGetAccount.setUser(userLogin);
+        userGetAccount.setCartLength(cartService.countProductInCart(currentUserDB.getId()));
+
+        return userGetAccount;
     }
 }
 

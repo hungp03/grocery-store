@@ -104,10 +104,10 @@ public class OrderService {
         return p;
     }
 
-    public OrderDTO cancelOrder(Long id) throws ResourceInvalidException {
+    public OrderDTO cancelOrder(Long id){
 
         Optional<Order> orderOptional = orderRepository.findById(id);
-        Order o = new Order();
+        Order o;
         OrderDTO orderDTO = new OrderDTO();
         if (orderOptional.isPresent()) {
             o = orderOptional.get();

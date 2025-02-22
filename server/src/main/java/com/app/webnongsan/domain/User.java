@@ -25,7 +25,7 @@ public class User {
     private String name;
 
     @NotBlank(message = "Không được để trống email")
-    @Column(unique = true)
+    @Column(unique = true, nullable = false)
     @Email(message = "Email không hợp lệ")
     private String email;
 

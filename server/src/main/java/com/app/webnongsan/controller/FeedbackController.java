@@ -29,13 +29,10 @@ import java.util.List;
 @AllArgsConstructor
 public class FeedbackController {
     private final FeedbackService feedbackService;
-    private final ProductRepository productRepository;
-    private final UserRepository userRepository;
-    private final FeedbackRepository feedbackRepository;
 
     @PutMapping("product/ratings")
     @ApiMessage("Create a feedback")
-    public ResponseEntity<Feedback> add(@RequestBody FeedbackDTO feedbackDTO) throws ResourceInvalidException{
+    public ResponseEntity<Feedback> add(@RequestBody FeedbackDTO feedbackDTO){
         return ResponseEntity.status(HttpStatus.CREATED).body(this.feedbackService.addFeedback(feedbackDTO));
     }
 
@@ -64,7 +61,7 @@ public class FeedbackController {
 
     @PutMapping("ratings/{id}")
     @ApiMessage("Hide a feedback")
-    public ResponseEntity<FeedbackDTO> hideFeedback(@PathVariable Long id) throws ResourceInvalidException{
+    public ResponseEntity<FeedbackDTO> hideFeedback(@PathVariable Long id){
         return ResponseEntity.status(HttpStatus.CREATED).body(this.feedbackService.hideFeedback(id));
     }
 }

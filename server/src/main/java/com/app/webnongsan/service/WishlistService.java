@@ -11,7 +11,9 @@ import com.app.webnongsan.repository.UserRepository;
 import com.app.webnongsan.repository.WishlistRepository;
 import com.app.webnongsan.util.PaginationHelper;
 import com.app.webnongsan.util.SecurityUtil;
+import com.app.webnongsan.util.exception.DuplicateResourceException;
 import com.app.webnongsan.util.exception.ResourceInvalidException;
+import com.app.webnongsan.util.exception.UserNotFoundException;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -25,18 +27,18 @@ public class WishlistService {
     private final ProductRepository productRepository;
     private final PaginationHelper paginationHelper;
 
-    public Wishlist addWishlist(Wishlist w) throws ResourceInvalidException {
+    public Wishlist addWishlist(Wishlist w){
         String email = SecurityUtil.getCurrentUserLogin().isPresent() ? SecurityUtil.getCurrentUserLogin().get() : "";
         User u = this.userRepository.findByEmail(email);
         if (u == null) {
-            throw new ResourceInvalidException("User không tồn tại");
+            throw new UserNotFoundException("User không tồn tại");
         }
         Product p = this.productRepository.findById(w.getId().getProductId()).orElseThrow(() -> new ResourceInvalidException("Product không tồn tại"));
 
         boolean exists = wishlistRepository.existsByUserIdAndProductId(u.getId(), p.getId());
 
         if (exists) {
-            throw new ResourceInvalidException("Sản phẩm đã có trong danh sách yêu thích");
+            throw new DuplicateResourceException("Sản phẩm đã có trong danh sách yêu thích");
         }
 
         w.setUser(u);
@@ -44,12 +46,12 @@ public class WishlistService {
         return this.wishlistRepository.save(w);
     }
 
-    public void deleteWishlist(Long productId) throws ResourceInvalidException {
+    public void deleteWishlist(Long productId){
         String email = SecurityUtil.getCurrentUserLogin().isPresent() ? SecurityUtil.getCurrentUserLogin().get() : "";
         User user = this.userRepository.findByEmail(email);
 
         if (user == null) {
-            throw new ResourceInvalidException("User không tồn tại");
+            throw new UserNotFoundException("User không tồn tại");
         }
 
         boolean exists = wishlistRepository.existsByUserIdAndProductId(user.getId(), productId);
@@ -66,7 +68,7 @@ public class WishlistService {
         User user = this.userRepository.findByEmail(email);
 
         if (user == null) {
-            throw new ResourceInvalidException("User không tồn tại");
+            throw new UserNotFoundException("User không tồn tại");
         }
 
         Page<WishlistItemDTO> wishlistItems = this.wishlistRepository.findWishlistItemsByUserId(user.getId(), pageable);

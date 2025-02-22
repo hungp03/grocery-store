@@ -1,6 +1,7 @@
 package com.app.webnongsan.domain;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Min;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -22,6 +23,7 @@ public class OrderDetail {
     @JoinColumn(name = "product_id")
     private Product product;
 
+    @Min(value = 1)
     private int quantity;
 
     private Double unit_price;
