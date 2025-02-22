@@ -2,10 +2,7 @@ package com.app.webnongsan.controller;
 
 import com.app.webnongsan.domain.Role;
 import com.app.webnongsan.domain.User;
-import com.app.webnongsan.domain.request.EmailRequestDTO;
-import com.app.webnongsan.domain.request.GoogleTokenRequest;
-import com.app.webnongsan.domain.request.LoginDTO;
-import com.app.webnongsan.domain.request.ResetPasswordDTO;
+import com.app.webnongsan.domain.request.*;
 import com.app.webnongsan.domain.response.user.CreateUserDTO;
 import com.app.webnongsan.domain.response.user.ResLoginDTO;
 import com.app.webnongsan.service.*;
@@ -13,7 +10,10 @@ import com.app.webnongsan.util.SecurityUtil;
 import com.app.webnongsan.util.annotation.ApiMessage;
 import com.app.webnongsan.util.exception.AuthException;
 import com.app.webnongsan.util.exception.ResourceInvalidException;
+import com.app.webnongsan.util.exception.UserNotFoundException;
 import jakarta.validation.Valid;
+import lombok.extern.slf4j.Slf4j;
+import org.checkerframework.checker.units.qual.A;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -33,315 +33,174 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 @RestController
 @RequestMapping("api/v2")
+@Slf4j
 public class AuthController {
-    private final AuthenticationManagerBuilder authenticationManagerBuilder;
-    private final SecurityUtil securityUtil;
     private final UserService userService;
-    private final EmailService emailService;
     private final FileService fileService;
     private final AuthService authService;
     private final CartService cartService;
     @Value("${jwt.refreshtoken-validity-in-seconds}")
     private long refreshTokenExpiration;
-    private final CustomOAuth2UserService oAuth2UserService;
 
-    public AuthController(AuthenticationManagerBuilder authenticationManagerBuilder, SecurityUtil securityUtil, UserService userService, EmailService emailService, AuthService authService, CartService cartService, FileService fileService, CustomOAuth2UserService oAuth2UserService) {
-        this.authenticationManagerBuilder = authenticationManagerBuilder;
-        this.securityUtil = securityUtil;
+    public AuthController(UserService userService, AuthService authService, CartService cartService, FileService fileService) {
         this.userService = userService;
-        this.emailService = emailService;
         this.authService = authService;
         this.fileService = fileService;
         this.cartService = cartService;
-        this.oAuth2UserService = oAuth2UserService;
     }
 
     @PostMapping("auth/login")
     @ApiMessage("Login")
-    public ResponseEntity<ResLoginDTO> login(@Valid @RequestBody LoginDTO loginDTO) throws AuthException {
-        User currentUserDB = this.userService.getUserByUsername(loginDTO.getEmail());
-
-        if (currentUserDB != null && currentUserDB.getStatus() == 0) {
-           throw new AuthException("Tài khoản của bạn đã bị khóa. Không thể đăng nhập");
-        }
-
-        UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(loginDTO.getEmail(), loginDTO.getPassword());
-        Authentication authentication = authenticationManagerBuilder.getObject().authenticate(authenticationToken);
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-        ResLoginDTO res = new ResLoginDTO();
-
-        if (currentUserDB != null) {
-            ResLoginDTO.UserLogin userLogin = new ResLoginDTO.UserLogin(
-                    currentUserDB.getId(),
-                    currentUserDB.getEmail(),
-                    currentUserDB.getName(),
-                    currentUserDB.getRole());
-            res.setUser(userLogin);
-        }
-
-        String accessToken = this.securityUtil.createAccessToken(authentication.getName(), res);
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-        res.setAccessToken(accessToken);
-        String refresh_token = this.securityUtil.createRefreshToken(loginDTO.getEmail(), res);
-        this.userService.updateUserToken(refresh_token, loginDTO.getEmail());
-        ResponseCookie responseCookie = ResponseCookie.from("refresh_token", refresh_token)
+    public ResponseEntity<ResLoginDTO> login(@Valid @RequestBody LoginDTO loginDTO) throws AuthException, UserNotFoundException {
+        Map<String, Object> response = this.authService.login(loginDTO);
+        ResponseCookie responseCookie = ResponseCookie.from("refresh_token", (String) response.get("refreshToken"))
                 .httpOnly(true)
                 .secure(false)
                 .path("/")
                 .maxAge(refreshTokenExpiration)
                 .sameSite("Lax")
                 .build();
+
+        log.info("User {} logged in successfully", loginDTO.getEmail());
         return ResponseEntity.ok()
-                .header(HttpHeaders.SET_COOKIE, responseCookie.toString()).body(res);
+                .header(HttpHeaders.SET_COOKIE, responseCookie.toString())
+                .body((ResLoginDTO) response.get("userInfo"));
     }
+
 
     @GetMapping("auth/account")
     @ApiMessage("Get user")
-    public ResponseEntity<ResLoginDTO.UserGetAccount> getAccount() throws AuthException {
-        String email = SecurityUtil.getCurrentUserLogin().isPresent() ? SecurityUtil.getCurrentUserLogin().get() : "";
-        // Lấy thông tin người dùng trong db
-        User currentUserDB = this.userService.getUserByUsername(email);
-        if (currentUserDB != null && currentUserDB.getStatus() == 0) {
-            throw new AuthException("Tài khoản của bạn đã bị khóa. Không thể đăng nhập");
-        }
-
-        ResLoginDTO.UserLogin userLogin = new ResLoginDTO.UserLogin();
-        ResLoginDTO.UserGetAccount userGetAccount = new ResLoginDTO.UserGetAccount();
-
-        if (currentUserDB != null) {
-            userLogin.setId(currentUserDB.getId());
-            userLogin.setEmail(currentUserDB.getEmail());
-            userLogin.setName(currentUserDB.getName());
-            userLogin.setRole(currentUserDB.getRole());
-            userGetAccount.setUser(userLogin);
-            userGetAccount.setCartLength(cartService.countProductInCart(currentUserDB.getId()));
-        }
-        return ResponseEntity.ok(userGetAccount);
+    public ResponseEntity<ResLoginDTO.UserGetAccount> getAccount() throws AuthException, UserNotFoundException {
+        return ResponseEntity.ok(this.authService.getAccount());
     }
 
     @GetMapping("auth/refresh")
     @ApiMessage("Get new token")
-    public ResponseEntity<ResLoginDTO> getNewRefreshToken(@CookieValue(name = "refresh_token", defaultValue = "none") String refreshToken) throws ResourceInvalidException, AuthException {
-        if (refreshToken.equals("none")) {
-            throw new ResourceInvalidException("Vui lòng đăng nhập");
-        }
-
-        // Check RFtoken hợp lệ
-        Jwt decodedToken = this.securityUtil.checkValidToken(refreshToken);
-        String email = decodedToken.getSubject();
-        User currentUser = this.userService.getUserByRFTokenAndEmail(email, refreshToken);
-        if (currentUser == null) {
-            throw new ResourceInvalidException("Refresh token không hợp lệ");
-        }
-        else {
-            if (currentUser.getStatus() == 0){
-                throw new AuthException("Tài khoản bị khóa");
-            }
-        }
-
-        // Tạo lại RF token và set cookies
-        ResLoginDTO res = new ResLoginDTO();
-        User currentUserDB = this.userService.getUserByUsername(email);
-        if (currentUserDB != null) {
-            ResLoginDTO.UserLogin userLogin = new ResLoginDTO.UserLogin(
-                    currentUserDB.getId(),
-                    currentUserDB.getEmail(),
-                    currentUserDB.getName(),
-                    currentUserDB.getRole());
-            res.setUser(userLogin);
-        }
-
-        // create access token
-        String access_token = this.securityUtil.createAccessToken(email, res);
-        res.setAccessToken(access_token);
-
-        // create refresh token
-        String new_refresh_token = this.securityUtil.createRefreshToken(email, res);
-
-        // update user
-        this.userService.updateUserToken(new_refresh_token, email);
-
+    public ResponseEntity<ResLoginDTO> getNewRefreshToken(@CookieValue(name = "refresh_token", defaultValue = "none") String refreshToken) throws ResourceInvalidException, AuthException, UserNotFoundException {
+        Map<String, Object> response = this.authService.getNewRefreshToken(refreshToken);
         // set cookies
         ResponseCookie resCookies = ResponseCookie
-                .from("refresh_token", new_refresh_token)
+                .from("refresh_token", (String) response.get("refreshToken"))
                 .httpOnly(true)
                 .secure(true)
                 .path("/")
                 .maxAge(refreshTokenExpiration)
                 .build();
-
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, resCookies.toString())
-                .body(res);
+                .body((ResLoginDTO) response.get("userInfo"));
     }
 
     @PostMapping("auth/logout")
     @ApiMessage("Logout")
-    public ResponseEntity<Void> logout() throws ResourceInvalidException {
-        String email = SecurityUtil.getCurrentUserLogin().isPresent() ? SecurityUtil.getCurrentUserLogin().get() : "";
-        if (email.isEmpty()) {
-            throw new ResourceInvalidException("Accesstoken không hợp lệ");
-        }
-
-        this.userService.updateUserToken(null, email);
-
-        //Xóa cookie
-        ResponseCookie deleteSpringCookie = ResponseCookie
+    public ResponseEntity<Void> logout() throws ResourceInvalidException, UserNotFoundException {
+        this.authService.logout();
+        ResponseCookie deleteCookie = ResponseCookie
                 .from("refresh_token", "")
                 .httpOnly(true)
                 .secure(true)
                 .path("/")
                 .maxAge(0)
                 .build();
+
         return ResponseEntity
                 .ok()
-                .header(HttpHeaders.SET_COOKIE, deleteSpringCookie.toString()).body(null);
+                .header(HttpHeaders.SET_COOKIE, deleteCookie.toString()).body(null);
     }
 
     @PostMapping("auth/register")
     @ApiMessage("Register a user")
     public ResponseEntity<CreateUserDTO> register(@Valid @RequestBody User user) throws ResourceInvalidException {
-        if (this.userService.isExistedEmail(user.getEmail())) {
-            throw new ResourceInvalidException("Email " + user.getEmail() + " đã tồn tại");
-        }
-        Role r = new Role();
-        r.setId(2);
-        user.setRole(r);
-        User newUser = this.userService.create(user);
-        return ResponseEntity.status(HttpStatus.CREATED).body(this.userService.convertToCreateDTO(newUser));
+        return ResponseEntity.status(HttpStatus.CREATED).body(this.authService.register(user));
     }
 
     @PostMapping("auth/forgot")
-    @ApiMessage("Forgot password")
-    public ResponseEntity<Void> forgotPassword(@RequestBody EmailRequestDTO emailRequest) throws ResourceInvalidException {
-        if (!this.userService.isExistedEmail(emailRequest.getEmail())) {
-            throw new ResourceInvalidException("Email " + emailRequest.getEmail() + " không tồn tại");
-        }
-        String uuid = String.valueOf(UUID.randomUUID());
-        String token = this.securityUtil.createResetPasswordToken(emailRequest.getEmail(), uuid);
-        this.authService.storeForgotToken(token, emailRequest.getEmail());
-        this.emailService.sendEmailFromTemplateSync(emailRequest.getEmail(), "Reset password", "forgotPassword", emailRequest.getEmail(), token);
+    @ApiMessage("Forgot password - OTP")
+    public ResponseEntity<Void> forgotPassword(@Valid @RequestBody EmailRequestDTO emailRequest) throws UserNotFoundException {
+        this.authService.forgotPassword(emailRequest.getEmail());
         return ResponseEntity.ok(null);
+    }
+
+    @PostMapping("auth/validate-otp")
+    @ApiMessage("Validate OTP")
+    public ResponseEntity<Map<String, String>> verifyOtp(@RequestBody OTPDto request) throws ResourceInvalidException {
+        return ResponseEntity.ok(this.authService.verifyOtp(request));
     }
 
     @PutMapping("auth/reset-password")
     @ApiMessage("Reset password")
     public ResponseEntity<Void> resetPassword(
             @RequestParam("token") String token,
-            @RequestBody ResetPasswordDTO request) throws ResourceInvalidException {
-        Jwt decodedToken = this.securityUtil.checkValidToken(token);
-        String email = decodedToken.getClaim("email");
-        this.userService.resetPassword(email, request.getNewPassword());
-        this.authService.deleteToken(token);
+            @RequestBody ResetPasswordDTO request) throws ResourceInvalidException, UserNotFoundException {
+        this.authService.resetPassword(token, request);
         return ResponseEntity.ok(null);
     }
 
-    @GetMapping("auth/validate-token")
-    @ApiMessage("validate token")
-    public ResponseEntity<Map<String, Boolean>> validateToken(@RequestParam("token") String token) {
-        try {
-            Jwt decodedToken = securityUtil.checkValidToken(token);
-            String email = decodedToken.getClaim("email");
-            boolean check = authService.checkValidToken(token, email);
-            return ResponseEntity.ok(Map.of("valid", check));
-        } catch (Exception e) {
-            return ResponseEntity.ok(Map.of("valid", false));
-        }
-    }
-
     @PutMapping("auth/account")
-    @ApiMessage("Update User Information")
-    public ResponseEntity<ResLoginDTO.UserGetAccount> udateUser(
+    @ApiMessage("Update user information")
+    public ResponseEntity<ResLoginDTO.UserGetAccount> updateUser(
             @RequestParam("name") String name,
             @RequestParam("email") String email,
             @RequestParam("phone") String phone,
             @RequestParam("address") String address,
-            @RequestParam(value = "avatarUrl", required = false) MultipartFile avatar) throws IOException {
-        String emailLoggedIn = SecurityUtil.getCurrentUserLogin().isPresent() ? SecurityUtil.getCurrentUserLogin().get() : "";
-        // Lấy thông tin người dùng trong db
+            @RequestParam(value = "avatarUrl", required = false) MultipartFile avatar) throws IOException, UserNotFoundException {
+
+        String emailLoggedIn = SecurityUtil.getCurrentUserLogin().orElse("");
+        log.info("User {} is updating their information", emailLoggedIn);
+
+        // Kiểm tra người dùng có tồn tại không
         User currentUserDB = userService.getUserByUsername(emailLoggedIn);
-        ResLoginDTO.UserLogin userLogin = new ResLoginDTO.UserLogin();
-        ResLoginDTO.UserGetAccount userGetAccount = new ResLoginDTO.UserGetAccount();
+
+        log.debug("Updating user: name={}, email={}, phone={}, address={}, hasAvatar={}",
+                name, email, phone, address, (avatar != null && !avatar.isEmpty()));
 
         // Cập nhật thông tin người dùng
         currentUserDB.setName(name);
         currentUserDB.setEmail(email);
         currentUserDB.setPhone(phone);
         currentUserDB.setAddress(address);
-        // Kiểm tra nếu có avatar mới được upload
+
+        // Nếu có avatar mới, lưu ảnh vào server
         if (avatar != null && !avatar.isEmpty()) {
-            // Lưu file ảnh vào server hoặc storage và cập nhật URL
-            String avatarUrl = fileService.store(avatar,"avatar");
-            currentUserDB.setAvatarUrl(avatarUrl);
+            try {
+                String avatarUrl = fileService.store(avatar, "avatar");
+                currentUserDB.setAvatarUrl(avatarUrl);
+                log.info("User {} uploaded a new avatar: {}", emailLoggedIn, avatarUrl);
+            } catch (IOException e) {
+                log.error("Error while saving avatar for user {}: {}", emailLoggedIn, e.getMessage(), e);
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            }
         }
+
+        // Lưu thông tin cập nhật vào DB
         userService.update(currentUserDB);
-        // Lấy thông tin người dùng sau khi cập nhật
+        log.info("User {} updated their profile successfully", emailLoggedIn);
 
-        userLogin.setId(currentUserDB.getId());
-        userLogin.setEmail(currentUserDB.getEmail());
-        userLogin.setName(currentUserDB.getName());
-        userLogin.setRole(currentUserDB.getRole());
-
-        return ResponseEntity.ok(userGetAccount);
-    }
-
-    @PostMapping("auth/signin/google")
-    @ApiMessage("Login with Google")
-    public ResponseEntity<ResLoginDTO> loginWithGoogle(@RequestBody GoogleTokenRequest request) throws AuthException, GeneralSecurityException, IOException {
-        // Xử lý token từ Google
-        OAuth2User oauth2User = oAuth2UserService.processOAuth2User(request.getIdToken());
-        String email = oauth2User.getAttribute("email");
-        User currentUserDB = userService.getUserByUsername(email);
-        // Kiểm tra trạng thái tài khoản
-        if (currentUserDB != null && currentUserDB.getStatus() == 0) {
-            throw new AuthException("Tài khoản của bạn đã bị khóa. Không thể đăng nhập");
-        }
-        //khi đăng nhập bằng mật khẩu, Spring Security tự động xử lý authorities từ UserDetailsService
-        // trong khi đăng nhập Google không có sẵn
-        List<GrantedAuthority> authorities = new ArrayList<>();
-        authorities.add(new SimpleGrantedAuthority("ROLE_" + currentUserDB.getRole().getRoleName()));
-
-        // Tạo UserDetails sử dụng User của Spring Security
-        UserDetails userDetails = new org.springframework.security.core.userdetails.User(
-                email,
-                "", // password trống vì xác thực qua Google
-                true, // enabled
-                true, // accountNonExpired
-                true, // credentialsNonExpired
-                true, // accountNonLocked
-                authorities
-        );
-
-        // Tạo authentication với UserDetails
-        Authentication authentication = new UsernamePasswordAuthenticationToken(
-                userDetails,
-                null,
-                userDetails.getAuthorities()
-        );
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-        ResLoginDTO res = new ResLoginDTO();
+        // Chuẩn bị dữ liệu phản hồi
         ResLoginDTO.UserLogin userLogin = new ResLoginDTO.UserLogin(
                 currentUserDB.getId(),
                 currentUserDB.getEmail(),
                 currentUserDB.getName(),
                 currentUserDB.getRole());
-        res.setUser(userLogin);
-        String accessToken = securityUtil.createAccessToken(email, res);
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-        res.setAccessToken(accessToken);
-        // Tạo refresh token nếu cần thiết
-        String refresh_token = securityUtil.createRefreshToken(email, res);
-        userService.updateUserToken(refresh_token, email);
 
+        ResLoginDTO.UserGetAccount userGetAccount = new ResLoginDTO.UserGetAccount();
+        userGetAccount.setUser(userLogin);
+        userGetAccount.setCartLength(cartService.countProductInCart(currentUserDB.getId()));
+
+        return ResponseEntity.ok(userGetAccount);
+    }
+
+
+    @PostMapping("auth/signin/google")
+    @ApiMessage("Login with Google")
+    public ResponseEntity<ResLoginDTO> loginWithGoogle(@RequestBody GoogleTokenRequest request) throws AuthException, GeneralSecurityException, IOException, UserNotFoundException {
+        Map<String, Object> response = this.authService.loginGoogle(request);
         // Tạo cookie cho refresh token
-        ResponseCookie responseCookie = ResponseCookie.from("refresh_token", refresh_token)
+        ResponseCookie responseCookie = ResponseCookie.from("refresh_token", (String) response.get("refreshToken"))
                 .httpOnly(true)
                 .secure(false)
                 .path("/")
@@ -351,6 +210,6 @@ public class AuthController {
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, responseCookie.toString())
-                .body(res);
+                .body((ResLoginDTO) response.get("userInfo"));
     }
 }

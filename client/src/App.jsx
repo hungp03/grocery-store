@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react'
 import path from '@/utils/path'
 import { Route, Routes } from "react-router-dom";
-import { Login, Home, Public, ProductDetail, Product, ResetPassword, CartDetail, Checkout, ErrorPage, PaymentSuccess, PaymentFailure, SearchRecommendation } from "@/pages/guest";
+import { Login, Home, Public, ProductDetail, Product, ResetPassword, CartDetail, Checkout, ErrorPage, PaymentSuccess, PaymentFailure } from "@/pages/guest";
 import { MemberLayout, Personal, Wishlist, History } from '@/pages/member';
 import { useDispatch, useSelector } from "react-redux";
 import { getCategories } from "@/store/app/asyncActions";
@@ -26,7 +26,7 @@ const App = () => {
         <Routes>
           <Route path={path.PUBLIC} element={<Public />}>
             <Route path={path.HOME} element={<Home />}></Route>
-            <Route path={path.SEARCH_RECOMMENDATION} element={<SearchRecommendation />}></Route>
+            {/* <Route path={path.SEARCH_RECOMMENDATION} element={<SearchRecommendation />}></Route> */}
             <Route path={path.PRODUCTS_BASE} element={<Product />}></Route>
             <Route path={path.PRODUCTS} element={<Product />}></Route>
             <Route path={path.PRODUCT_DETAIL} element={<ProductDetail />}></Route>

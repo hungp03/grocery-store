@@ -36,7 +36,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         }
     }
 
-    public OAuth2User processOAuth2User(String idToken) throws AuthException, GeneralSecurityException, IOException {
+    public OAuth2User processOAuth2User(String idToken) throws GeneralSecurityException, IOException {
         // Xác thực token với Google
         GoogleIdToken googleIdToken = googleIdTokenVerifier.verify(idToken);
         if (googleIdToken != null) {

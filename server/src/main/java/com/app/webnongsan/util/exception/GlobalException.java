@@ -26,7 +26,7 @@ public class GlobalException {
     @ExceptionHandler(Exception.class)
     public ResponseEntity<RestResponse<Object>> handleAllException(Exception ex) {
         RestResponse<Object> res = new RestResponse<Object>();
-        res.setStatusCode(HttpStatus.INTERNAL_SERVER_ERROR.value());
+        res.setStatusCode(-1);
         res.setMessage(ex.getMessage());
         res.setError("Internal Server Error");
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(res);
@@ -34,12 +34,11 @@ public class GlobalException {
 
     @ExceptionHandler(value = {
             UsernameNotFoundException.class,
-            BadCredentialsException.class,
-            ResourceInvalidException.class
+            BadCredentialsException.class
     })
-    public ResponseEntity<RestResponse<Object>> handleIdException(Exception ex) {
+    public ResponseEntity<RestResponse<Object>> handleCredientialException(Exception ex) {
         RestResponse<Object> res = new RestResponse<Object>();
-        res.setStatusCode(HttpStatus.BAD_REQUEST.value());
+        res.setStatusCode(-2);
         res.setError("Exception occurs...");
         res.setMessage(ex.getMessage());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(res);
@@ -61,24 +60,12 @@ public class GlobalException {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(res);
     }
 
-    //404 not found
-    @ExceptionHandler (value = {
-            NoResourceFoundException.class,
-    })
-    public ResponseEntity<RestResponse<Object>> handleNotFoundException (Exception ex) {
-        RestResponse<Object> res = new RestResponse<Object>();
-        res.setStatusCode(HttpStatus.NOT_FOUND.value());
-        res.setError("404 Not Found. URL may not exist...");
-        res.setMessage(ex.getMessage());
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(res);
-    }
-
     @ExceptionHandler(value = {
             StorageException.class
     })
     public ResponseEntity<RestResponse<Object>> handleFileUploadException(Exception ex) {
         RestResponse<Object> res = new RestResponse<Object>();
-        res.setStatusCode(HttpStatus.BAD_REQUEST.value());
+        res.setStatusCode(-3);
         res.setError("Upload file exception!");
         res.setMessage(ex.getMessage());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(res);
@@ -89,7 +76,7 @@ public class GlobalException {
     })
     public ResponseEntity<RestResponse<Object>> handleAuthException(Exception ex) {
         RestResponse<Object> res = new RestResponse<Object>();
-        res.setStatusCode(HttpStatus.FORBIDDEN.value());
+        res.setStatusCode(-4);
         res.setError("Authentication failed!");
         res.setMessage(ex.getMessage());
 
@@ -107,13 +94,34 @@ public class GlobalException {
     }
 
     @ExceptionHandler(value = {
-            PermissionException.class
+            ResourceInvalidException.class
     })
-    public ResponseEntity<RestResponse<Object>> handlePermissionException(Exception ex) {
+    public ResponseEntity<RestResponse<Object>> handleResourceException(Exception ex) {
         RestResponse<Object> res = new RestResponse<Object>();
-        res.setStatusCode(HttpStatus.FORBIDDEN.value());
-        res.setError("Permission denied!");
+        res.setStatusCode(-5);
+        res.setError("Resource not found");
         res.setMessage(ex.getMessage());
-        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(res);
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(res);
+    }
+
+    @ExceptionHandler(value = {UserNotFoundException.class})
+    public ResponseEntity<RestResponse<Object>> handleUserNotFoundException(Exception ex){
+        RestResponse<Object> res = new RestResponse<Object>();
+        res.setStatusCode(-6);
+        res.setError("User not found in system");
+        res.setMessage(ex.getMessage());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(res);
+    }
+
+    //404 not found
+    @ExceptionHandler (value = {
+            NoResourceFoundException.class,
+    })
+    public ResponseEntity<RestResponse<Object>> handleNotFoundException (Exception ex) {
+        RestResponse<Object> res = new RestResponse<Object>();
+        res.setStatusCode(HttpStatus.NOT_FOUND.value());
+        res.setError("404 Not Found. URL may not exist...");
+        res.setMessage(ex.getMessage());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(res);
     }
 }

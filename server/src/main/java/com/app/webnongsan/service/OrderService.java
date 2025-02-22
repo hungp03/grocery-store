@@ -9,6 +9,7 @@ import com.app.webnongsan.domain.response.order.OrderDTO;
 import com.app.webnongsan.domain.response.order.WeeklyRevenue;
 import com.app.webnongsan.repository.OrderRepository;
 import com.app.webnongsan.repository.UserRepository;
+import com.app.webnongsan.util.exception.UserNotFoundException;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -75,7 +76,7 @@ public class OrderService {
             res.setStatus(order.getStatus());
             res.setPaymentMethod(order.getPaymentMethod());
             res.setAddress(order.getAddress());
-            res.setTotal_price(order.getTotal_price()); // Chú ý: có thể cần sửa lại tên phương thức
+            res.setTotal_price(order.getTotal_price()); 
             res.setUserEmail(order.getUser().getEmail());
             res.setUserId(order.getUser().getId());
             res.setUserName(order.getUser().getName());
@@ -147,7 +148,7 @@ public class OrderService {
         return res;
     }
 
-    public Order create(OrderDTO orderDTO) throws ResourceInvalidException {
+    public Order create(OrderDTO orderDTO) throws ResourceInvalidException, UserNotFoundException {
         String emailLoggedIn = SecurityUtil.getCurrentUserLogin().isPresent() ? SecurityUtil.getCurrentUserLogin().get() : "";
         // Lấy thông tin người dùng trong db
         User currentUserDB = userService.getUserByUsername(emailLoggedIn);

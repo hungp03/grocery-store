@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { Button } from '@/components';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { apiResetPassword, apiValidateToken } from '@/apis';
+import { apiResetPassword} from '@/apis';
 import { toast } from 'react-toastify';
 import { useForm } from 'react-hook-form';
 import path from '@/utils/path';
@@ -12,63 +12,37 @@ const ResetPassword = () => {
     const queryParams = new URLSearchParams(location.search);
     const token = queryParams.get('token');
 
-    const [validToken, setValidToken] = useState(null);
-    const [isCheckingToken, setIsCheckingToken] = useState(true);
-
-    const checkToken = async (token) => {
-        try {
-            const check = await apiValidateToken(token);
-            setValidToken(check.data?.valid);
-        } catch (error) {
-            setValidToken(false);
-        } finally {
-            setIsCheckingToken(false);
-        }
-    };
-
-    useEffect(() => {
-        if (token) {
-            checkToken(token);
-        } else {
-            setIsCheckingToken(false);
-        }
-    }, [location.search, token]);
-
-    useEffect(() => {
-        if (!isCheckingToken && validToken === false) {
-            toast.error("Token không hợp lệ hoặc đã hết hạn. Quay về trang chủ sau 3 giây...");
-            setTimeout(() => {
-                navigate(`/${path.HOME}`);
-            }, 3000);
-        }
-    }, [isCheckingToken, validToken, navigate]);
-
     const { register, handleSubmit, formState: { errors }, watch } = useForm();
     const newPassword = watch("password");
 
     const handleResetPassword = async (data) => {
-        const response = await apiResetPassword(data.password, token);
+        const response = await apiResetPassword({
+            token,
+            newPassword: data.password,
+            confirmPassword: data.confirmPassword
+        });
+    
         if (response.statusCode !== 200) {
-            toast.info("Có lỗi xảy ra, hãy thử lại sau");
+            if (response.message.toLowerCase().includes('jwt expired')) {
+                toast.info("Đã hết thời gian đặt lại mật khẩu, vui lòng thực hiện lại");
+            } else {
+                toast.error("Có lỗi xảy ra, vui lòng thử lại sau");
+            }
             navigate(`/${path.LOGIN}`);
         } else {
             toast.success("Đổi mật khẩu thành công");
             navigate(`/${path.LOGIN}`);
         }
     };
-
-    if (isCheckingToken) {
-        return <div className="absolute animate-fade-in top-0 left-0 bottom-0 right-0 bg-overlay flex flex-col items-center justify-center py-8 z-50"><p>Đang kiểm tra token...</p></div>;
-    }
+    
 
     return (
         <div className="absolute animate-fade-in top-0 left-0 bottom-0 right-0 bg-overlay flex flex-col items-center justify-center py-8 z-50">
-            {validToken ? (
                 <div className="p-6 bg-white rounded-md shadow-lg w-full max-w-lg">
                     <h2 className="text-2xl font-semibold text-center mb-4">Đặt lại mật khẩu</h2>
                     <form onSubmit={handleSubmit(handleResetPassword)} className="flex flex-col gap-4">
                         <div>
-                            <label htmlFor="password" className="block text-gray-700 font-semibold">Mật khẩu mới</label>
+                            <label htmlFor="password" className="block text-gray-700">Mật khẩu mới</label>
                             <input
                                 type="password"
                                 id="password"
@@ -88,7 +62,7 @@ const ResetPassword = () => {
                             {errors.password && <span className="text-red-500 text-sm">{errors.password.message}</span>}
                         </div>
                         <div>
-                            <label htmlFor="confirmPassword" className="block text-gray-700 font-semibold">Xác nhận mật khẩu</label>
+                            <label htmlFor="confirmPassword" className="block text-gray-700">Xác nhận mật khẩu</label>
                             <input
                                 type="password"
                                 id="confirmPassword"
@@ -111,9 +85,6 @@ const ResetPassword = () => {
                         </div>
                     </form>
                 </div>
-            ) : (
-                <p>Token không hợp lệ hoặc đã hết hạn.</p>
-            )}
         </div>
     );
 };

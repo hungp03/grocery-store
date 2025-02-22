@@ -56,9 +56,9 @@ public class SecurityUtil {
 
     private String createToken(String email, Instant now, Instant validity, Map<String, Object> additionalClaims) {
         JwtClaimsSet.Builder claimsBuilder = JwtClaimsSet.builder()
-            .issuedAt(now)
-            .expiresAt(validity)
-            .subject(email);
+                .issuedAt(now)
+                .expiresAt(validity)
+                .subject(email);
         additionalClaims.forEach(claimsBuilder::claim);
 
         JwtClaimsSet claims = claimsBuilder.build();
@@ -107,26 +107,18 @@ public class SecurityUtil {
         return createToken(email, now, validity, additionalClaims);
     }
 
-
-    public String createResetPasswordToken(String email, String uuid) {
+    public String createResetToken(String email) {
         Instant now = Instant.now();
-        Instant validity = now.plus(5, ChronoUnit.MINUTES); // 5 phút
-
-        // Tạo claims bổ sung cho reset password token
-        Map<String, Object> additionalClaims = new HashMap<>();
-        additionalClaims.put("email", email);
-        additionalClaims.put("token", uuid);
-
-        return createToken(email, now, validity, additionalClaims);
+        Instant validity = now.plus(10, ChronoUnit.MINUTES);
+        return createToken(email, now, validity, Map.of("type", "RESET_PASSWORD"));
     }
-
 
     private SecretKey getSecretKey() {
         byte[] keyBytes = Base64.from(jwtKey).decode();
         return new SecretKeySpec(keyBytes, 0, keyBytes.length, JWT_ALGORITHM.getName());
     }
 
-    public Jwt checkValidToken(String token){
+    public Jwt checkValidToken(String token) {
         NimbusJwtDecoder jwtDecoder = NimbusJwtDecoder.withSecretKey(
                 getSecretKey()).macAlgorithm(SecurityUtil.JWT_ALGORITHM).build();
         try {
@@ -157,26 +149,6 @@ public class SecurityUtil {
         }
 
         throw new IllegalArgumentException("User ID not found or invalid token");
-    }
-
-    // không sử dụng nếu sử dụng spring security
-    public static String getUserRole() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-
-        if (authentication != null && authentication.getPrincipal() instanceof Jwt jwt) {
-            Object userClaimObj = jwt.getClaims().get("user");
-
-            if (userClaimObj instanceof Map<?, ?> userClaim) {
-                Object roleObj = userClaim.get("role");
-                if (roleObj instanceof Map<?, ?> roleMap) {
-                    Object roleNameObj = roleMap.get("roleName");
-                    if (roleNameObj instanceof String) {
-                        return (String) roleNameObj;
-                    }
-                }
-            }
-        }
-        return null;
     }
 
 }

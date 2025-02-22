@@ -39,23 +39,25 @@ export const apiForgotPassword = async (data) =>
         data
     });
 
-export const apiResetPassword = async (newPassword, token) =>
+export const apiResetPassword = async (data) =>
     axiosInstance({
         url: "/auth/reset-password",
         method: 'put',
         params: {
-            token: token
+            token: data.token
         }, data: {
-            newPassword: newPassword
+            newPassword: data.newPassword,
+            confirmPassword: data.confirmPassword
         }
     });
 
-export const apiValidateToken = async (token) =>
+export const apiVerifyOtp = async (email, otp) =>
     axiosInstance({
-        url: "/auth/validate-token",
-        method: 'get',
-        params: {
-            token: token
+        url: "auth/validate-otp",
+        method: 'post',
+        data:{
+            email: email,
+            otp: otp
         }
     });
 

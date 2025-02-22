@@ -73,7 +73,7 @@ const SearchBar = () => {
       if (searchTimeoutRef.current) {
         clearTimeout(searchTimeoutRef.current);
       }
-      navigate(`/products/recommendation/${searchTerm.toLowerCase()}`);
+      navigate(`/products?search=${searchTerm.toLowerCase()}`);
       setShowResults(false);
     }
   };

@@ -57,7 +57,7 @@ public class EmailService {
             templateName, String username, Object o) {
         Context context = new Context();
         context.setVariable("NAME", username);
-        context.setVariable("TOKEN", o);
+        context.setVariable("OTP", o);
         String content = this.templateEngine.process(templateName, context);
         this.sendEmailSync(to, subject, content, false, true);
     }

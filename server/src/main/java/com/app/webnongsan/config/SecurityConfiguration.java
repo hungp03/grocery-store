@@ -52,7 +52,7 @@ public class SecurityConfiguration {
                 "/api/v2/auth/register",
                 "/api/v2/auth/forgot",
                 "/api/v2/auth/reset-password",
-                "/api/v2/auth/validate-token",
+                "/api/v2/auth/validate-otp",
                 "/api/v2/auth/signin/google",
                 "/storage/**",
                 "/oauth2/**",

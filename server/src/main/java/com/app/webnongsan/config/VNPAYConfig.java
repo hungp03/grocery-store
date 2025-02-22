@@ -17,14 +17,21 @@ import java.util.stream.Collectors;
 @Configuration
 public class VNPAYConfig {
     @Getter
-    private String vnp_PayUrl = "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html";
-    private String vnp_ReturnUrl = "http://localhost:8080/api/v2/payment/vn-pay-callback";
-    private String vnp_TmnCode = "5Q92ND8N" ;
+    @Value("${vnpay.pay-url}")
+    private String vnp_PayUrl;
+    @Value("${vnpay.return-url}")
+    private String vnp_ReturnUrl;
+    @Value("${vnpay.tmn-code}")
+    private String vnp_TmnCode;
     @Getter
-    private String secretKey = "DSK5IJ5Z2VL89SQE2DP2IISSN60IMQPZ";
-    private String vnp_Version = "2.1.0";
-    private String vnp_Command = "pay";
-    private String orderType = "other";
+    @Value("${vnpay.secret-key}")
+    private String secretKey;
+    @Value("${vnpay.version}")
+    private String vnp_Version;
+    @Value("${vnpay.command}")
+    private String vnp_Command;
+    @Value("${vnpay.order-type}")
+    private String orderType;
 
     public Map<String, String> getVNPayConfig() {
         Map<String, String> vnpParamsMap = new HashMap<>();

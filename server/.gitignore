@@ -34,4 +34,5 @@ build/
 
 **/application.properties
 **/application.yml
+/logs/app.log
 

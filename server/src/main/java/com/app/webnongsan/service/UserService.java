@@ -6,13 +6,14 @@ import com.app.webnongsan.domain.response.user.CreateUserDTO;
 import com.app.webnongsan.domain.response.user.UpdateUserDTO;
 import com.app.webnongsan.domain.response.user.UserDTO;
 import com.app.webnongsan.repository.UserRepository;
-import com.app.webnongsan.util.exception.ResourceInvalidException;
+import com.app.webnongsan.util.exception.AuthException;
+import com.app.webnongsan.util.exception.UserNotFoundException;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -20,6 +21,7 @@ import java.util.stream.Collectors;
 
 @Service
 @AllArgsConstructor
+@Slf4j
 public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
@@ -117,11 +119,15 @@ public class UserService {
         return u;
     }
 
-    public User getUserByUsername(String username) {
-        return this.userRepository.findByEmail(username);
+    public User getUserByUsername(String username) throws UserNotFoundException {
+        User u =  this.userRepository.findByEmail(username);
+        if (u == null){
+            throw new UserNotFoundException("User không tồn tại");
+        }
+        return u;
     }
 
-    public void updateUserToken(String token, String email) {
+    public void updateUserToken(String token, String email) throws UserNotFoundException {
         User currentUser = this.getUserByUsername(email);
         if (currentUser != null) {
             currentUser.setRefreshToken(token);
@@ -133,16 +139,17 @@ public class UserService {
         return this.userRepository.findByEmailAndRefreshToken(email, token);
     }
 
-    public void resetPassword(String email, String newPassword) throws ResourceInvalidException {
+    public void resetPassword(String email, String newPassword) throws UserNotFoundException {
         User user = getUserByUsername(email);
-
-        if (user == null) {
-            throw new ResourceInvalidException("User with email " + email + " not found");
-        }
-
         user.setPassword(passwordEncoder.encode(newPassword));
-
         this.userRepository.save(user);
+    }
+
+    public void checkAccountBanned(User user) throws AuthException {
+        if (user != null && user.getStatus() == 0) {
+            log.warn("User {} has been banned from logging in", user.getEmail());
+            throw new AuthException("Tài khoản của bạn đã bị khóa.");
+        }
     }
 }
 

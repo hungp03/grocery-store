@@ -24,9 +24,7 @@ public class FormatResponse implements ResponseBodyAdvice<Object> {
     public Object beforeBodyWrite(Object body, MethodParameter returnType, MediaType selectedContentType, Class<? extends HttpMessageConverter<?>> selectedConverterType, ServerHttpRequest request, ServerHttpResponse response) {
         HttpServletResponse servletResponse = ((ServletServerHttpResponse) response).getServletResponse();
         int status = servletResponse.getStatus();
-
         RestResponse<Object> res = new RestResponse<Object>();
-        res.setStatusCode(status);
 
         if (body instanceof String || body instanceof Resource || body instanceof byte[]) {
             return body;
@@ -35,6 +33,7 @@ public class FormatResponse implements ResponseBodyAdvice<Object> {
             return body;
         }
         else {
+            res.setStatusCode(status);
             res.setData(body);
             ApiMessage message = returnType.getMethodAnnotation(ApiMessage.class);
             res.setMessage(message != null ? message.value() : "CALL API SUCCESS");

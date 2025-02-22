@@ -12,6 +12,7 @@ import com.app.webnongsan.util.exception.ResourceInvalidException;
 import com.turkraft.springfilter.boot.Filter;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.checkerframework.checker.units.qual.A;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Pageable;
@@ -28,6 +29,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("api/v2")
+@Slf4j
 public class ProductController {
     private final ProductService productService;
     private final DataExportService dataExportService;
@@ -50,8 +52,10 @@ public class ProductController {
     @ApiMessage("Get product")
     public ResponseEntity<Product> get(@PathVariable("id") long id) throws ResourceInvalidException {
         if (!this.productService.checkValidProductId(id)){
+            log.warn("Product id = {} does not exist", id);
             throw new ResourceInvalidException("Product id = " + id + " không tồn tại");
         }
+        log.info("Fetched product with id: {}", id);
         return ResponseEntity.ok(this.productService.get(id));
     }
 

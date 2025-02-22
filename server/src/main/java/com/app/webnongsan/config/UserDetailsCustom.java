@@ -2,6 +2,7 @@ package com.app.webnongsan.config;
 
 import com.app.webnongsan.service.UserService;
 import lombok.AllArgsConstructor;
+import lombok.SneakyThrows;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -16,9 +17,11 @@ import java.util.Collections;
 public class UserDetailsCustom implements UserDetailsService {
     private final UserService userService;
 
+    @SneakyThrows
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        com.app.webnongsan.domain.User user = this.userService.getUserByUsername(username);
+        com.app.webnongsan.domain.User user = null;
+        user = this.userService.getUserByUsername(username);
         if (user == null){
             throw new UsernameNotFoundException("Tài khoản không hợp lệ");
         }
