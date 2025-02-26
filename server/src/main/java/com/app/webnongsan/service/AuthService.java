@@ -11,7 +11,6 @@ import com.app.webnongsan.domain.response.user.CreateUserDTO;
 import com.app.webnongsan.domain.response.user.ResLoginDTO;
 import com.app.webnongsan.repository.VerificationRepository;
 import com.app.webnongsan.util.SecurityUtil;
-import com.app.webnongsan.util.exception.AuthException;
 import com.app.webnongsan.util.exception.DuplicateResourceException;
 import com.app.webnongsan.util.exception.ResourceInvalidException;
 import com.app.webnongsan.util.exception.UserNotFoundException;

@@ -3,7 +3,6 @@ package com.app.webnongsan.service;
 import com.app.webnongsan.domain.Order;
 import com.app.webnongsan.domain.User;
 import com.app.webnongsan.domain.response.PaginationDTO;
-import com.app.webnongsan.domain.response.feedback.FeedbackDTO;
 import com.app.webnongsan.domain.response.order.OrderDTO;
 
 import com.app.webnongsan.domain.response.order.WeeklyRevenue;
@@ -12,14 +11,11 @@ import com.app.webnongsan.repository.UserRepository;
 import com.app.webnongsan.util.exception.UserNotFoundException;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 import com.app.webnongsan.domain.*;
 

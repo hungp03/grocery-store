@@ -2,26 +2,17 @@
 package com.app.webnongsan.service;
 
 import com.app.webnongsan.domain.Product;
-import com.app.webnongsan.domain.response.product.ResProductDTO;
-import com.app.webnongsan.repository.CategoryRepository;
 import com.app.webnongsan.repository.ProductRepository;
 import lombok.AllArgsConstructor;
-
-import javax.swing.JFileChooser;
 
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.io.FileOutputStream;
 import java.lang.String;
 
 @Service

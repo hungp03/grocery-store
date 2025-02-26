@@ -4,7 +4,6 @@ import com.app.webnongsan.domain.Category;
 import com.app.webnongsan.domain.response.PaginationDTO;
 import com.app.webnongsan.service.CategoryService;
 import com.app.webnongsan.util.annotation.ApiMessage;
-import com.app.webnongsan.util.exception.ResourceInvalidException;
 import com.turkraft.springfilter.boot.Filter;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;

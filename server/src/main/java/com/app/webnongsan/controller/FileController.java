@@ -4,7 +4,6 @@ import com.app.webnongsan.domain.response.file.ResUploadFileDTO;
 import com.app.webnongsan.service.FileService;
 import com.app.webnongsan.util.annotation.ApiMessage;
 import com.app.webnongsan.util.exception.StorageException;
-import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -14,13 +13,8 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.net.URI;
 import java.net.URISyntaxException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.Instant;
-import java.util.Base64;
 import java.util.List;
 import java.util.Arrays;
 

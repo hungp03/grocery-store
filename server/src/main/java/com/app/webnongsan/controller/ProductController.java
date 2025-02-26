@@ -2,22 +2,14 @@ package com.app.webnongsan.controller;
 
 import com.app.webnongsan.domain.Product;
 import com.app.webnongsan.domain.response.PaginationDTO;
-import com.app.webnongsan.domain.response.product.ResProductDTO;
-import com.app.webnongsan.domain.response.product.SearchProductDTO;
 import com.app.webnongsan.service.DataExportService;
 import com.app.webnongsan.service.ProductService;
-import com.app.webnongsan.util.SecurityUtil;
 import com.app.webnongsan.util.annotation.ApiMessage;
 import com.app.webnongsan.util.exception.ResourceInvalidException;
 import com.turkraft.springfilter.boot.Filter;
 import jakarta.validation.Valid;
-import lombok.AllArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.checkerframework.checker.units.qual.A;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.data.repository.query.Param;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -25,7 +17,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
-import java.util.List;
 
 @RestController
 @RequestMapping("api/v2")

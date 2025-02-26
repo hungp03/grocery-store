@@ -11,7 +11,6 @@ import com.app.webnongsan.util.PaginationHelper;
 import com.app.webnongsan.util.exception.ResourceInvalidException;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.criteria.*;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
