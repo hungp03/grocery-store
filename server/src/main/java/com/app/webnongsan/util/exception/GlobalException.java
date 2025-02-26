@@ -22,7 +22,6 @@ import java.util.stream.Collectors;
 
 @RestControllerAdvice
 public class GlobalException {
-    private static final Logger log = LoggerFactory.getLogger(GlobalException.class);
 
     @ExceptionHandler({UsernameNotFoundException.class, BadCredentialsException.class})
     public ResponseEntity<RestResponse<Object>> handleCredentialException(RuntimeException ex) {

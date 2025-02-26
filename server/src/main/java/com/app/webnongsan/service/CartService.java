@@ -30,12 +30,9 @@ public class CartService {
     private final UserRepository userRepository;
     private final PaginationHelper paginationHelper;
 
-    public Cart addOrUpdateCart(Cart cart){
-        String email = SecurityUtil.getCurrentUserLogin().isPresent() ? SecurityUtil.getCurrentUserLogin().get() : "";
-        User u = this.userRepository.findByEmail(email);
-        if (u == null) {
-            throw new UserNotFoundException("User không tồn tại");
-        }
+    public Cart addOrUpdateCart(Cart cart) {
+        long uid = SecurityUtil.getUserId();
+        User u = this.userRepository.findById(uid).orElseThrow(() -> new UserNotFoundException("User không tồn tại"));
         Product p = this.productService.findById(cart.getId().getProductId());
 
         if (cart.getQuantity() > p.getQuantity()) {
@@ -46,7 +43,7 @@ public class CartService {
         if (existingCart.isPresent()) {
             Cart cartItem = existingCart.get();
             int newQuantity = cartItem.getQuantity() + cart.getQuantity();
-            if (newQuantity < 0){
+            if (newQuantity < 0) {
                 throw new ResourceInvalidException("Số lượng sản phẩm không hợp lệ");
             }
             if (newQuantity > p.getQuantity()) {
@@ -62,46 +59,32 @@ public class CartService {
 
     }
 
-    public void deleteFromCart(long productId){
-        String email = SecurityUtil.getCurrentUserLogin().isPresent() ? SecurityUtil.getCurrentUserLogin().get() : "";
-        User user = this.userRepository.findByEmail(email);
-
-        if (user == null) {
-            throw new UserNotFoundException("User không tồn tại");
-        }
-
-        boolean exists = this.cartRepository.existsById(new CartId(user.getId(), productId));
+    public void deleteFromCart(long productId) {
+        long uid = SecurityUtil.getUserId();
+        User u = this.userRepository.findById(uid).orElseThrow(() -> new UserNotFoundException("User không tồn tại"));
+        boolean exists = this.cartRepository.existsById(new CartId(uid, productId));
         if (!exists) {
             throw new ResourceInvalidException("Sản phẩm không tồn tại trong giỏ hàng");
         }
-
-        CartId cartId = new CartId(user.getId(), productId);
+        CartId cartId = new CartId(uid, productId);
         this.cartRepository.deleteById(cartId);
     }
 
-    public PaginationDTO getCartByCurrentUser(Pageable pageable){
-        String email = SecurityUtil.getCurrentUserLogin().isPresent() ? SecurityUtil.getCurrentUserLogin().get() : "";
-        User user = this.userRepository.findByEmail(email);
+    public PaginationDTO getCartByCurrentUser(Pageable pageable) {
+        long uid = SecurityUtil.getUserId();
+        User u = this.userRepository.findById(uid).orElseThrow(() -> new UserNotFoundException("User không tồn tại"));
 
-        if (user == null) {
-            throw new ResourceInvalidException("User không tồn tại");
-        }
-
-        Page<CartItemDTO> cartItems = this.cartRepository.findCartItemsByUserId(user.getId(), pageable);
+        Page<CartItemDTO> cartItems = this.cartRepository.findCartItemsByUserId(uid, pageable);
         return this.paginationHelper.fetchAllEntities(cartItems);
     }
 
-    public List<CartItemDTO> getCartItemsByProductIds(List<Long> productIds, Pageable pageable){
-        String email = SecurityUtil.getCurrentUserLogin().isPresent() ? SecurityUtil.getCurrentUserLogin().get() : "";
-        User user = this.userRepository.findByEmail(email);
-
-        if (user == null) {
-            throw new ResourceInvalidException("User không tồn tại");
-        }
-        return this.cartRepository.findCartItemsByUserIdAndProductId(user.getId(),productIds, pageable);
+    public List<CartItemDTO> getCartItemsByProductIds(List<Long> productIds, Pageable pageable) {
+        long uid = SecurityUtil.getUserId();
+        User u = this.userRepository.findById(uid).orElseThrow(() -> new UserNotFoundException("User không tồn tại"));
+        return this.cartRepository.findCartItemsByUserIdAndProductId(uid, productIds, pageable);
     }
 
-    public long countProductInCart(long userId){
+    public long countProductInCart(long userId) {
         return this.cartRepository.countProductsByUserId(userId);
     }
 }

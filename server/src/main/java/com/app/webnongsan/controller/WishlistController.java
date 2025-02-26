@@ -21,20 +21,20 @@ public class WishlistController {
 
     @PostMapping("wishlist")
     @ApiMessage("Add wishlist")
-    public ResponseEntity<Wishlist> add(@RequestBody Wishlist w) throws ResourceInvalidException {
+    public ResponseEntity<Wishlist> add(@RequestBody Wishlist w){
         return ResponseEntity.status(HttpStatus.CREATED).body(this.wishlistService.addWishlist(w));
     }
 
-    @DeleteMapping("wishlist")
+    @DeleteMapping("wishlist/{pid}")
     @ApiMessage("Delete wishlist")
-    public ResponseEntity<Void> delete(@RequestParam("pid") long productId) throws ResourceInvalidException {
+    public ResponseEntity<Void> delete(@PathVariable("pid") long productId){
         this.wishlistService.deleteWishlist(productId);
         return ResponseEntity.ok(null);
     }
 
     @GetMapping("wishlist")
     @ApiMessage("Get list wishlist")
-    public ResponseEntity<PaginationDTO> getAll(Pageable pageable) throws ResourceInvalidException {
+    public ResponseEntity<PaginationDTO> getAll(Pageable pageable){
         return ResponseEntity.ok(this.wishlistService.getWishlistsByCurrentUser(pageable));
     }
 }

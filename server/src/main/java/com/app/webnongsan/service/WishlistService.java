@@ -23,18 +23,13 @@ import org.springframework.stereotype.Service;
 @AllArgsConstructor
 public class WishlistService {
     private final WishlistRepository wishlistRepository;
-    private final UserRepository userRepository;
     private final ProductRepository productRepository;
     private final PaginationHelper paginationHelper;
-
+    private final UserService userService;
     public Wishlist addWishlist(Wishlist w){
-        String email = SecurityUtil.getCurrentUserLogin().isPresent() ? SecurityUtil.getCurrentUserLogin().get() : "";
-        User u = this.userRepository.findByEmail(email);
-        if (u == null) {
-            throw new UserNotFoundException("User không tồn tại");
-        }
+        long uid = SecurityUtil.getUserId();
+        User u = this.userService.getUserById(uid);
         Product p = this.productRepository.findById(w.getId().getProductId()).orElseThrow(() -> new ResourceInvalidException("Product không tồn tại"));
-
         boolean exists = wishlistRepository.existsByUserIdAndProductId(u.getId(), p.getId());
 
         if (exists) {
@@ -47,13 +42,8 @@ public class WishlistService {
     }
 
     public void deleteWishlist(Long productId){
-        String email = SecurityUtil.getCurrentUserLogin().isPresent() ? SecurityUtil.getCurrentUserLogin().get() : "";
-        User user = this.userRepository.findByEmail(email);
-
-        if (user == null) {
-            throw new UserNotFoundException("User không tồn tại");
-        }
-
+        long uid = SecurityUtil.getUserId();
+        User user = this.userService.getUserById(uid);
         boolean exists = wishlistRepository.existsByUserIdAndProductId(user.getId(), productId);
         if (!exists) {
             throw new ResourceInvalidException("Sản phẩm không tồn tại trong danh sách yêu thích");
@@ -64,13 +54,8 @@ public class WishlistService {
     }
 
     public PaginationDTO getWishlistsByCurrentUser( Pageable pageable) throws ResourceInvalidException {
-        String email = SecurityUtil.getCurrentUserLogin().isPresent() ? SecurityUtil.getCurrentUserLogin().get() : "";
-        User user = this.userRepository.findByEmail(email);
-
-        if (user == null) {
-            throw new UserNotFoundException("User không tồn tại");
-        }
-
+        long uid = SecurityUtil.getUserId();
+        User user = this.userService.getUserById(uid);
         Page<WishlistItemDTO> wishlistItems = this.wishlistRepository.findWishlistItemsByUserId(user.getId(), pageable);
         return this.paginationHelper.fetchAllEntities(wishlistItems);
     }

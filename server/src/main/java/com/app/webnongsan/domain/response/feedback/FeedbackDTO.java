@@ -2,6 +2,7 @@ package com.app.webnongsan.domain.response.feedback;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.Instant;
@@ -9,6 +10,7 @@ import java.time.Instant;
 @Getter
 @Setter
 @AllArgsConstructor
+@NoArgsConstructor
 public class FeedbackDTO {
     private long id;
     //Usser
@@ -24,8 +26,4 @@ public class FeedbackDTO {
     private String description;
     private int status;
     private Instant updatedAt;
-
-
-    public FeedbackDTO() {
-    }
 }

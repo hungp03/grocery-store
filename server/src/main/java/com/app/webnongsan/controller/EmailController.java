@@ -12,6 +12,7 @@ import com.app.webnongsan.service.UserService;
 import com.app.webnongsan.util.SecurityUtil;
 import com.app.webnongsan.util.annotation.ApiMessage;
 import com.app.webnongsan.util.exception.ResourceInvalidException;
+import com.app.webnongsan.util.exception.UserNotFoundException;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -38,19 +39,14 @@ public class EmailController {
     ) throws ResourceInvalidException {
         RestResponse<Long> response = new RestResponse<>();
         try {
-            String email = SecurityUtil.getCurrentUserLogin().isPresent() ? SecurityUtil.getCurrentUserLogin().get() : "";
-            User u = this.userRepository.findByEmail(email);
-            if (u == null) {
-                throw new ResourceInvalidException("User không tồn tại");
-            }
-
+            long uid = SecurityUtil.getUserId();
+            User u = this.userRepository.findById(uid).orElseThrow(() -> new UserNotFoundException("User không tồn tại"));
             String templateName = "checkout";
 
             // Gửi email sau khi thanh toán thành công
             String subject = "Thông tin đơn hàng";
 
-            emailService.sendEmailFromTemplateSyncCheckout(email, subject, templateName, u.getName(), address, phone, paymentMethod, totalPrice,items);
-//            response.setData(order.getId());
+            emailService.sendEmailFromTemplateSyncCheckout(u.getEmail(), subject, templateName, u.getName(), address, phone, paymentMethod, totalPrice,items);
             response.setStatusCode(HttpStatus.CREATED.value());
             response.setMessage("Gửi email thành công");
 

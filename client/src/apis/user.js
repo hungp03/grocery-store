@@ -18,7 +18,7 @@ export const apiLogin = async (data) =>
 
 export const apiLoginGoogle = async (idToken) => {
     return axiosInstance({
-        url: "/auth/signin/google", 
+        url: "/auth/signin/google",
         method: "post",
         data: { idToken },
         withCredentials: true
@@ -55,7 +55,7 @@ export const apiVerifyOtp = async (email, otp) =>
     axiosInstance({
         url: "auth/validate-otp",
         method: 'post',
-        data:{
+        data: {
             email: email,
             otp: otp
         }
@@ -122,11 +122,8 @@ export const apiGetCart = async (page, size) => {
 
 export const apiDeleteWishlist = async (pid) => {
     return axiosInstance({
-        url: `/wishlist`,
+        url: `/wishlist/${pid}`,
         method: 'delete',
-        params: {
-            pid
-        }
     })
 }
 

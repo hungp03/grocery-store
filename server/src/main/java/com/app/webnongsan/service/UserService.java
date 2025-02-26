@@ -10,7 +10,6 @@ import com.app.webnongsan.repository.UserRepository;
 import com.app.webnongsan.util.SecurityUtil;
 import com.app.webnongsan.util.exception.*;
 import lombok.AllArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -31,7 +30,7 @@ public class UserService {
     private final CartService cartService;
 
     public User create(User user) {
-        if (this.isExistedEmail(user.getEmail())){
+        if (this.isExistedEmail(user.getEmail())) {
             throw new DuplicateResourceException("Email " + user.getEmail() + " đã tồn tại");
         }
         //hash password
@@ -49,6 +48,10 @@ public class UserService {
     }
 
     public void delete(long id) {
+        boolean check = this.isExistedId(id);
+        if (!check) {
+            throw new ResourceInvalidException("Người dùng với id " + id + " không tồn tại");
+        }
         this.userRepository.deleteById(id);
     }
 
@@ -74,7 +77,7 @@ public class UserService {
     }
 
     public User getUserById(long id) {
-        return this.userRepository.findById(id).orElse(null);
+        return this.userRepository.findById(id).orElseThrow(() -> new UserNotFoundException("User không tồn tại"));
     }
 
     public PaginationDTO fetchAllUser(Specification<User> specification, Pageable pageable) {
@@ -126,20 +129,19 @@ public class UserService {
         return u;
     }
 
-    public User getUserByUsername(String username){
-        User u =  this.userRepository.findByEmail(username);
-        if (u == null){
+    public User getUserByUsername(String username) {
+        User u = this.userRepository.findByEmail(username);
+        if (u == null) {
             throw new UserNotFoundException("User không tồn tại");
         }
         return u;
     }
 
-    public void updateUserToken(String token, String email){
+    public void updateUserToken(String token, String email) {
         User currentUser = this.getUserByUsername(email);
-        if (currentUser != null) {
-            currentUser.setRefreshToken(token);
-            this.userRepository.save(currentUser);
-        }
+        currentUser.setRefreshToken(token);
+        this.userRepository.save(currentUser);
+
     }
 
     public User getUserByRFTokenAndEmail(String email, String token) {
@@ -152,7 +154,7 @@ public class UserService {
         this.userRepository.save(user);
     }
 
-    public void checkAccountBanned(User user){
+    public void checkAccountBanned(User user) {
         if (user != null && user.getStatus() == 0) {
             throw new AuthException("Tài khoản của bạn đã bị khóa.");
         }
@@ -161,9 +163,8 @@ public class UserService {
     public ResLoginDTO.UserGetAccount updateUser(
             String name, String email, String phone, String address, MultipartFile avatar) {
 
-        String emailLoggedIn = SecurityUtil.getCurrentUserLogin().orElseThrow(
-                () -> new AuthException("User is not authenticated"));
-        User currentUserDB = getUserByUsername(emailLoggedIn);
+        long uid = SecurityUtil.getUserId();
+        User currentUserDB = this.getUserById(uid);
 
         // Cập nhật thông tin người dùng
         currentUserDB.setName(name);

@@ -16,7 +16,6 @@ import com.app.webnongsan.util.exception.DuplicateResourceException;
 import com.app.webnongsan.util.exception.ResourceInvalidException;
 import com.app.webnongsan.util.exception.UserNotFoundException;
 import lombok.AllArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationContext;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
@@ -70,12 +69,9 @@ public class AuthService {
     }
 
     public ResLoginDTO.UserGetAccount getAccount(){
-        String email = SecurityUtil.getCurrentUserLogin().isPresent() ? SecurityUtil.getCurrentUserLogin().get() : "";
-        // Lấy thông tin người dùng trong db
-        User currentUserDB = this.userService.getUserByUsername(email);
-        if (currentUserDB != null && currentUserDB.getStatus() == 0) {
-            throw new AuthException("Tài khoản của bạn đã bị khóa.");
-        }
+        long uid = SecurityUtil.getUserId();
+        User currentUserDB = this.userService.getUserById(uid);
+        this.userService.checkAccountBanned(currentUserDB);
 
         ResLoginDTO.UserLogin userLogin = new ResLoginDTO.UserLogin();
         ResLoginDTO.UserGetAccount userGetAccount = new ResLoginDTO.UserGetAccount();

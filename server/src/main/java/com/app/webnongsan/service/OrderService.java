@@ -55,16 +55,6 @@ public class OrderService {
         this.orderRepository.deleteById(id);
     }
 
-
-    public List<OrderDTO> getLastFiveOrders() {
-        Pageable pageable = PageRequest.of(0, 5, Sort.by("id").descending());
-        List<Order> orders = this.orderRepository.findAll(pageable).getContent();
-        return orders.stream()
-                .map(this::convertToOrderDTO)
-                .collect(Collectors.toList());
-    }
-
-
     public Optional<OrderDTO> findOrder(long id) {
         OrderDTO res = new OrderDTO();
         Optional<Order> orderOptional = this.orderRepository.findById(id);
@@ -76,7 +66,7 @@ public class OrderService {
             res.setStatus(order.getStatus());
             res.setPaymentMethod(order.getPaymentMethod());
             res.setAddress(order.getAddress());
-            res.setTotal_price(order.getTotal_price()); 
+            res.setTotal_price(order.getTotal_price());
             res.setUserEmail(order.getUser().getEmail());
             res.setUserId(order.getUser().getId());
             res.setUserName(order.getUser().getName());
@@ -104,7 +94,7 @@ public class OrderService {
         return p;
     }
 
-    public OrderDTO cancelOrder(Long id){
+    public OrderDTO cancelOrder(Long id) {
 
         Optional<Order> orderOptional = orderRepository.findById(id);
         Order o;
@@ -149,12 +139,8 @@ public class OrderService {
     }
 
     public Order create(OrderDTO orderDTO) throws ResourceInvalidException, UserNotFoundException {
-        String emailLoggedIn = SecurityUtil.getCurrentUserLogin().isPresent() ? SecurityUtil.getCurrentUserLogin().get() : "";
-        // Lấy thông tin người dùng trong db
-        User currentUserDB = userService.getUserByUsername(emailLoggedIn);
-//        if(orderDTO.getUserId() == currentUserDB.getId()){
-//            throw new ResourceInvalidException("User không hợp lệ");
-//        }
+        long uid = SecurityUtil.getUserId();
+        User currentUserDB = this.userService.getUserById(uid);
         Order order = new Order();
         order.setUser(currentUserDB);
         order.setAddress(orderDTO.getAddress());
@@ -182,14 +168,9 @@ public class OrderService {
     }
 
     public PaginationDTO getOrderByCurrentUser(Pageable pageable, Integer status) throws ResourceInvalidException {
-        String email = SecurityUtil.getCurrentUserLogin().isPresent() ? SecurityUtil.getCurrentUserLogin().get() : "";
-        User user = this.userRepository.findByEmail(email);
-
-        if (user == null) {
-            throw new ResourceInvalidException("User không tồn tại");
-        }
-
-        Page<OrderDetailDTO> orderItems = this.orderRepository.findOrderItemsByUserId(user.getId(), status, pageable);
+        long uid = SecurityUtil.getUserId();
+        User u = this.userService.getUserById(uid);
+        Page<OrderDetailDTO> orderItems = this.orderRepository.findOrderItemsByUserId(uid, status, pageable);
         return this.paginationHelper.fetchAllEntities(orderItems);
     }
 

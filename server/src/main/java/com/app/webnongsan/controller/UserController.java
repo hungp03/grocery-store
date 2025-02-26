@@ -41,10 +41,6 @@ public class UserController {
     @DeleteMapping("users/{id}")
     @ApiMessage("Delete user")
     public ResponseEntity<Void> deleteUser(@PathVariable("id") long id) throws ResourceInvalidException {
-        boolean check = this.userService.isExistedId(id);
-        if (!check){
-            throw new ResourceInvalidException("Người dùng với id " + id + " không tồn tại");
-        }
         this.userService.delete(id);
         return ResponseEntity.ok(null);
     }
@@ -53,9 +49,6 @@ public class UserController {
     @ApiMessage("Get user by id")
     public ResponseEntity<UserDTO> getUser(@PathVariable("id") long id) throws ResourceInvalidException {
         User currentUser = this.userService.getUserById(id);
-        if (currentUser == null){
-            throw new ResourceInvalidException("Người dùng với id " + id + " không tồn tại");
-        }
         return ResponseEntity.status(HttpStatus.OK).body(this.userService.convertToUserDTO(currentUser));
     }
 
@@ -69,9 +62,6 @@ public class UserController {
     @ApiMessage("Update user")
     public ResponseEntity<UpdateUserDTO> updateUser(@RequestBody User user) throws ResourceInvalidException {
         User updatedUser = this.userService.update(user);
-        if (updatedUser == null){
-            throw new ResourceInvalidException("Người dùng với id " + user.getId() + " không tồn tại");
-        }
         return ResponseEntity.ok(this.userService.convertToUpdateUserDTO(updatedUser));
     }
 

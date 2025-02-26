@@ -19,6 +19,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -28,10 +29,12 @@ import java.util.Optional;
 public class FeedbackService {
     private final FeedbackRepository feedbackRepository;
     private final ProductRepository productRepository;
+    private final UserService userService;
     private final UserRepository userRepository;
 
     public Feedback addFeedback(FeedbackDTO feedbackDTO) {
-        User u = userRepository.findById(feedbackDTO.getUserId()).orElseThrow(() -> new UserNotFoundException("User không tồn tại"));
+        long uid = SecurityUtil.getUserId();
+        User u = this.userService.getUserById(uid);
         Product p = productRepository.findById(feedbackDTO.getProductId()).orElseThrow(() -> new ResourceInvalidException("Sản phẩm không tồn tại"));
         boolean exists = this.feedbackRepository.existsByUserIdAndProductId(u.getId(), p.getId());
 
@@ -51,7 +54,6 @@ public class FeedbackService {
         double averageRating = feedbackRepository.calculateAverageRatingByProductId(p.getId());
         p.setRating(averageRating);
         productRepository.save(p);
-
         return f;
     }
 
@@ -104,7 +106,7 @@ public class FeedbackService {
         return p;
     }
 
-    public FeedbackDTO hideFeedback(Long id){
+    public FeedbackDTO hideFeedback(Long id) {
 
         Optional<Feedback> feedbackOptional = feedbackRepository.findById(id);
         Feedback f;
@@ -147,12 +149,9 @@ public class FeedbackService {
 
     public FeedbackDTO convertToFeedbackDTO(Feedback feedback) {
         FeedbackDTO feedbackDTO = new FeedbackDTO();
-        Optional<User> optionalUser = userRepository.findById(feedback.getUser().getId());
-        if (optionalUser.isPresent()) {
-            User u = optionalUser.get();
-
+        User u = this.userService.getUserById(feedback.getUser().getId());
+        if (u != null) {
             feedbackDTO.setId(feedback.getId());
-
             feedbackDTO.setUserId(u.getId());
             feedbackDTO.setUserName(u.getName());
             feedbackDTO.setUserAvatarUrl(feedback.getUser().getAvatarUrl());

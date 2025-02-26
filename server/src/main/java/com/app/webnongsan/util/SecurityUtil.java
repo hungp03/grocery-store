@@ -1,6 +1,7 @@
 package com.app.webnongsan.util;
 
 import com.app.webnongsan.domain.response.user.ResLoginDTO;
+import com.app.webnongsan.util.exception.AuthException;
 import com.nimbusds.jose.util.Base64;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
@@ -141,14 +142,14 @@ public class SecurityUtil {
                 if (idObj instanceof Number) {
                     return ((Number) idObj).longValue();
                 } else {
-                    throw new IllegalArgumentException("User ID is not of type Number");
+                    throw new AuthException("Token không hợp lệ");
                 }
             } else {
-                throw new IllegalArgumentException("User claim is not of type Map");
+                throw new AuthException("Token không hợp lệ");
             }
         }
 
-        throw new IllegalArgumentException("User ID not found or invalid token");
+        throw new AuthException("User ID not found or invalid token");
     }
 
 }
