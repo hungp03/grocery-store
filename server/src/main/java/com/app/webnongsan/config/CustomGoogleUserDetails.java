@@ -3,20 +3,57 @@ package com.app.webnongsan.config;
 import com.app.webnongsan.domain.User;
 import lombok.Getter;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.oauth2.core.user.OAuth2User;
+
 import java.util.Collection;
-import java.util.List;
+import java.util.Collections;
 import java.util.Map;
 
-public class CustomGoogleUserDetails implements OAuth2User {
-
-    @Getter
-    private User user;
-    private Map<String, Object> attributes;
+@Getter
+public class CustomGoogleUserDetails implements OAuth2User, UserDetails {
+    private final User user;
+    private final Map<String, Object> attributes;
 
     public CustomGoogleUserDetails(User user, Map<String, Object> attributes) {
         this.user = user;
         this.attributes = attributes;
+    }
+
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + user.getRole().getRoleName()));
+    }
+
+    @Override
+    public String getPassword() {
+        return null;
+    }
+
+    @Override
+    public String getUsername() {
+        return user.getEmail();
+    }
+
+    @Override
+    public boolean isAccountNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isAccountNonLocked() {
+        return true;
+    }
+
+    @Override
+    public boolean isCredentialsNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return user.getStatus() == 1;
     }
 
     @Override
@@ -28,11 +65,5 @@ public class CustomGoogleUserDetails implements OAuth2User {
     public String getName() {
         return user.getName();
     }
-
-    @Override
-    public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of();
-    }
-
 }
 

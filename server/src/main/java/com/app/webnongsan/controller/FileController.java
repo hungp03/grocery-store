@@ -4,6 +4,7 @@ import com.app.webnongsan.domain.response.file.ResUploadFileDTO;
 import com.app.webnongsan.service.FileService;
 import com.app.webnongsan.util.annotation.ApiMessage;
 import com.app.webnongsan.util.exception.StorageException;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -20,40 +21,24 @@ import java.util.Arrays;
 
 @RestController
 @RequestMapping("api/v2")
+@RequiredArgsConstructor
 public class FileController {
     @Value("${upload-file.base-uri}")
     private String baseURI;
 
     private final FileService fileService;
 
-    public FileController(FileService fileService) {
-        this.fileService = fileService;
-    }
-
     @PostMapping("files")
     @ApiMessage("Upload single file")
-    public ResponseEntity<ResUploadFileDTO> upload(@RequestParam(name = "file", required = false) MultipartFile file,
-                                                   @RequestParam("folder") String folder) throws URISyntaxException, IOException{
-        //Validate empty file
-        if (file == null || file.isEmpty()) {
-            throw new StorageException("File is empty. Please choose a file");
-        }
+    public ResponseEntity<ResUploadFileDTO> upload(
+            @RequestParam(name = "file", required = false) MultipartFile file,
+            @RequestParam("folder") String folder) throws IOException, URISyntaxException {
 
-        //Validate extension file
-        String fileName = file.getOriginalFilename();
-        List<String> allowedExtensions = Arrays.asList("jpg", "jpeg", "png");
-        boolean isValid = allowedExtensions.stream().anyMatch(item -> {
-            assert fileName != null;
-            return fileName.toLowerCase().endsWith(item);
-        });
-        if (!isValid) {
-            throw new StorageException("File not allowed! Please use file " + allowedExtensions.toString());
-        }
-        //create folder if not exist
-        this.fileService.createDirectory(baseURI + folder);
-        //save file
-        String uploadFile = this.fileService.store(file, folder);
-        ResUploadFileDTO rs = new ResUploadFileDTO(uploadFile, Instant.now());
-        return ResponseEntity.ok(rs);
+        fileService.validateFile(file);
+        fileService.createDirectory(baseURI + folder);
+        String uploadFile = fileService.store(file, folder);
+
+        ResUploadFileDTO response = new ResUploadFileDTO(uploadFile, Instant.now());
+        return ResponseEntity.ok(response);
     }
 }

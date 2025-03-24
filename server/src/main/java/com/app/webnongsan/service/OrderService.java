@@ -2,35 +2,40 @@ package com.app.webnongsan.service;
 
 import com.app.webnongsan.domain.Order;
 import com.app.webnongsan.domain.User;
+import com.app.webnongsan.domain.request.CheckoutRequestDTO;
 import com.app.webnongsan.domain.response.PaginationDTO;
 import com.app.webnongsan.domain.response.order.OrderDTO;
 
 import com.app.webnongsan.domain.response.order.WeeklyRevenue;
 import com.app.webnongsan.repository.OrderRepository;
 import com.app.webnongsan.repository.UserRepository;
-import com.app.webnongsan.util.exception.UserNotFoundException;
+import com.app.webnongsan.util.exception.ResourceInvalidException;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.util.*;
 
 import com.app.webnongsan.domain.*;
 
-import com.app.webnongsan.domain.response.order.OrderDetailDTO;
 import com.app.webnongsan.repository.OrderDetailRepository;
 
 import com.app.webnongsan.repository.ProductRepository;
 
 import com.app.webnongsan.util.PaginationHelper;
 import com.app.webnongsan.util.SecurityUtil;
-import com.app.webnongsan.util.exception.ResourceInvalidException;
 
 
 @Service
 @AllArgsConstructor
+@Slf4j
 public class OrderService {
     private final OrderRepository orderRepository;
     private final UserRepository userRepository;
@@ -38,7 +43,7 @@ public class OrderService {
     private final UserService userService;
     private final ProductRepository productRepository;
     private final PaginationHelper paginationHelper;
-
+    private final CartService cartService;
     public Order get(long id) {
         return this.orderRepository.findById(id).orElse(null);
     }
@@ -52,78 +57,28 @@ public class OrderService {
     }
 
     public Optional<OrderDTO> findOrder(long id) {
-        OrderDTO res = new OrderDTO();
         Optional<Order> orderOptional = this.orderRepository.findById(id);
         if (orderOptional.isPresent()) {
             Order order = orderOptional.get();
-            res.setId(order.getId());
-            res.setOrderTime(order.getOrderTime());
-            res.setDeliveryTime(order.getDeliveryTime());
-            res.setStatus(order.getStatus());
-            res.setPaymentMethod(order.getPaymentMethod());
-            res.setAddress(order.getAddress());
-            res.setTotal_price(order.getTotal_price());
-            res.setUserEmail(order.getUser().getEmail());
-            res.setUserId(order.getUser().getId());
-            res.setUserName(order.getUser().getName());
-            return Optional.of(res);
+            return Optional.of(this.convertToOrderDTO(order));
         } else {
             return Optional.empty();
         }
     }
 
     public PaginationDTO getAll(Specification<Order> spec, Pageable pageable) {
-        Page<Order> ordersPage = this.orderRepository.findAll(spec, pageable);
-
-        PaginationDTO p = new PaginationDTO();
-        PaginationDTO.Meta meta = new PaginationDTO.Meta();
-
-        meta.setPage(pageable.getPageNumber() + 1);
-        meta.setPageSize(pageable.getPageSize());
-        meta.setPages(ordersPage.getTotalPages());
-        meta.setTotal(ordersPage.getTotalElements());
-
-        p.setMeta(meta);
-
-        List<OrderDTO> listOrders = ordersPage.getContent().stream().map(this::convertToOrderDTO).toList();
-        p.setResult(listOrders);
-        return p;
+        Page<Order> ordersPage = orderRepository.findAll(spec, pageable);
+        Page<OrderDTO> orderDTOPage = ordersPage.map(this::convertToOrderDTO);
+        return paginationHelper.fetchAllEntities(orderDTOPage);
     }
 
-    public OrderDTO cancelOrder(Long id) {
-
-        Optional<Order> orderOptional = orderRepository.findById(id);
-        Order o;
-        OrderDTO orderDTO = new OrderDTO();
-        if (orderOptional.isPresent()) {
-            o = orderOptional.get();
-            if (o.getStatus() == 0) o.setStatus(1);
-            else o.setStatus(3);
-            this.orderRepository.save(o);
-            orderDTO.setId(o.getId());
-            orderDTO.setOrderTime(o.getOrderTime());
-            orderDTO.setDeliveryTime(o.getDeliveryTime());
-            orderDTO.setStatus(o.getStatus());
-            orderDTO.setPaymentMethod(o.getPaymentMethod());
-
-            orderDTO.setAddress(o.getAddress());
-            orderDTO.setTotal_price(o.getTotal_price());
-            orderDTO.setTotalPrice(o.getTotal_price());
-
-            orderDTO.setUserEmail(o.getUser().getEmail());
-            orderDTO.setUserId(o.getUser().getId());
-            orderDTO.setUserName(o.getUser().getName());
-        }
-
-
-        return orderDTO;
-    }
 
     public OrderDTO convertToOrderDTO(Order order) {
         OrderDTO res = new OrderDTO();
         res.setId(order.getId());
         res.setOrderTime(order.getOrderTime());
         res.setDeliveryTime(order.getDeliveryTime());
+        res.setPhone(order.getPhone());
         res.setStatus(order.getStatus());
         res.setPaymentMethod(order.getPaymentMethod());
         res.setAddress(order.getAddress());
@@ -134,49 +89,124 @@ public class OrderService {
         return res;
     }
 
-    public Order create(OrderDTO orderDTO) throws ResourceInvalidException, UserNotFoundException {
-        long uid = SecurityUtil.getUserId();
-        User currentUserDB = this.userService.getUserById(uid);
-        Order order = new Order();
-        order.setUser(currentUserDB);
-        order.setAddress(orderDTO.getAddress());
-        order.setPhone(orderDTO.getPhone());
-        order.setTotal_price(orderDTO.getTotalPrice());
-        order.setPaymentMethod(orderDTO.getPaymentMethod());
-        order.setStatus(0);
-        Order saveOrder = orderRepository.save(order);
-        orderDTO.getItems().forEach(item -> {
-            Product product = productRepository.findById(item.getProductId())
-                    .orElseThrow(() -> new RuntimeException("Product not found"));
-            OrderDetail orderDetail = new OrderDetail();
-            OrderDetailId id = new OrderDetailId();
-            id.setOrderId(saveOrder.getId());
-            id.setProductId(product.getId());
-            orderDetail.setId(id);
-            orderDetail.setOrder(saveOrder);
-            orderDetail.setProduct(product);
+    private void increaseProductSales(Long orderId) {
+        List<OrderDetail> orderDetails = orderDetailRepository.findByOrderId(orderId);
 
+        for (OrderDetail detail : orderDetails) {
+            Product product = detail.getProduct();
+            product.setSold(product.getSold() + detail.getQuantity());
+            productRepository.save(product);
+        }
+    }
+
+    public void restoreProductStock(long orderId) {
+        List<OrderDetail> orderDetails = orderDetailRepository.findByOrderId(orderId);
+
+        for (OrderDetail orderDetail : orderDetails) {
+            Product product = orderDetail.getProduct();
+            product.setQuantity(product.getQuantity() + orderDetail.getQuantity());
+            productRepository.save(product);
+        }
+    }
+
+    @Transactional
+    public void updateOrderStatus(Long orderId, int status) {
+        Order order = this.get(orderId);
+        if (order.getStatus() == 3){
+            throw new ResourceInvalidException("Không thể thay đổi trạng thái đơn hàng đã hủy");
+        }
+        order.setStatus(status);
+
+        if (status == 2 || status == 3) {
+            order.setDeliveryTime(Instant.now());
+        }
+
+        if (status == 2) {
+            increaseProductSales(orderId);
+        }
+
+        // Nếu đơn hàng bị hủy (status == 3), hoàn lại số lượng sản phẩm
+        if (status == 3) {
+            restoreProductStock(orderId);
+        }
+
+        orderRepository.save(order);
+    }
+
+    @Transactional
+    public void create(CheckoutRequestDTO request) {
+        long uid = SecurityUtil.getUserId();
+        User currentUser = userService.getUserById(uid);
+        // Tạo order mới
+        Order order = new Order();
+        order.setUser(currentUser);
+        order.setAddress(request.getAddress());
+        order.setPhone(request.getPhone());
+        order.setTotal_price(request.getTotalPrice());
+        order.setPaymentMethod(request.getPaymentMethod());
+        order.setStatus(0);
+
+        Order savedOrder = orderRepository.save(order);
+        List<Long> purchasedProductIds = new ArrayList<>();
+
+        List<OrderDetail> orderDetails = request.getItems().stream().map(item -> {
+            Product product = productRepository.findById(item.getProductId())
+                    .orElseThrow(() -> new ResourceInvalidException("Product not found: " + item.getProductId()));
+
+            if (product.getQuantity() < item.getQuantity()) {
+                throw new ResourceInvalidException("Not enough stock for product: " + product.getId());
+            }
+
+            product.setQuantity(product.getQuantity() - item.getQuantity());
+            productRepository.save(product);
+            purchasedProductIds.add(product.getId());
+            // Tạo order detail
+            OrderDetailId id = new OrderDetailId(savedOrder.getId(), product.getId());
+            OrderDetail orderDetail = new OrderDetail();
+            orderDetail.setId(id);
+            orderDetail.setOrder(savedOrder);
+            orderDetail.setProduct(product);
             orderDetail.setQuantity(item.getQuantity());
             orderDetail.setUnit_price(product.getPrice());
-            orderDetailRepository.save(orderDetail);
-        });
-        return saveOrder;
+            return orderDetail;
+        }).toList();
+        cartService.deleteSelectedItems(purchasedProductIds);
+        // Lưu tất cả orderDetails bằng batch save
+        orderDetailRepository.saveAll(orderDetails);
     }
 
-    public PaginationDTO getOrderByCurrentUser(Pageable pageable, Integer status) throws ResourceInvalidException {
+
+
+    public PaginationDTO getOrdersByCurrentUser(Integer status, Pageable pageable) {
         long uid = SecurityUtil.getUserId();
-        User u = this.userService.getUserById(uid);
-        Page<OrderDetailDTO> orderItems = this.orderRepository.findOrderItemsByUserId(uid, status, pageable);
-        return this.paginationHelper.fetchAllEntities(orderItems);
+
+        // Thêm sort
+        Pageable sortedPageable = PageRequest.of(
+                pageable.getPageNumber(),
+                pageable.getPageSize(),
+                Sort.by(Sort.Direction.DESC, "id")
+        );
+
+        Page<Order> ordersPage = (status != null)
+                ? orderRepository.findByUserIdAndStatus(uid, status, sortedPageable)
+                : orderRepository.findByUserId(uid, sortedPageable);
+
+        Page<OrderDTO> orderDTOPage = ordersPage.map(this::convertToOrderDTO);
+
+        return paginationHelper.fetchAllEntities(orderDTOPage);
     }
 
+
+
+
+    @Transactional
     public List<WeeklyRevenue> getMonthlyRevenue(int month, int year) {
-        List<Object[]> results = orderRepository.getMonthlyRevenue(month, year);
+        List<Object[]> res =  orderRepository.GetRevenueByWeekCycle(month, year);
         List<WeeklyRevenue> weeklyRevenues = new ArrayList<>();
 
-        for (Object[] result : results) {
+        for (Object[] result : res) {
             String days = String.valueOf(result[0]);
-            double totalRevenue = (Double) result[1];
+            double totalRevenue = ((Number) result[1]).doubleValue();
             weeklyRevenues.add(new WeeklyRevenue(days, totalRevenue));
         }
         return weeklyRevenues;

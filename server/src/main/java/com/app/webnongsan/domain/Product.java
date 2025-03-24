@@ -10,6 +10,8 @@ import jakarta.validation.constraints.*;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.io.Serial;
+import java.io.Serializable;
 import java.time.Instant;
 import java.util.List;
 
@@ -17,7 +19,9 @@ import java.util.List;
 @Table(name = "products")
 @Getter
 @Setter
-public class Product {
+public class Product implements Serializable {
+    @Serial
+    private static final long serialVersionUID = 1L;
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
@@ -41,12 +45,9 @@ public class Product {
     private int sold;
 
     private Instant createdAt;
-    @NotBlank(message = "Người tạo không được để trống")
     private String createdBy;
 
     private Instant updatedAt;
-    @NotBlank(message = "Người cập nhật không được để trống")
-    private String updatedBy;
 
     @Size(max = 20, message = "Đơn vị không được vượt quá 20 ký tự")
     private String unit;
@@ -80,7 +81,6 @@ public class Product {
 
     @PreUpdate
     public void handleBeforeUpdate(){
-        this.updatedBy = SecurityUtil.getCurrentUserLogin().isPresent() ? SecurityUtil.getCurrentUserLogin().get() : "";
         this.updatedAt = Instant.now();
     }
 }

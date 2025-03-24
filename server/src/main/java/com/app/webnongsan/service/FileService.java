@@ -1,5 +1,6 @@
 package com.app.webnongsan.service;
 
+import com.app.webnongsan.util.exception.StorageException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.stereotype.Service;
@@ -13,6 +14,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.Arrays;
+import java.util.List;
 
 @Service
 public class FileService {
@@ -68,5 +71,20 @@ public class FileService {
 
         File file = new File(path.toString());
         return new InputStreamResource(new FileInputStream(file));
+    }
+
+    public void validateFile(MultipartFile file) {
+        if (file == null || file.isEmpty()) {
+            throw new StorageException("File is empty. Please choose a file");
+        }
+
+        String fileName = file.getOriginalFilename();
+        List<String> allowedExtensions = Arrays.asList("jpg", "jpeg", "png");
+        boolean isValid = allowedExtensions.stream().anyMatch(item ->
+                fileName != null && fileName.toLowerCase().endsWith(item));
+
+        if (!isValid) {
+            throw new StorageException("File not allowed! Please use file " + allowedExtensions);
+        }
     }
 }

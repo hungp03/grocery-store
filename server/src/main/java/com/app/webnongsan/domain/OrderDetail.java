@@ -5,11 +5,16 @@ import jakarta.validation.constraints.Min;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.io.Serial;
+import java.io.Serializable;
+
 @Entity
 @Table(name = "order_detail")
 @Getter
 @Setter
-public class OrderDetail {
+public class OrderDetail implements Serializable {
+    @Serial
+    private static final long serialVersionUID = 1L;
     @EmbeddedId
     private OrderDetailId id;
 

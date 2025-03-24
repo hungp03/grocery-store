@@ -92,6 +92,10 @@ export const getUserById = async (id) => {
         method: 'get',
     });
 }
+
+export const apiUpdatePassword = async (data) =>
+    axiosInstance({ url: "/users/update-password", method: 'put', data });
+
 export const apiAddOrUpdateCart = async (pid, quantity) => {
     return axiosInstance({
         url: '/cart',
@@ -149,21 +153,29 @@ export const apiAddWishList = async (pid) => {
 
 export const apiSetStatusUser = async (user) => {
     return axiosInstance({
-        url: "/users",
+        url: "/users/status",
         method: 'put',
         data: user
     });
 };
 // Tạo order
-export const apiCreateOrder = async (formData) => {
+export const apiCreateOrder = async (data) => {
+    const requestBody = {
+        address: data.address,
+        phone: data.phone,
+        paymentMethod: data.paymentMethod,
+        totalPrice: data.totalPrice,
+        items: data.items
+    };
+
     return axiosInstance({
         url: `/checkout`,
         method: 'post',
-        data: formData,
+        data: requestBody,
         headers: {
-            'Content-Type': 'multipart/form-data'
+            'Content-Type': 'application/json'
         }
-    })
+    });
 }
 // Lấy các sản phẩm được chọn trong cart
 export const apiGetSelectedCart = async (pids) => {
@@ -172,6 +184,7 @@ export const apiGetSelectedCart = async (pids) => {
         method: 'get',
     });
 };
+
 export const apiSendEmail = async (formData) => {
     return axiosInstance({
         url: `checkout/email`,

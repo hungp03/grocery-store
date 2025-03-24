@@ -1,9 +1,11 @@
 
 package com.app.webnongsan.config;
 
+import com.app.webnongsan.service.CustomOAuth2UserService;
 import com.app.webnongsan.util.SecurityUtil;
 import com.nimbusds.jose.jwk.source.ImmutableSecret;
 import com.nimbusds.jose.util.Base64;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -16,10 +18,6 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
-import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
-import org.springframework.security.oauth2.client.userinfo.OAuth2UserService;
-import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
@@ -30,13 +28,16 @@ import org.springframework.security.web.SecurityFilterChain;
 
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
-import java.util.Map;
 
 @Configuration
 @EnableMethodSecurity(securedEnabled = true)
+@RequiredArgsConstructor
 public class SecurityConfiguration {
     @Value("${jwt.base64-secret}")
     private String jwtKey;
+
+    private final CustomOAuth2UserService customOauth2;
+    private final OAuth2AuthenticationSuccessHandler authenticationSuccessHandler;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -70,9 +71,9 @@ public class SecurityConfiguration {
                         .requestMatchers(HttpMethod.GET, "/api/v2/categories/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v2/product/ratings/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v2/files").permitAll()
-                        .requestMatchers(HttpMethod.GET,"/api/v2/payment/vn-pay/**").permitAll()
-                        .requestMatchers(HttpMethod.GET,"/api/v2/payment/vn-pay").permitAll()
-                        .requestMatchers(HttpMethod.GET,"/api/v2/payment/vn-pay-callback").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v2/payment/vn-pay/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v2/payment/vn-pay").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v2/payment/vn-pay-callback").permitAll()
                         .requestMatchers("/favicon.ico").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v2/ratings").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/api/v2/ratings/**").hasRole("ADMIN")
@@ -91,7 +92,10 @@ public class SecurityConfiguration {
                         .requestMatchers(HttpMethod.PUT, "/api/v2/users").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
-
+                .oauth2Login(oauth2 -> oauth2.userInfoEndpoint(
+                                userInfo -> userInfo.userService(customOauth2)
+                        ).successHandler(authenticationSuccessHandler)
+                )
                 .oauth2ResourceServer(oauth2 -> oauth2
                         .jwt(Customizer.withDefaults())
                         .authenticationEntryPoint(customAuthenticationEntryPoint))

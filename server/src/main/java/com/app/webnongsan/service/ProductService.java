@@ -119,14 +119,6 @@ public class ProductService {
     }
 
 
-
-    public double getMaxPrice(String category, String productName) {
-        if (category != null && !category.isEmpty() && !this.categoryRepository.existsByName(category)) {
-            throw new ResourceInvalidException("Category không tồn tại");
-        }
-        return this.productRepository.getMaxPriceByCategoryAndProductName(category, productName);
-    }
-
     public PaginationDTO search(Specification<Product> spec, Pageable pageable) {
         Page<SearchProductDTO> productPage = this.searchProduct(spec, pageable);
         return this.paginationHelper.buildPaginationDTO(productPage);

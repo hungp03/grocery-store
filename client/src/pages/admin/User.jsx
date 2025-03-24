@@ -4,7 +4,7 @@ import { useSelector } from "react-redux";
 import { useNavigate, useSearchParams, createSearchParams } from "react-router-dom";
 import { apiGetAllUser, apiSetStatusUser } from "@/apis";
 import avatarDefault from "@/assets/avatarDefault.png";
-
+const PAGE_SIZE = 10;
 const User = () => {
   const { current } = useSelector((state) => state.user);
   const [users, setUsers] = useState([]);
@@ -12,7 +12,6 @@ const User = () => {
   const [params] = useSearchParams();
   const [currentPage, setCurrentPage] = useState(Number(params.get('page')) || 1);
   const [totalPage, setTotalPage] = useState(null)
-  const USER_PER_PAGE = 8;
   const navigate = useNavigate();
 
   const fetchUsers = async (queries) => {
@@ -29,7 +28,7 @@ const User = () => {
   };
 
   useEffect(() => {
-    const queries = { page: currentPage, size: USER_PER_PAGE };
+    const queries = { page: currentPage, size: PAGE_SIZE };
     fetchUsers(queries);
   }, [currentPage]);
 
@@ -80,7 +79,7 @@ const User = () => {
       dataIndex: "status",
       key: "status",
       render: (status, user) => (
-        <Button className="w-20"
+        <Button className="w-20 "
           type={status === 1 ? "primary" : "default"}
           onClick={() => handleStatusChange(user)}
         >
@@ -103,7 +102,7 @@ const User = () => {
         loading={loading}
         pagination={{
           current: currentPage,
-          pageSize: USER_PER_PAGE,
+          pageSize: PAGE_SIZE,
           onChange: handlePaginationChange,
           total: totalPage,
         }}

@@ -1,102 +1,125 @@
-import React, { memo, useRef, useEffect, useState } from "react";
-import avatar from "@/assets/avatarDefault.png"
-import productDF from "@/assets/product_default.png"
-import { FaClock, FaRegStar, FaStar, FaX } from "react-icons/fa6";
-import { GrStatusCritical, GrStatusCriticalSmall } from "react-icons/gr";
-import { Modal, Button } from 'antd';
-import clsx from "clsx";
-import { apiCancelOrder } from "@/apis";
+import React, { memo, useEffect, useState } from "react";
+import { Modal, Button, Typography, Image } from "antd";
+import { FaClock } from "react-icons/fa6";
+import { apiGetOrderDetail, apiUpdateOrderStatus } from "@/apis";
+import productDF from "@/assets/product_default.png";
 
-const FeedbackCard = ({ data, onClose, updateOrderStatus }) => {
-    const modalRef = useRef()
-    const [isCancel, setIsCancel] = useState(false)
-    const [resStatus, setResStatus] = useState(0)
+const { Text, Title } = Typography;
+
+const OrderCard = ({ order, onClose, updateOrderStatus }) => {
+    const [isCancel, setIsCancel] = useState(false);
+    const [resStatus, setResStatus] = useState(order?.status || 0);
+    const [products, setProducts] = useState([]);
+
     useEffect(() => {
-        modalRef.current.scrollIntoView({ block: 'center', behavior: 'smooth' })
-    }, [])
+        const fetchOrderDetails = async () => {
+            try {
+                const response = await apiGetOrderDetail(order.id);
+                if (response.statusCode === 200) {
+                    setProducts(response.data);
+                }
+            } catch (error) {
+                console.error("Lỗi khi lấy chi tiết đơn hàng:", error);
+            }
+        };
+
+        fetchOrderDetails();
+    }, [order.id]);
+
     const handleCancelOrder = (oid) => {
         Modal.confirm({
-            title: 'Xác nhận hủy đơn hàng',
-            content: 'Bạn có chắc chắn muốn hủy đơn hàng này không?',
-            okText: 'Hủy đơn hàng',
-            cancelText: 'Không',
+            title: "Xác nhận hủy đơn hàng",
+            content: "Bạn có chắc chắn muốn hủy đơn hàng này không?",
+            okText: "Hủy đơn hàng",
+            cancelText: "Không",
             onOk: async () => {
-                const response = await apiCancelOrder(oid, { status: 3 })
-                if (response?.statusCode === 200) {
-                    setIsCancel(true)
-                    updateOrderStatus(oid, 3);
-                    setResStatus(response?.data?.status)
+                try {
+                    const response = await apiUpdateOrderStatus(oid, 3);
+                    if (response?.statusCode === 200) {
+                        setIsCancel(true);
+                        updateOrderStatus(oid, 3);
+                        setResStatus(3);
+                    }
+                } catch (error) {
+                    console.error("Lỗi khi hủy đơn hàng:", error);
                 }
             },
-            onCancel: () => {
-                //console.log('Đơn hàng không bị hủy');
-            },
         });
+    };
 
-    }
-    useEffect(() => {
-
-    }, [data])
     return (
-        <div onClick={e => e.stopPropagation()} ref={modalRef}
-            className="w-full max-w-3xl rounded-xl inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-xl shadow-lg p-8 max-w-3xl w-full relative">
-                <button
-                    onClick={onClose}
-                    className="absolute top-2 right-2 text-gray-500 hover:text-gray-700 transition-colors"
-                    aria-label="Close"
-                >
-                    <FaX className="w-6 h-6" />
-                </button>
-                <div className="flex justify-between items-center">
-                    <span className="text-green-600 font-medium">
-                        {data[0]?.status === 0 ? "Chờ xác nhận" : data[0]?.status === 1 ? "Chờ giao hàng" : data[0]?.status === 2 ? "Gian hàng Thành công" : "Hủy bỏ"}
-                    </span>
-                    <span className="text-green-600 font-medium">{(data[0]?.status === 2 || data[0]?.status === 3) ? "HOÀN THÀNH" : "CHƯA HOÀN THÀNH"}</span>
-                </div>
-                <div className="overflow-y-auto max-h-80 mt-2 mb-2">
-                    {data?.map((order, index) => (
-                        <div key={order?.orderId + "-" + index} className="flex  space-x-4 items-center justify-start mb-6 w-full">
-                            <img src={
-                                order?.imageUrl ? order?.imageUrl : productDF} alt={order?.productName}
-                                className="w-[40px]  h-[40px] object-cover rounded-lg border-primary shadow-md" />
-                            <div className="ml-4 flex-1">
-                                <h2 className="text-xl font-medium text-primary">{order?.productName}</h2>
-                                <h2 className="text-sm text-gray-500">{order?.category}</h2>
-                                <p className="text-sm">x{order?.quantity}</p>
-                            </div>
-                            <div className="text-right">
-                                <p className="font-medium">{new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(+order.unit_price)}</p>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-                <p className="text-sm text-blue-600">Trả hàng miễn phí 15 ngày</p>
-                <div className="flex justify-between items-center pt-4 border-t">
-                    <span>Thành tiền:</span>
-                    <span className="text-xl font-bold text-red-500">
-                        {new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(
-                            data?.reduce((total, item) => total + item?.unit_price * item?.quantity, 0))}
-                    </span>
-                </div>
-                <div className="flex justify-between">
-                    <div className="flex items-center justify-start text-sm text-muted-foreground">
-                        <FaClock className="w-4 h-4 mr-1" />
-                        <span>Thời gian đặt hàng: {new Date(data[0]?.orderTime).toLocaleString("vi-VN")}</span>
-                    </div>
-                    <div className="space-x-2 ">
-                        <Button disabled={resStatus === 2 ? true : false}
-                            className={clsx("px-4 py-2 rounded-md text-white text-semibold my-2 w-full"
-                                , resStatus == 2 && "bg-gray-400", resStatus !== 2 && "bg-red-500")}
-                            onClick={() => handleCancelOrder(data[0]?.orderId)}
-                            type="danger"
-                        >Hủy đơn hàng</Button>
-                    </div>
-                </div>
-
+        <Modal
+            open={true}
+            onCancel={onClose}
+            footer={null}
+            centered
+            title={`Chi tiết đơn hàng #${order.id}`}
+        >
+            <div className="flex justify-between items-center mb-4">
+                <Text type="success">
+                    {resStatus === 0
+                        ? "Chờ xác nhận"
+                        : resStatus === 1
+                        ? "Chờ giao hàng"
+                        : resStatus === 2
+                        ? "Giao hàng thành công"
+                        : "Đã hủy"}
+                </Text>
+                <Text type="success">
+                    {resStatus === 2 || resStatus === 3 ? "HOÀN THÀNH" : "CHƯA HOÀN THÀNH"}
+                </Text>
             </div>
-        </div>
-    )
-}
 
-export default memo(FeedbackCard)
+            <div className="overflow-y-auto max-h-80">
+                {products?.map((product, index) => (
+                    <div key={product.productId} className="flex space-x-4 items-center justify-start mb-4">
+                        <Image
+                            width={50}
+                            height={50}
+                            src={product.imageUrl || productDF}
+                            alt={product.productName}
+                            className="rounded-lg border shadow-md"
+                        />
+                        <div className="flex-1">
+                            <Title level={5} className="m-0">{product.productName}</Title>
+                            <p className="text-sm">x{product.quantity}</p>
+                        </div>
+                        <div className="text-right">
+                            <Text strong>
+                                {new Intl.NumberFormat("vi-VN", {
+                                    style: "currency",
+                                    currency: "VND",
+                                }).format(+product.unit_price)}
+                            </Text>
+                        </div>
+                    </div>
+                ))}
+            </div>
+
+            <div className="flex justify-between items-center pt-4 border-t mt-4">
+                <Text strong>Thành tiền:</Text>
+                <Text strong type="danger" className="text-lg">
+                    {new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(
+                        products?.reduce((total, item) => total + item?.unit_price * item?.quantity, 0)
+                    )}
+                </Text>
+            </div>
+
+            <div className="flex justify-between mt-4">
+                <div className="flex items-center text-sm">
+                    <FaClock className="w-4 h-4 mr-1" />
+                    <Text>Thời gian đặt hàng: {new Date(order.orderTime).toLocaleString("vi-VN")}</Text>
+                </div>
+                <Button
+                    danger
+                    disabled={[1, 2, 3].includes(resStatus)}
+                    onClick={() => handleCancelOrder(order.id)}
+                >
+                    Hủy đơn hàng
+                </Button>
+            </div>
+        </Modal>
+    );
+};
+
+export default memo(OrderCard);

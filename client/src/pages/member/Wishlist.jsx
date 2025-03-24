@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { Pagination } from '@/components';
 import { apiDeleteWishlist, apiGetWishlist } from '@/apis';
-import { toast } from 'react-toastify';
+import { message } from 'antd';
 import { useSelector } from 'react-redux';
 import {WishlistItem} from '@/components';
 
@@ -23,9 +23,9 @@ const Wishlist = () => {
     const deleteProductInWishlist = async (pid) => {
         const res = await apiDeleteWishlist(pid);
         if (res.statusCode === 200) {
-            toast.success("Đã xóa sản phẩm khỏi yêu thích");
+            message.success("Đã xóa sản phẩm khỏi yêu thích");
         } else {
-            toast.error("Có lỗi trong quá trình xóa");
+            message.error("Có lỗi trong quá trình xóa");
         }
     };
 
@@ -64,14 +64,14 @@ const Wishlist = () => {
                 });
             }).catch(error => {
                 console.error("Lỗi khi xóa sản phẩm:", error);
-                toast.error("Có lỗi xảy ra khi xóa sản phẩm");
+                message.error("Có lỗi xảy ra khi xóa sản phẩm");
             });
         }, DELETE_DELAY);
     };
 
     return (
         <div className='w-full relative px-4'>
-            <header className="text-xl font-semibold py-4 mb-5">Wishlist</header>
+            <header className="text-xl font-semibold py-4 mb-5 border-b">Wishlist</header>
             <div className="w-4/5 mx-auto py-8 flex flex-col gap-4">
                 {wishlist?.result?.length > 0 ? (
                     <div className="space-y-2">

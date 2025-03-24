@@ -9,7 +9,7 @@ import PropTypes from 'prop-types';
 const { IoTrashBinOutline } = icons
 const WishlistItem = ({ item, loadingDeletes, removeItem }) => {
     return (
-        <div key={item.id} className='flex items-center justify-between border-b pb-4'>
+        <div key={item.id} className='flex bg-white p-4 items-center justify-between border-b rounded-md'>
             <Link
                 to={`/products/${encodeURIComponent(item.category)}/${item.id}/${convertToSlug(item.productName)}`}
                 className={`flex items-center flex-1 ${item.stock <= 0 ? 'opacity-50' : ''}`}

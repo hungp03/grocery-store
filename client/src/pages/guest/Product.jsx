@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useSearchParams, useNavigate, createSearchParams } from 'react-router-dom';
 import { Breadcrumb, ProductCard, FilterItem, Pagination, SortItem } from '@/components';
-import { apiGetProducts, apiGetMaxPrice } from '@/apis';
+import { apiGetProducts } from '@/apis';
 import Masonry from 'react-masonry-css';
 import { v4 as uuidv4 } from 'uuid';
 import { sortProductOption } from '@/utils/constants';
@@ -25,8 +25,6 @@ const Product = () => {
   const [activeClick, setActiveClick] = useState(null);
   const [params] = useSearchParams();
   const { category } = useParams()
-  const [maxPrice, setMaxPrice] = useState(0);
-  const [isLoading, setIsLoading] = useState(true);
   const [isProductLoading, setIsProductLoading] = useState(true);
   const [sortOption, setSortOption] = useState('');
   const [error, setError] = useState(null);
@@ -41,25 +39,6 @@ const Product = () => {
       return category;
     }
     return 'Tất cả sản phẩm';
-  };
-
-  const fetchMaxPrice = async () => {
-    try {
-      setIsLoading(true);
-      setError(null);
-      const res = await apiGetMaxPrice(category, params.get('search'));
-      if (res.statusCode === 200) {
-        setMaxPrice(res.data);
-
-      } else {
-        throw new Error('Lỗi khi lấy giá tối đa');
-      }
-    } catch (error) {
-      console.error('Error fetching max price:', error);
-      setError('Lỗi khi lấy khoảng giá, hãy thử lại');
-    } finally {
-      setIsLoading(false);
-    }
   };
 
   const fetchProducts = async (queries) => {
@@ -152,13 +131,6 @@ const Product = () => {
     fetchProducts(queries);
   }, [params, sortOption, category, navigate]);
 
-  useEffect(() => {
-    if (!isProductLoading && !error && products?.result?.length > 0) {
-      fetchMaxPrice();
-    } else {
-      setIsLoading(false);
-    }
-  }, [isProductLoading, error, products.result]);
 
   const changeActiveFilter = useCallback((name) => {
     if (activeClick === name) setActiveClick(null);
@@ -185,27 +157,17 @@ const Product = () => {
       <div className='w-main border p-4 flex justify-between mt-8 m-auto'>
         <div className='w-3/4 flex-auto flex items-center gap-4'>
           <span className='font-semibold text-sm'>Lọc</span>
-          {isLoading ? (
-            <div className="flex items-center justify-center w-40">
-              <ClipLoader
-                size={30}
-                color={"#123abc"}
-                loading={isLoading}
-                cssOverride={override}
-                aria-label="Loading Spinner"
-              />
-            </div>
-          ) : (
+        
             <FilterItem
               name='price'
               activeClick={activeClick}
               changeActiveFilter={changeActiveFilter}
               range
               min={0}
-              max={maxPrice}
+              max={500000}
               step={1000}
             />
-          )}
+        
           <FilterItem
             name='rating'
             activeClick={activeClick}

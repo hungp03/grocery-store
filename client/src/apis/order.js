@@ -1,8 +1,8 @@
 import axiosInstance from "@/utils/axios";
 export const apiGetAllOrders = async (params = {}) => {
     const defaultParams = {
-        sort: "id,desc",  
-        ...params,       
+        sort: "id,desc",
+        ...params,
     };
 
     return axiosInstance({
@@ -45,6 +45,7 @@ export const apiUpdateOrderStatus = async (orderId, status) =>
     axiosInstance({
         url: `updateOrderStatus/${orderId}`,
         params: { status: status },
+        method: 'put'
     })
 
 export const apiGetSummary = async () =>

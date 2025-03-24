@@ -9,7 +9,6 @@ const MemberLayout = ()=>{
     const {isLoggedIn, current} = useSelector(state => state.user)
     const [loading, setLoading] = useState(true);
     useEffect(() => {
-        // Đợi 1 giây rồi chuyển hướng
         const timer =setTimeout(() => {
             setLoading(false);
             }, 1000);

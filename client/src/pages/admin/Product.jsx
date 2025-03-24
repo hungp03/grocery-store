@@ -12,7 +12,8 @@ import { Table, Modal, Button, message } from "antd";
 import product_default from "@/assets/product_default.png";
 import { SortItem } from "@/components";
 import { sortProductOption } from "@/utils/constants";
-const PRODUCT_PER_PAGE = 6;
+
+const PAGE_SIZE = 10;
 
 const Product = () => {
   const [params] = useSearchParams();
@@ -59,7 +60,7 @@ const Product = () => {
     // const sortQuery = null;
     const queries = {
       page: currentPage,
-      size: PRODUCT_PER_PAGE,
+      size: PAGE_SIZE,
       filter: filters,
       // sort: sortQuery||"", 
     };
@@ -117,7 +118,7 @@ const Product = () => {
 
       const queries = {
         page: currentPage,
-        size: PRODUCT_PER_PAGE,
+        size: PAGE_SIZE,
         filter: filters,
       };
 
@@ -280,7 +281,7 @@ const Product = () => {
         rowKey="id"
         pagination={{
           current: currentPage,
-          pageSize: PRODUCT_PER_PAGE,
+          pageSize: PAGE_SIZE,
           onChange: handlePagination,
           total: products?.data?.meta?.total,
           showSizeChanger: false

@@ -20,7 +20,4 @@ public class OrderDTO {
     private String userEmail;
     private String userName;
     private Long userId;
-    private Double totalPrice;
-    private List<OrderDetailDTO> items;
-
 }

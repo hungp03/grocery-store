@@ -17,30 +17,28 @@ const AddCategory = () => {
     };
 
     try {
-      // Tạo category trước
-      const resCheck = await apiCreateCategory(categoryToCreate);
-      if (resCheck.statusCode === 400) {
-        throw new Error(resCheck.message || "Có lỗi xảy ra khi tạo danh mục.");
+      const response = await apiCreateCategory(categoryToCreate);
+      if (response.statusCode === -7) {
+        throw new Error("Phân loại đã tồn tại trong hệ thống");
       }
-
+      else if (response.statusCode !== 200) {
+        throw new Error("Có lỗi xảy ra khi tạo phân loại");
+      }
+      
       // Upload ảnh nếu có
       if (categoryImage) {
         const resUpload = await apiUploadImage(categoryImage, "category");
-        categoryToCreate.id = resCheck.data.id;
+        categoryToCreate.id = response.data.id;
         categoryToCreate.imageUrl = resUpload?.data?.fileName;
-        
-        // Update category với ảnh mới
         await apiUpdateCategory(categoryToCreate);
       }
 
       toast.success("Thêm phân loại thành công!");
-      
-      // Reset form và preview
       form.resetFields();
       setCategoryImage(null);
       setPreviewCategoryImage(null);
     } catch (err) {
-      toast.error("Có lỗi xảy ra: " + err.message);
+      toast.error(err.message);
     }
   };
 
@@ -65,7 +63,7 @@ const AddCategory = () => {
         message.error('Bạn chỉ có thể tải lên file hình ảnh!');
         return false;
       }
-      return false; // Prevent auto upload
+      return false;
     },
     onChange: handleImageChange,
     maxCount: 1,
@@ -77,7 +75,7 @@ const AddCategory = () => {
       <div className="mb-4">
         <BackButton turnBackPage="/admin/category" header="Quay lại" />
       </div>
-      
+
       <Card title="Thêm phân loại mới" className="max-w-2xl mx-auto">
         <Form
           form={form}
@@ -89,7 +87,7 @@ const AddCategory = () => {
             name="name"
             rules={[{ required: true, message: 'Vui lòng nhập tên phân loại!' }]}
           >
-            <Input className='rounded-md'/>
+            <Input className='rounded-md' />
           </Form.Item>
 
           <Form.Item label="Hình ảnh">
@@ -107,16 +105,16 @@ const AddCategory = () => {
                 }}
               />
             </div>
-            
+
             <div className="flex gap-4">
               <Upload {...uploadProps}>
                 <Button icon={<UploadOutlined />} size="large">
                   Chọn ảnh
                 </Button>
               </Upload>
-              
-              <Button 
-                style={{ backgroundColor: '#10B981', color: 'white' , flex: 1}}
+
+              <Button
+                style={{ backgroundColor: '#10B981', color: 'white', flex: 1 }}
                 htmlType="submit"
                 size="large"
               >

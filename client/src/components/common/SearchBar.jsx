@@ -117,7 +117,7 @@ const SearchBar = () => {
               </button>
             </>
           ) : (
-            <div className="p-2 text-sm cursor-pointer" onClick={handleShowAll}>Tìm kiếm với hệ thống đề xuất?</div>
+            <div className="p-2 text-sm cursor-pointer">Không tìm thấy sản phẩm...</div>
           )}
         </div>
       )}

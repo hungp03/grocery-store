@@ -4,11 +4,16 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.io.Serial;
+import java.io.Serializable;
+
 @Entity
 @Table(name = "wishlists")
 @Getter
 @Setter
-public class Wishlist {
+public class Wishlist implements Serializable {
+    @Serial
+    private static final long serialVersionUID = 1L;
     @EmbeddedId
     private WishlistId id;
 

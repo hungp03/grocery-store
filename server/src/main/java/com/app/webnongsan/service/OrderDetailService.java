@@ -14,31 +14,17 @@ import java.util.List;
 @AllArgsConstructor
 public class OrderDetailService {
     private final OrderDetailRepository orderDetailRepository;
-    public OrderDetail get(long orderId){
-        return this.orderDetailRepository.findById(orderId).orElse(null);
+
+    public List<OrderDetailDTO> getOrderDetailById(long orderId) {
+        List<OrderDetail> orderDetails = this.orderDetailRepository.findByOrderId(orderId);
+        return orderDetails.stream()
+                .map(this::convertToOrderDetailDTO)
+                .toList();
     }
 
-    public PaginationDTO getOrderDetailById (Pageable pageable,long orderId){
-        Page<OrderDetail> orderDetailsPage = this.orderDetailRepository.findByOrderId(orderId, pageable);
-
-
-        PaginationDTO p = new PaginationDTO();
-        PaginationDTO.Meta meta = new PaginationDTO.Meta();
-
-        meta.setPage(pageable.getPageNumber() + 1);
-        meta.setPageSize(pageable.getPageSize());
-        meta.setPages(orderDetailsPage.getTotalPages());
-        meta.setTotal(orderDetailsPage.getTotalElements());
-
-        p.setMeta(meta);
-
-        List<OrderDetailDTO> listOrderDetail = orderDetailsPage.getContent().stream().map(this::convertToOrderDetailDTO).toList();
-        p.setResult(listOrderDetail);
-        return p;
-    }
     public OrderDetailDTO convertToOrderDetailDTO(OrderDetail orderDetail) {
         OrderDetailDTO res = new OrderDetailDTO();
-        res.setOrderId(orderDetail.getOrder().getId());
+        res.setProductId(orderDetail.getProduct().getId());
         res.setQuantity(orderDetail.getQuantity());
         res.setProductName(orderDetail.getProduct().getProductName());
         res.setUnit_price(orderDetail.getProduct().getPrice());

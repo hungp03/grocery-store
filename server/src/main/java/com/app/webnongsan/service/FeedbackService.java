@@ -129,7 +129,18 @@ public class FeedbackService {
         return feedbackDTO;
     }
 
+    public PaginationDTO getFeedbacksWithAdjustedSize(Long productId, Integer size, Pageable pageable) {
+        if (size == null || size < 1) {
+            long totalEls = this.feedbackRepository.countByProductId(productId);
+            size = totalEls > 0 ? (int) totalEls : 1;
+        }
+
+        Pageable updatedPageable = PageRequest.of(pageable.getPageNumber(), size);
+        return getByProductId(productId, updatedPageable);
+    }
+
     public PaginationDTO getByProductId(Long productId, Pageable pageable) {
+
         Page<Feedback> feedbackPage = this.feedbackRepository.findByProductId(productId, pageable);
         PaginationDTO p = new PaginationDTO();
         PaginationDTO.Meta meta = new PaginationDTO.Meta();

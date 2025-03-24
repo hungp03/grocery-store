@@ -1,28 +1,24 @@
 package com.app.webnongsan.service;
 
-import com.app.webnongsan.domain.VerificationCode;
+import com.app.webnongsan.config.CustomGoogleUserDetails;
+import com.app.webnongsan.domain.OTPCode;
 import com.app.webnongsan.domain.Role;
 import com.app.webnongsan.domain.User;
 import com.app.webnongsan.domain.request.GoogleTokenRequest;
 import com.app.webnongsan.domain.request.LoginDTO;
-import com.app.webnongsan.domain.request.OTPDto;
 import com.app.webnongsan.domain.request.ResetPasswordDTO;
 import com.app.webnongsan.domain.response.user.CreateUserDTO;
 import com.app.webnongsan.domain.response.user.ResLoginDTO;
-import com.app.webnongsan.repository.VerificationRepository;
+import com.app.webnongsan.repository.OTPCodeRepository;
 import com.app.webnongsan.util.SecurityUtil;
 import com.app.webnongsan.util.exception.DuplicateResourceException;
 import com.app.webnongsan.util.exception.ResourceInvalidException;
 import com.app.webnongsan.util.exception.UserNotFoundException;
 import lombok.AllArgsConstructor;
-import org.springframework.context.ApplicationContext;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
@@ -30,44 +26,31 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
+import java.time.Instant;
 import java.util.Map;
 import java.util.Random;
 
 @Service
 @AllArgsConstructor
 public class AuthService {
-    private static final long OTP_EXPIRY_MINUTES = 5;
+    private static final long OTP_EXPIRY_SECOND = 300;
     private final AuthenticationManagerBuilder authenticationManagerBuilder;
-    private final VerificationRepository verificationRepository;
+    private final OTPCodeRepository otpCodeRepository;
     private final UserService userService;
     private final CartService cartService;
     private final EmailService emailService;
     private final SecurityUtil securityUtil;
-    private final ApplicationContext context;
     private final CustomOAuth2UserService oAuth2UserService;
 
     public void storeOTP(String otp, String email) {
-        VerificationCode authOTP = new VerificationCode();
-        authOTP.setOtp(otp);
-        authOTP.setEmail(email);
-        authOTP.setExpiryTime(LocalDateTime.now().plusMinutes(OTP_EXPIRY_MINUTES));
-        this.verificationRepository.save(authOTP);
+        OTPCode otpCode = otpCodeRepository.findByEmail(email)
+                .orElse(new OTPCode());
+        otpCode.setEmail(email);
+        otpCode.setOtpCode(otp);
+        otpCodeRepository.save(otpCode);
     }
 
-    public boolean isOTPValid(String otp, String email){
-        VerificationCode authOTP = this.verificationRepository.findByOtpAndEmail(otp, email);
-        return authOTP != null && authOTP.getExpiryTime().isAfter(LocalDateTime.now());
-    }
-
-    @Transactional
-    public void deleteOtp(String otp, String email){
-        this.verificationRepository.deleteByOtpAndEmail(otp, email);
-    }
-
-    public ResLoginDTO.UserGetAccount getAccount(){
+    public ResLoginDTO.UserGetAccount getAccount() {
         long uid = SecurityUtil.getUserId();
         User currentUserDB = this.userService.getUserById(uid);
         this.userService.checkAccountBanned(currentUserDB);
@@ -86,7 +69,7 @@ public class AuthService {
         return userGetAccount;
     }
 
-    public void logout(){
+    public void logout() {
         String email = SecurityUtil.getCurrentUserLogin().isPresent() ? SecurityUtil.getCurrentUserLogin().get() : "";
         if (email.isEmpty()) {
             throw new ResourceInvalidException("Accesstoken không hợp lệ");
@@ -94,7 +77,7 @@ public class AuthService {
         this.userService.updateUserToken(null, email);
     }
 
-    public CreateUserDTO register(User user){
+    public CreateUserDTO register(User user) {
         if (this.userService.isExistedEmail(user.getEmail())) {
             throw new DuplicateResourceException("Email " + user.getEmail() + " đã tồn tại");
         }
@@ -105,7 +88,7 @@ public class AuthService {
         return this.userService.convertToCreateDTO(newUser);
     }
 
-    public void forgotPassword(String email){
+    public void forgotPassword(String email) {
         if (!userService.isExistedEmail(email)) {
             throw new UserNotFoundException("Email " + email + " không tồn tại");
         }
@@ -114,20 +97,19 @@ public class AuthService {
         this.emailService.sendEmailFromTemplateSync(email, "Reset password", "forgotPassword", email, otp);
     }
 
-    // Không gọi trực tiếp deleteOtp() vì @Transactional không hoạt động khi gọi trong cùng một class
-    // Lấy bean từ ApplicationContext để Spring áp dụng proxy và quản lý transaction đúng cách
-    // No EntityManager with actual transaction available for current thread - cannot reliably process 'remove' call
-    public Map<String, String> verifyOtp(OTPDto request){
-        if (this.isOTPValid(request.getOtp(), request.getEmail())) {
-            String tempToken = securityUtil.createResetToken(request.getEmail());
-            context.getBean(AuthService.class).deleteOtp(request.getOtp(), request.getEmail());
-            return Map.of("tempToken", tempToken);
-        } else {
-            throw new ResourceInvalidException("Mã OTP không hợp lệ hoặc đã hết hạn.");
-        }
+    @Transactional
+    public Map<String, String> verifyOtp(String email, String inputOtp) {
+        return otpCodeRepository.findByEmail(email)
+                .filter(otp -> otp.getOtpCode().equals(inputOtp) && otp.getExpiresAt().isAfter(Instant.now()))
+                .map(otp -> {
+                    String tempToken = securityUtil.createResetToken(email);
+                    otpCodeRepository.deleteByEmail(email); // Xóa OTP sau khi xác thực
+                    return Map.of("tempToken", tempToken);
+                })
+                .orElseThrow(() -> new ResourceInvalidException("Mã OTP không hợp lệ hoặc đã hết hạn."));
     }
 
-    public void resetPassword(String token, ResetPasswordDTO request){
+    public void resetPassword(String token, ResetPasswordDTO request) {
         Jwt decodedToken = this.securityUtil.checkValidToken(token);
         if (!request.getNewPassword().equals(request.getConfirmPassword())) {
             throw new ResourceInvalidException("Mật khẩu xác nhận không khớp.");
@@ -140,7 +122,7 @@ public class AuthService {
         this.userService.resetPassword(email, request.getNewPassword());
     }
 
-    public Map<String, Object> login(LoginDTO loginDTO){
+    public Map<String, Object> login(LoginDTO loginDTO) {
         User currentUserDB = this.userService.getUserByUsername(loginDTO.getEmail());
         this.userService.checkAccountBanned(currentUserDB);
         UsernamePasswordAuthenticationToken authenticationToken =
@@ -206,31 +188,21 @@ public class AuthService {
     public Map<String, Object> loginGoogle(GoogleTokenRequest request) throws IOException, GeneralSecurityException {
         // Xử lý token từ Google
         OAuth2User oauth2User = oAuth2UserService.processOAuth2User(request.getIdToken());
-        String email = oauth2User.getAttribute("email");
-        User currentUserDB = userService.getUserByUsername(email);
-        this.userService.checkAccountBanned(currentUserDB);
-        //khi đăng nhập bằng mật khẩu, Spring Security tự động xử lý authorities từ UserDetailsService
-        //trong khi đăng nhập Google không có sẵn
-        List<GrantedAuthority> authorities = new ArrayList<>();
-        authorities.add(new SimpleGrantedAuthority("ROLE_" + currentUserDB.getRole().getRoleName()));
-        // Tạo UserDetails sử dụng User của Spring Security
-        UserDetails userDetails = new org.springframework.security.core.userdetails.User(
-                email,
-                "", // password trống vì xác thực qua Google
-                true, // enabled
-                true, // accountNonExpired
-                true, // credentialsNonExpired
-                true, // accountNonLocked
-                authorities
-        );
+        CustomGoogleUserDetails userDetails = (CustomGoogleUserDetails) oauth2User;
+        User currentUserDB = userDetails.getUser();
 
-        // Tạo authentication với UserDetails
+        // Kiểm tra tài khoản bị ban
+        this.userService.checkAccountBanned(currentUserDB);
+
+        // Tạo authentication với CustomGoogleUserDetails
         Authentication authentication = new UsernamePasswordAuthenticationToken(
                 userDetails,
                 null,
                 userDetails.getAuthorities()
         );
         SecurityContextHolder.getContext().setAuthentication(authentication);
+
+        // Tạo response
         ResLoginDTO res = new ResLoginDTO();
         ResLoginDTO.UserLogin userLogin = new ResLoginDTO.UserLogin(
                 currentUserDB.getId(),
@@ -238,12 +210,15 @@ public class AuthService {
                 currentUserDB.getName(),
                 currentUserDB.getRole());
         res.setUser(userLogin);
-        String accessToken = securityUtil.createAccessToken(email, res);
-        SecurityContextHolder.getContext().setAuthentication(authentication);
+
+        // Tạo access token
+        String accessToken = securityUtil.createAccessToken(currentUserDB.getEmail(), res);
         res.setAccessToken(accessToken);
+
         // Tạo refresh token
-        String refresh_token = securityUtil.createRefreshToken(email, res);
-        userService.updateUserToken(refresh_token, email);
+        String refresh_token = securityUtil.createRefreshToken(currentUserDB.getEmail(), res);
+        userService.updateUserToken(refresh_token, currentUserDB.getEmail());
+
         return Map.of(
                 "userInfo", res,
                 "refreshToken", refresh_token

@@ -4,11 +4,9 @@ import com.app.webnongsan.domain.Category;
 import com.app.webnongsan.domain.response.PaginationDTO;
 import com.app.webnongsan.service.CategoryService;
 import com.app.webnongsan.util.annotation.ApiMessage;
-import com.turkraft.springfilter.boot.Filter;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -47,7 +45,7 @@ public class CategoryController {
 
     @GetMapping("categories")
     @ApiMessage("Get all categories")
-    public ResponseEntity<PaginationDTO> getAll(@Filter Specification<Category> spec, Pageable page) {
-        return ResponseEntity.ok(this.categoryService.fetchAllCategories(spec, page));
+    public ResponseEntity<PaginationDTO> getAll(Pageable pageable) {
+        return ResponseEntity.ok(this.categoryService.fetchAllCategories(pageable));
     }
 }

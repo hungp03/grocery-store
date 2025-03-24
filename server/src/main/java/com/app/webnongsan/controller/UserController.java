@@ -1,6 +1,8 @@
 package com.app.webnongsan.controller;
 
 import com.app.webnongsan.domain.User;
+import com.app.webnongsan.domain.request.UpdatePasswordDTO;
+import com.app.webnongsan.domain.request.UserStatusDTO;
 import com.app.webnongsan.domain.response.PaginationDTO;
 import com.app.webnongsan.domain.response.user.CreateUserDTO;
 import com.app.webnongsan.domain.response.user.ResLoginDTO;
@@ -54,22 +56,27 @@ public class UserController {
         return ResponseEntity.ok(this.userService.fetchAllUser(spec, pageable));
     }
 
-    @PutMapping("users")
-    @ApiMessage("Update user")
-    public ResponseEntity<UpdateUserDTO> updateUser(@RequestBody User user) throws ResourceInvalidException {
-        User updatedUser = this.userService.update(user);
-        return ResponseEntity.ok(this.userService.convertToUpdateUserDTO(updatedUser));
+    @PutMapping("users/update-password")
+    @ApiMessage("Change password")
+    public ResponseEntity<Void> changePassword(@Valid @RequestBody UpdatePasswordDTO dto){
+        this.userService.changePassword(dto);
+        return ResponseEntity.ok(null);
+    }
+
+    @PutMapping("users/status")
+    @ApiMessage("Update user status")
+    public ResponseEntity<Void> updateUser(@RequestBody UserStatusDTO user) throws ResourceInvalidException {
+        this.userService.updateStatus(user);
+        return ResponseEntity.ok(null);
     }
 
     @PutMapping("users/account")
     @ApiMessage("Update user information")
     public ResponseEntity<ResLoginDTO.UserGetAccount> updateUser(
             @RequestParam("name") String name,
-            @RequestParam("email") String email,
             @RequestParam("phone") String phone,
             @RequestParam("address") String address,
             @RequestParam(value = "avatarUrl", required = false) MultipartFile avatar) throws IOException {
-
-        return ResponseEntity.ok(this.userService.updateUser(name, email, phone, address, avatar));
+        return ResponseEntity.ok(this.userService.updateUser(name, phone, address, avatar));
     }
 }

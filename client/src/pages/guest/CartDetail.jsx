@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import  {CartItem, CartFooter, EmptyCart} from '@/components';
+import { CartItem, CartFooter, EmptyCart } from '@/components';
 import { apiGetCart, apiAddOrUpdateCart, apiDeleteCart } from '@/apis';
 import { getCurrentUser } from '@/store/user/asyncActions';
 import withBaseComponent from '@/hocs/withBaseComponent';
@@ -35,33 +35,35 @@ const Cart = ({ dispatch }) => {
   // API Functions
   const deleteProductInCart = async (pid) => {
     const res = await apiDeleteCart(pid);
-    if (res.statusCode === 200) {
-      toast.success("Đã xóa sản phẩm");
-      dispatch(getCurrentUser())
-    } else {
-      toast.error("Có lỗi trong quá trình xóa");
-    }
+    const messages = {
+      200: "Đã xóa sản phẩm",
+      [-5]: "Sản phẩm không tồn tại trong giỏ hàng",
+      [-6]: "Thông tin người dùng không hợp lệ"
+    };
+    toast[res.statusCode === 200 ? 'success' : 'error'](messages[res.statusCode] || "Có lỗi trong quá trình xóa");
+    res.statusCode === 200 && dispatch(getCurrentUser());
   };
 
   const fetchCartItems = async (pageToFetch = 1, pageSize = ITEMS_PER_PAGE) => {
     setIsLoading(true);
-    try {
-      const response = await apiGetCart(pageToFetch, pageSize);
+    const response = await apiGetCart(pageToFetch, pageSize);
+    if (response.statusCode === -6) {
+      toast.error("Thông tin người dùng không hợp lệ");
+      setIsLoading(false);
+      return;
+    }
+    if (response.statusCode === 200) {
       const products = response.data.result;
-
       setCartItems((prevItems) => {
         const updatedItems = pageToFetch === 1 ? products : [...prevItems, ...products];
         return updatedItems;
       });
-
       setHasMore(products.length === pageSize);
       setPage(pageToFetch);
-    } catch (error) {
-      console.error('Lỗi khi lấy dữ liệu giỏ hàng:', error);
+    } else {
       toast.error("Có lỗi khi tải dữ liệu giỏ hàng");
-    } finally {
-      setIsLoading(false);
     }
+    setIsLoading(false);
   };
 
   // Handler Functions
@@ -114,10 +116,10 @@ const Cart = ({ dispatch }) => {
     if (!currentItem) return;
 
     const validatedQuantity =
-      newQuantity === '' || isNaN(newQuantity) || newQuantity < 1 
-        ? 1 
+      newQuantity === '' || isNaN(newQuantity) || newQuantity < 1
+        ? 1
         : Math.min(newQuantity, currentItem.stock);
-    
+
     const quantityDifference = validatedQuantity - currentItem.quantity;
     if (quantityDifference === 0) return;
 
@@ -142,26 +144,23 @@ const Cart = ({ dispatch }) => {
 
     // Set new timeout for API call
     debounceTimeouts.current[pid] = setTimeout(async () => {
-      try {
-        const finalChange = pendingChanges.current[pid];
-        if (finalChange !== undefined) {
-          const rs = await apiAddOrUpdateCart(pid, finalChange);
-          if (rs.statusCode === 201) {
-            toast.success(`Đã cập nhật số lượng mới: ${rs.data.quantity}`);
-          } else {
-            toast.error("Có lỗi xảy ra");
-          }
-          delete pendingChanges.current[pid];
-
-          setPendingUpdates(prev => {
-            const newSet = new Set(prev);
-            newSet.delete(pid);
-            return newSet;
-          });
+      const finalChange = pendingChanges.current[pid];
+      if (finalChange !== undefined) {
+        const rs = await apiAddOrUpdateCart(pid, finalChange);
+        if (rs.statusCode === 201) {
+          toast.success(`Đã cập nhật số lượng mới: ${rs.data.quantity}`);
+        } else if (rs.statusCode === -5) {
+          toast.error(rs.message);
+        } else {
+          toast.error("Có lỗi xảy ra");
         }
-      } catch (error) {
-        console.error('Lỗi khi cập nhật giỏ hàng:', error);
-        toast.error("Có lỗi khi cập nhật số lượng");
+        delete pendingChanges.current[pid];
+
+        setPendingUpdates(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(pid);
+          return newSet;
+        });
       }
     }, DEBOUNCE_DELAY);
   };
@@ -183,7 +182,7 @@ const Cart = ({ dispatch }) => {
   const removeItem = (pid) => {
     // Kiểm tra nếu có bất kỳ cập nhật nào đang pending
     if (pendingUpdates.size > 0) return;
-    
+
     setLoadingDeletes(prev => new Set(prev).add(pid));
     setTimeout(() => {
       deleteProductInCart(pid);
@@ -200,7 +199,7 @@ const Cart = ({ dispatch }) => {
       });
     }, DELETE_DELAY);
   };
-  
+
 
   const calculateSelectedTotal = () => {
     return cartItems
@@ -211,10 +210,10 @@ const Cart = ({ dispatch }) => {
 
   const handleCheckout = () => {
     if (!isCheckoutDisabled && selectedItems.size > 0) {
-      navigate(`/${path.CHECKOUT}`, { 
-        state: { 
+      navigate(`/${path.CHECKOUT}`, {
+        state: {
           selectedItems: Array.from(selectedItems)
-        } 
+        }
       });
     }
   };
@@ -242,23 +241,23 @@ const Cart = ({ dispatch }) => {
       (item) => {
         // Kiểm tra sản phẩm được chọn
         if (!selectedItems.has(item.id)) return false;
-        
+
         return (
-          item.quantity < 1 || 
+          item.quantity < 1 ||
           isNaN(item.quantity) ||
           item.quantity > item.stock ||
           item.stock <= 0
         );
       }
     );
-  
+
     // Chỉ vô hiệu hóa nút khi:
     // 1. Có cập nhật đang pending
     // 2. Có xóa đang pending
     // 3. Không có sản phẩm nào được chọn
     // 4. Có sản phẩm được chọn nhưng số lượng không hợp lệ
     setIsCheckoutDisabled(
-      pendingUpdates.size > 0 || 
+      pendingUpdates.size > 0 ||
       loadingDeletes.size > 0 ||
       selectedItems.size === 0 ||
       isAnyQuantityInvalid
@@ -270,8 +269,8 @@ const Cart = ({ dispatch }) => {
       item.stock > 0 && item.stock >= item.quantity
     ));
     setIsAllSelected(
-      selectedItems.size === validItems.length && 
-      cartItems.length > 0 && 
+      selectedItems.size === validItems.length &&
+      cartItems.length > 0 &&
       selectedItems.size !== 0
     );
   }, [selectedItems, cartItems]);
@@ -279,23 +278,23 @@ const Cart = ({ dispatch }) => {
   return (
     <div className="w-main mt-10 p-6 bg-white shadow-md rounded-lg">
       <h2 className="text-xl font-semibold mb-4">Giỏ hàng</h2>
-      
+
       {cartItems?.length > 0 ? (
         <div className="space-y-4">
           {cartItems.map((item) => (
             <CartItem
-            key={item.id}
-            item={item}
-            isSelected={selectedItems.has(item.id)}
-            onToggleSelect={toggleSelectItem}
-            onQuantityChange={handleQuantityChange}
-            onIncrease={increaseQuantity}
-            onDecrease={decreaseQuantity}
-            onRemove={removeItem}
-            isCheckoutDisabled={isCheckoutDisabled}
-            loadingDeletes={loadingDeletes}
-            pendingUpdates={pendingUpdates}
-          />
+              key={item.id}
+              item={item}
+              isSelected={selectedItems.has(item.id)}
+              onToggleSelect={toggleSelectItem}
+              onQuantityChange={handleQuantityChange}
+              onIncrease={increaseQuantity}
+              onDecrease={decreaseQuantity}
+              onRemove={removeItem}
+              isCheckoutDisabled={isCheckoutDisabled}
+              loadingDeletes={loadingDeletes}
+              pendingUpdates={pendingUpdates}
+            />
           ))}
 
           <CartFooter

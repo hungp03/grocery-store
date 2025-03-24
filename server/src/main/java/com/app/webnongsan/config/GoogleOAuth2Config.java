@@ -1,5 +1,6 @@
 package com.app.webnongsan.config;
 
+
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import org.springframework.beans.factory.annotation.Value;
@@ -12,7 +13,6 @@ import java.util.Collections;
 public class GoogleOAuth2Config {
     @Value("${spring.security.oauth2.client.registration.google.client-id}")
     private String googleClientId;
-
 
     @Bean
     public GoogleIdTokenVerifier googleIdTokenVerifier() {

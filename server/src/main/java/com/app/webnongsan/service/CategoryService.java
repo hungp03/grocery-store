@@ -10,9 +10,12 @@ import com.app.webnongsan.util.exception.DuplicateResourceException;
 import com.app.webnongsan.util.exception.ResourceInvalidException;
 import lombok.AllArgsConstructor;
 
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 
 @Service
@@ -34,7 +37,7 @@ public class CategoryService {
     }
 
     public boolean isCategoryNameUnique(Long id, String name) {
-        return !categoryRepository.existsByNameAndNotId(name, id);
+        return !categoryRepository.existsByNameAndIdNot(name, id);
     }
 
     public Category findById(long id) {
@@ -52,14 +55,14 @@ public class CategoryService {
         return categoryRepository.save(curr);
     }
 
-    public void delete(long id) throws ResourceInvalidException {
+    public void delete(long id) {
         if (productRepository.existsByCategoryId(id)) {
             throw new CannotDeleteException("Không thể xóa vì category có sản phẩm liên quan.");
         }
         categoryRepository.deleteById(id);
     }
 
-    public PaginationDTO fetchAllCategories(Specification<Category> specification, Pageable pageable) {
-        return paginationHelper.fetchAllEntities(specification, pageable, categoryRepository);
+    public PaginationDTO fetchAllCategories(Pageable pageable) {
+        return paginationHelper.fetchAllEntities(pageable, categoryRepository);
     }
 }

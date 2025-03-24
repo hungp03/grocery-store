@@ -1,6 +1,8 @@
 package com.app.webnongsan.service;
 
 import com.app.webnongsan.domain.User;
+import com.app.webnongsan.domain.request.UpdatePasswordDTO;
+import com.app.webnongsan.domain.request.UserStatusDTO;
 import com.app.webnongsan.domain.response.PaginationDTO;
 import com.app.webnongsan.domain.response.user.CreateUserDTO;
 import com.app.webnongsan.domain.response.user.ResLoginDTO;
@@ -13,8 +15,10 @@ import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -102,19 +106,12 @@ public class UserService {
         return p;
     }
 
-    public User update(User reqUser) {
+    public void updateStatus(UserStatusDTO reqUser) {
         User currentUser = this.getUserById(reqUser.getId());
         if (currentUser != null) {
-            //currentUser.setEmail(reqUser.getEmail());
-            currentUser.setName(reqUser.getName());
-            currentUser.setAddress(reqUser.getAddress());
-            currentUser.setPhone(reqUser.getPhone());
-            currentUser.setAvatarUrl(reqUser.getAvatarUrl());
             currentUser.setStatus(reqUser.getStatus());
-            //currentUser.setPassword(passwordEncoder.encode(reqUser.getPassword()));
-            currentUser = this.userRepository.save(currentUser);
+            this.userRepository.save(currentUser);
         }
-        return currentUser;
     }
 
     public UpdateUserDTO convertToUpdateUserDTO(User user) {
@@ -161,14 +158,14 @@ public class UserService {
     }
 
     public ResLoginDTO.UserGetAccount updateUser(
-            String name, String email, String phone, String address, MultipartFile avatar) {
+            String name, String phone, String address, MultipartFile avatar) {
 
         long uid = SecurityUtil.getUserId();
         User currentUserDB = this.getUserById(uid);
 
         // Cập nhật thông tin người dùng
         currentUserDB.setName(name);
-        currentUserDB.setEmail(email);
+//        currentUserDB.setEmail(email);
         currentUserDB.setPhone(phone);
         currentUserDB.setAddress(address);
 
@@ -181,11 +178,7 @@ public class UserService {
                 throw new StorageException("Failed to store avatar file");
             }
         }
-
-        // Lưu thông tin cập nhật vào DB
         userRepository.save(currentUserDB);
-
-        // Chuẩn bị dữ liệu phản hồi
         ResLoginDTO.UserLogin userLogin = new ResLoginDTO.UserLogin(
                 currentUserDB.getId(),
                 currentUserDB.getEmail(),
@@ -195,8 +188,22 @@ public class UserService {
         ResLoginDTO.UserGetAccount userGetAccount = new ResLoginDTO.UserGetAccount();
         userGetAccount.setUser(userLogin);
         userGetAccount.setCartLength(cartService.countProductInCart(currentUserDB.getId()));
-
         return userGetAccount;
+    }
+
+    @Transactional
+    public void changePassword(UpdatePasswordDTO dto) {
+        if (!dto.getNewPassword().equals(dto.getConfirmPassword())){
+            throw new AuthException("Mật khẩu xác nhận không trùng khớp");
+        }
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        User user = this.getUserByUsername(username);
+
+        if (!passwordEncoder.matches(dto.getCurrentPassword(), user.getPassword())) {
+            throw new AuthException("Mật khẩu cũ không đúng");
+        }
+        user.setPassword(passwordEncoder.encode(dto.getNewPassword()));
+        userRepository.save(user);
     }
 }
 

@@ -49,7 +49,7 @@ public class AuthController {
 
     @PostMapping("auth/login")
     @ApiMessage("Login")
-    public ResponseEntity<ResLoginDTO> login(@Valid @RequestBody LoginDTO loginDTO){
+    public ResponseEntity<ResLoginDTO> login(@Valid @RequestBody LoginDTO loginDTO) {
         Map<String, Object> response = this.authService.login(loginDTO);
         ResponseCookie responseCookie = ResponseCookie.from("refresh_token", (String) response.get("refreshToken"))
                 .httpOnly(true)
@@ -67,13 +67,13 @@ public class AuthController {
 
     @GetMapping("auth/account")
     @ApiMessage("Get user")
-    public ResponseEntity<ResLoginDTO.UserGetAccount> getAccount(){
+    public ResponseEntity<ResLoginDTO.UserGetAccount> getAccount() {
         return ResponseEntity.ok(this.authService.getAccount());
     }
 
     @GetMapping("auth/refresh")
     @ApiMessage("Get new token")
-    public ResponseEntity<ResLoginDTO> getNewRefreshToken(@CookieValue(name = "refresh_token", defaultValue = "none") String refreshToken){
+    public ResponseEntity<ResLoginDTO> getNewRefreshToken(@CookieValue(name = "refresh_token", defaultValue = "none") String refreshToken) {
         Map<String, Object> response = this.authService.getNewRefreshToken(refreshToken);
         // set cookies
         ResponseCookie resCookies = ResponseCookie
@@ -90,7 +90,7 @@ public class AuthController {
 
     @PostMapping("auth/logout")
     @ApiMessage("Logout")
-    public ResponseEntity<Void> logout(){
+    public ResponseEntity<Void> logout() {
         this.authService.logout();
         ResponseCookie deleteCookie = ResponseCookie
                 .from("refresh_token", "")
@@ -107,35 +107,35 @@ public class AuthController {
 
     @PostMapping("auth/register")
     @ApiMessage("Register a user")
-    public ResponseEntity<CreateUserDTO> register(@Valid @RequestBody User user){
+    public ResponseEntity<CreateUserDTO> register(@Valid @RequestBody User user) {
         return ResponseEntity.status(HttpStatus.CREATED).body(this.authService.register(user));
     }
 
     @PostMapping("auth/forgot")
     @ApiMessage("Forgot password - OTP")
-    public ResponseEntity<Void> forgotPassword(@Valid @RequestBody EmailRequestDTO emailRequest){
+    public ResponseEntity<Void> forgotPassword(@Valid @RequestBody EmailRequestDTO emailRequest) {
         this.authService.forgotPassword(emailRequest.getEmail());
         return ResponseEntity.ok(null);
     }
 
     @PostMapping("auth/validate-otp")
     @ApiMessage("Validate OTP")
-    public ResponseEntity<Map<String, String>> verifyOtp(@RequestBody OTPDto request){
-        return ResponseEntity.ok(this.authService.verifyOtp(request));
+    public ResponseEntity<Map<String, String>> verifyOtp(@Valid @RequestBody OTPDto request) {
+        return ResponseEntity.ok(this.authService.verifyOtp(request.getEmail(), request.getOtp()));
     }
 
     @PutMapping("auth/reset-password")
     @ApiMessage("Reset password")
     public ResponseEntity<Void> resetPassword(
             @RequestParam("token") String token,
-            @RequestBody ResetPasswordDTO request){
+            @Valid @RequestBody ResetPasswordDTO request) {
         this.authService.resetPassword(token, request);
         return ResponseEntity.ok(null);
     }
 
     @PostMapping("auth/signin/google")
     @ApiMessage("Login with Google")
-    public ResponseEntity<ResLoginDTO> loginWithGoogle(@RequestBody GoogleTokenRequest request) throws GeneralSecurityException, IOException{
+    public ResponseEntity<ResLoginDTO> loginWithGoogle(@Valid @RequestBody GoogleTokenRequest request) throws GeneralSecurityException, IOException {
         Map<String, Object> response = this.authService.loginGoogle(request);
         // Tạo cookie cho refresh token
         ResponseCookie responseCookie = ResponseCookie.from("refresh_token", (String) response.get("refreshToken"))

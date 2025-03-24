@@ -74,10 +74,10 @@ public class GlobalException {
                 ex.getMessage(), HttpStatus.NOT_FOUND);
     }
 
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<RestResponse<Object>> handleAllException(Exception ex) {
-        return buildResponse(-1, "Internal Server Error", ex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
-    }
+//    @ExceptionHandler(Exception.class)
+//    public ResponseEntity<RestResponse<Object>> handleAllException(Exception ex) {
+//        return buildResponse(-1, "Internal Server Error", ex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+//    }
 
     private ResponseEntity<RestResponse<Object>> buildResponse(int statusCode, String error, Object message, HttpStatus status) {
         RestResponse<Object> response = new RestResponse<>();

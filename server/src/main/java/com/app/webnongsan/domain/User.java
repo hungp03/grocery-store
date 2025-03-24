@@ -5,10 +5,14 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.io.Serial;
+import java.io.Serializable;
 import java.time.Instant;
 import java.util.List;
 
@@ -16,7 +20,9 @@ import java.util.List;
 @Table(name = "users")
 @Getter
 @Setter
-public class User {
+public class User implements Serializable {
+    @Serial
+    private static final long serialVersionUID = 1L;
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
@@ -32,6 +38,8 @@ public class User {
 //    @NotBlank(message = "Không được để trống password")
     private String password;
 
+    @Min(value = 0, message = "Trạng thái không hợp lệ")
+    @Max(value = 1, message = "Trạng thái không hợp lệ")
     private int status;
 
     private String phone;
@@ -47,9 +55,11 @@ public class User {
     @JoinColumn(name = "role_id")
     private Role role;
 
+    @JsonIgnore
     @OneToMany(fetch = FetchType.LAZY, mappedBy = "user")
     private List<Feedback> feedbacks;
 
+    @JsonIgnore
     @OneToMany(fetch = FetchType.LAZY, mappedBy = "user")
     private List<Order> orders;
 

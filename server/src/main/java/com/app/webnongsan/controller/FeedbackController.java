@@ -6,7 +6,6 @@ import com.app.webnongsan.domain.response.feedback.FeedbackDTO;
 import com.app.webnongsan.service.FeedbackService;
 import com.app.webnongsan.util.annotation.ApiMessage;
 import lombok.AllArgsConstructor;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -31,12 +30,8 @@ public class FeedbackController {
             @PathVariable Long id,
             @RequestParam(value = "size",required = false) Integer size,
             Pageable pageable) {
-        if(size == null || size < 1){
-            long totalEls = this.feedbackService.getTotalFeedbacksByProductId(id);
-            size = totalEls > 0 ? (int) totalEls : 1;
-        }
-        Pageable updatePageable = PageRequest.of(pageable.getPageNumber(),size);
-        return ResponseEntity.ok(this.feedbackService.getByProductId(id, updatePageable));
+        PaginationDTO result = feedbackService.getFeedbacksWithAdjustedSize(id, size, pageable);
+        return ResponseEntity.ok(result);
     }
 
     @GetMapping("ratings")

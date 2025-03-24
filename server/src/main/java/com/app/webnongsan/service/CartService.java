@@ -16,6 +16,7 @@ import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -82,7 +83,15 @@ public class CartService {
         return this.cartRepository.findCartItemsByUserIdAndProductId(uid, productIds, pageable);
     }
 
+    @Transactional
+    public void deleteSelectedItems(List<Long> productIds) {
+        long uid = SecurityUtil.getUserId();
+        List<CartId> cartIds = productIds.stream()
+                .map(productId -> new CartId(uid, productId))
+                .toList();
+        cartRepository.deleteByIdIn(cartIds);
+    }
     public long countProductInCart(long userId) {
-        return this.cartRepository.countProductsByUserId(userId);
+        return this.cartRepository.countById_UserId(userId);
     }
 }

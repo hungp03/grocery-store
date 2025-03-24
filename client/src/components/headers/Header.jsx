@@ -2,7 +2,7 @@
 import React, { useState, useEffect, memo } from "react";
 import logo from "@/assets/logo.png";
 import icons from "@/utils/icons";
-import { Link} from "react-router-dom";
+import { Link } from "react-router-dom";
 import path from "@/utils/path";
 import { useSelector } from "react-redux";
 import { SearchBar } from "@/components";
@@ -11,7 +11,7 @@ import withBaseComponent from "@/hocs/withBaseComponent";
 
 const { FaUserCircle, FaCartShopping } = icons;
 
-const Header = ({ navigate}) => {
+const Header = ({ navigate }) => {
   const location = useLocation();
   const hideSearch = location.pathname.includes('/admin');
   const { current } = useSelector(state => state.user)
@@ -34,14 +34,24 @@ const Header = ({ navigate}) => {
       <Link to={`/${path.HOME}`}>
         <img src={logo} alt="logo" className="w-[120px] object-contain" />
       </Link>
-      {!hideSearch && <SearchBar/>}
+      {!hideSearch && <SearchBar />}
       <div className="ml-auto flex">
-        <div className="cursor-pointer hover:underline flex items-center justify-center gap-2 px-5 border-r" onClick={() => navigate(`/${path.CART}`)}>
+        <div
+          className="relative cursor-pointer hover:underline flex items-center justify-center gap-2 px-5"
+          onClick={() => navigate(`/${path.CART}`)}
+        >
+
           <FaCartShopping color="#10B981" size={25} />
-          <span>{`${current?.cartLength || 0} sản phẩm`} </span>
+
+          {current?.cartLength > 0 && (
+            <span className="absolute -top-1 -right-1 bg-main text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+              {current.cartLength}
+            </span>
+          )}
         </div>
 
-        <div className="cursor-pointer flex items-center justify-center px-5 gap-2 relative"
+
+        <div className="ml-4 border-l cursor-pointer flex items-center justify-center px-5 gap-2 relative"
           onClick={() => setIsShowOption(prev => !prev)}
           id="profile"
         >

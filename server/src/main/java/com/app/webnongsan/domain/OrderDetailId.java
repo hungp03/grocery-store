@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 
 import lombok.Setter;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.Objects;
 
@@ -17,9 +18,9 @@ import java.util.Objects;
 
 @AllArgsConstructor
 @NoArgsConstructor
-
-
 public class OrderDetailId implements Serializable {
+    @Serial
+    private static final long serialVersionUID = 1L;
     private Long orderId;
     private Long productId;
 

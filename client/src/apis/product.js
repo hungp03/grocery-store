@@ -56,13 +56,6 @@ export const apiGetRatingsPage = async (pid, params) =>
         params,
     });
 
-export const apiGetMaxPrice = async (category, productName) =>
-    axiosInstance({
-        url: `/products/max-price`,
-        method: "get",
-        params: { category, productName },
-    });
-
 export const apiCreateProduct = async (product) => {
     const res = await axiosInstance({
         url: `/products`,
@@ -106,13 +99,6 @@ export const apiHideRating = async (id) =>
     axiosInstance({
         url: `ratings/${id}`,
         method: "put",
-    })
-
-export const apiCancelOrder = async (id, params) =>
-    axiosInstance({
-        url: `updateOrderStatus/${id}`,
-        method: "get",
-        params,
     })
 
 export const apiFetchRecommendProductById = async (id) =>

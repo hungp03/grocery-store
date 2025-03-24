@@ -11,22 +11,11 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
 
 
-
 import java.util.List;
-//@Repository
-//public interface OrderDetailRepository extends JpaRepository<OrderDetail, OrderDetailId>, JpaSpecificationExecutor<OrderDetail> {
-//
-//    Page<OrderDetail> findByOrderId(long orderId, Pageable pageable);
-////    List<OrderDetail> findByOrderId(long orderId);
-////    boolean existsById(OrderDetailId id);
-////    List<OrderDetail> findAllByOrderId(Long orderId);
-//}
-
 
 @Repository
-public interface OrderDetailRepository extends JpaRepository<OrderDetail, Long>, JpaSpecificationExecutor<OrderDetail> {
-        Page<OrderDetail> findByOrderId(long orderId, Pageable pageable);
-        boolean existsById(OrderDetailId id);
-
+public interface OrderDetailRepository extends JpaRepository<OrderDetail, OrderDetailId>, JpaSpecificationExecutor<OrderDetail> {
+    List<OrderDetail> findByOrderId(Long orderId);
+//    Page<OrderDetail> findByOrderId(Long orderId, Pageable pageable);
 }
 

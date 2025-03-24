@@ -3,8 +3,8 @@ import * as apis from "@/apis";
 
 export const getCurrentUser = createAsyncThunk("user/current", async () => {
   const response = await apis.apiGetCurrentUser()
-  if (response.statusCode === 403) {
-    // Thực hiện logout nếu mã lỗi là 403
+  if (response.statusCode === -4) {
+    // Logout khi user không còn active (AuthException)
     window.localStorage.removeItem('persist:ogani_shop/user');
     return isRejectedWithValue(new Error("User is not authorized"));
   }
@@ -12,7 +12,7 @@ export const getCurrentUser = createAsyncThunk("user/current", async () => {
     return isRejectedWithValue(response);
   }
 
-  // format tạm thời
+  // format temporary
   if (response.data && response.data.user && response.data.cartLength) { 
     response.data.user.cartLength = response.data.cartLength;
     delete response.data.cartLength;

@@ -22,17 +22,17 @@ public class PaymentController {
         return new ResponseObject<>(HttpStatus.OK, "Success", paymentService.createVnPayPayment(request));
     }
 
-    @GetMapping("/vn-pay-callback")
-    public ResponseEntity<?> payCallbackHandler(HttpServletRequest request) {
-        String status = request.getParameter("vnp_ResponseCode");
-        if (status.equals("00")) {
-            return ResponseEntity.status(HttpStatus.FOUND).header("Location", "http://localhost:4173/payment-success") // URL của trang thành công trên client
-                    .build();
-        } else {
-            return ResponseEntity.status(HttpStatus.FOUND)
-                    .header("Location", "http://localhost:4173/payment-failure") // URL của trang thất bại trên client
-                    .build();
-        }
-    }
+//    @GetMapping("/vn-pay-callback")
+//    public ResponseEntity<?> payCallbackHandler(HttpServletRequest request) {
+//        String status = request.getParameter("vnp_ResponseCode");
+//        if (status.equals("00")) {
+//            return ResponseEntity.status(HttpStatus.FOUND).header("Location", "http://localhost:port/payment-success") // URL của trang thành công trên client
+//                    .build();
+//        } else {
+//            return ResponseEntity.status(HttpStatus.FOUND)
+//                    .header("Location", "http://localhost:port/payment-failure") // URL của trang thất bại trên client
+//                    .build();
+//        }
+//    }
 }
 

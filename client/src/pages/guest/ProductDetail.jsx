@@ -51,7 +51,6 @@ const ProductDetail = ({ isQuickView, data }) => {
 
   const fetchRecommended = async () => {
     const res = await apiGetProducts({ page: 1, size: 12, filter: `category.name='${params?.category}' and id! ${pid}` })
-    console.log(res)
     if (res.statusCode === 200) {
       setRecommendedProducts(res.data.result);
     }
@@ -61,7 +60,7 @@ const ProductDetail = ({ isQuickView, data }) => {
     const response = await apiGetRatingsPage(pid, { page, size: 5 });
     if (response.statusCode === 200) {
       setFeedbacks(response.data?.result);
-      setFeedbacksPage(response.data?.result); // Có thể bỏ qua nếu không cần
+      setFeedbacksPage(response.data?.result); 
       setCurrentPage(page);
     }
   };

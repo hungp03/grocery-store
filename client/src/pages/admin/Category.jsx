@@ -7,6 +7,8 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import category_default from "@/assets/category_default.png";
 import { AddButton } from '@/components/admin';
 
+const PAGE_SIZE = 10;
+
 const Category = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -24,7 +26,7 @@ const Category = () => {
   useEffect(() => {
     const queries = {
       page: currentPage,
-      size: 6,
+      size: PAGE_SIZE,
     };
     fetchCategories(queries);
   }, [currentPage]);
@@ -34,7 +36,7 @@ const Category = () => {
       const response = await apiDeleteCategory(cid);
       if (response.statusCode === 200) {
         message.success('Xóa danh mục thành công!', 2);
-        fetchCategories({ page: currentPage, size: 6 });
+        fetchCategories({ page: currentPage, size: PAGE_SIZE });
       } else {
         throw new Error('Xóa danh mục thất bại!');
       }
@@ -54,11 +56,11 @@ const Category = () => {
   };
 
   const columns = [
-    {
-      title: 'ID',
-      dataIndex: 'id',
-      key: 'id',
-    },
+    // {
+    //   title: 'ID',
+    //   dataIndex: 'id',
+    //   key: 'id',
+    // },
     {
       title: 'Ảnh',
       dataIndex: 'imageUrl',
@@ -114,7 +116,7 @@ const Category = () => {
           rowKey="id"
           pagination={{
             current: currentPage,
-            pageSize: 6,
+            pageSize: PAGE_SIZE,
             onChange: (page) => {
               setCurrentPage(page);
             },

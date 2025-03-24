@@ -28,12 +28,10 @@ public class WishlistService {
         long uid = SecurityUtil.getUserId();
         User u = this.userService.getUserById(uid);
         Product p = this.productRepository.findById(w.getId().getProductId()).orElseThrow(() -> new ResourceInvalidException("Product không tồn tại"));
-        boolean exists = wishlistRepository.existsByUserIdAndProductId(u.getId(), p.getId());
-
+        boolean exists = wishlistRepository.existsById_UserIdAndId_ProductId(u.getId(), p.getId());
         if (exists) {
             throw new DuplicateResourceException("Sản phẩm đã có trong danh sách yêu thích");
         }
-
         w.setUser(u);
         w.setProduct(p);
         return this.wishlistRepository.save(w);
@@ -42,7 +40,7 @@ public class WishlistService {
     public void deleteWishlist(Long productId){
         long uid = SecurityUtil.getUserId();
         User user = this.userService.getUserById(uid);
-        boolean exists = wishlistRepository.existsByUserIdAndProductId(user.getId(), productId);
+        boolean exists = wishlistRepository.existsById_UserIdAndId_ProductId(user.getId(), productId);
         if (!exists) {
             throw new ResourceInvalidException("Sản phẩm không tồn tại trong danh sách yêu thích");
         }
@@ -51,7 +49,7 @@ public class WishlistService {
         wishlistRepository.deleteById(wishlistId);
     }
 
-    public PaginationDTO getWishlistsByCurrentUser( Pageable pageable) throws ResourceInvalidException {
+    public PaginationDTO getWishlistsByCurrentUser(Pageable pageable) throws ResourceInvalidException {
         long uid = SecurityUtil.getUserId();
         User user = this.userService.getUserById(uid);
         Page<WishlistItemDTO> wishlistItems = this.wishlistRepository.findWishlistItemsByUserId(user.getId(), pageable);

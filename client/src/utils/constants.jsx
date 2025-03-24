@@ -1,9 +1,6 @@
 import path from "./path";
 import icons from "./icons";
-import { AiOutlineInfo } from "react-icons/ai";
-import { FaHome } from "react-icons/fa";
-import {FaHeart } from "react-icons/fa6";
-import { MdHistory } from "react-icons/md";
+import { UserOutlined, HomeOutlined, HeartOutlined, HistoryOutlined, SettingOutlined} from "@ant-design/icons";
 export const navigation = [
   {
     id: 1,
@@ -78,39 +75,33 @@ export const sortProductOption = [
   { value: 'createdAt-desc', label: 'Mới nhất' }
 ];
 
-export const memberSidebar = [
+export const memberSidebarItems = [
   {
-    id: 4,
-    type: 'SINGLE',
-    text: 'Trang chủ',
-    path: `/`,
-    icon: <FaHome size={20} />
+    key: `/${path.MEMBER}/${path.PERSONAL}`,
+    icon: <UserOutlined />,
+    label: 'Thông tin cá nhân',
   },
   {
-    id: 1,
-    type: 'SINGLE',
-    text: 'Trang cá nhân',
-    path: `/${path.MEMBER}/${path.PERSONAL}`,
-    icon: <AiOutlineInfo size={20} />
+    key: `/${path.MEMBER}/${path.WISHLIST}`,
+    icon: <HeartOutlined />,
+    label: 'Sản phẩm yêu thích',
   },
+  {
+    key: `/${path.MEMBER}/${path.HISTORY}`,
+    icon: <HistoryOutlined />,
+    label: 'Sản phẩm đã mua',
+  },
+  {
+    type: 'divider',
+  },
+  {
+    key: `/${path.MEMBER}/${path.SETTING}`,
+    icon: <SettingOutlined />,
+    label: 'Cài đặt tài khoản',
+  },
+];
 
-  {
-    id: 2,
-    type: 'SINGLE',
-    text: 'Lịch sử đơn hàng',
-    path: `/${path.MEMBER}/${path.HISTORY}`,
-    icon: <MdHistory size={20} />
-  },
-  {
-    id: 3,
-    type: 'SINGLE',
-    text: 'Danh sách yêu thích',
-    path: `/${path.MEMBER}/${path.WISHLIST}`,
-    icon: <FaHeart size={20} />
-  }
-]
-
-export const statusOrder = [  
+export const statusOrder = [
   {
     label: "Default",
     value: "default"
@@ -120,7 +111,7 @@ export const statusOrder = [
     value: 0,
   },
   {
-    label:'In delivery',
+    label: 'In delivery',
     value: 1,
   },
   {
@@ -167,33 +158,33 @@ export const sortFeedbackOrder = [
 
 export const AdminNavigationPath = [
   {
-      id: 1,
-      value: "Tổng quan",
-      path: path.ADMIN_OVERVIEW
+    id: 1,
+    value: "Tổng quan",
+    path: path.ADMIN_OVERVIEW
   },
   {
-      id: 2,
-      value: "Phân loại",
-      path: path.ADMIN_CATEGORY
+    id: 2,
+    value: "Phân loại",
+    path: path.ADMIN_CATEGORY
   },
   {
-      id: 3,
-      value: "Sản phẩm",
-      path: path.ADMIN_PRODUCT
+    id: 3,
+    value: "Sản phẩm",
+    path: path.ADMIN_PRODUCT
   },
   {
-      id: 4,
-      value: "Người sử dụng",
-      path: path.ADMIN_USER
+    id: 4,
+    value: "Người sử dụng",
+    path: path.ADMIN_USER
   },
   {
-      id: 5,
-      value: "Phản hồi",
-      path: path.ADMIN_FEEDBACK
+    id: 5,
+    value: "Phản hồi",
+    path: path.ADMIN_FEEDBACK
   },
   {
-      id: 6,
-      value: "Đơn đặt hàng",
-      path: path.ADMIN_ORDER
+    id: 6,
+    value: "Đơn đặt hàng",
+    path: path.ADMIN_ORDER
   },
 ];

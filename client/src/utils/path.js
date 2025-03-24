@@ -18,6 +18,7 @@ const path = {
   PERSONAL: "personal",
   HISTORY: "buy-history",
   WISHLIST: "wishlist",
+  SETTING: "setting",
 
   //Admin path
   ADMIN: "admin",

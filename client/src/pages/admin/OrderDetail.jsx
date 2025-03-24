@@ -65,8 +65,8 @@ function OrderDetail() {
   }, [orderInformation]);
 
   useEffect(() => {
-    if (orderDetail?.data?.result) {
-      const total = orderDetail.data.result.reduce((sum, item) => {
+    if (orderDetail?.data) {
+      const total = orderDetail.data.reduce((sum, item) => {
         return sum + item.unit_price * item.quantity;
       }, 0);
       setTotalMoney(total);
@@ -169,7 +169,7 @@ function OrderDetail() {
       <Card title="Cart Items" style={{ width: '90%', margin: '20px auto' }}>
         <Table
           columns={columns}
-          dataSource={orderDetail?.data?.result}
+          dataSource={orderDetail?.data}
           rowKey={(record, index) => `${record.orderId}-${index}`}
           pagination={false}
           summary={() => (

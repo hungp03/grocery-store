@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import { useSelector } from "react-redux";
 import payment from '@/assets/payment/payment.svg';
-import { apiCreateOrder, apiDeleteCart, apiGetSelectedCart, apiPaymentVNPay, apiSendEmail, getUserById, apiUpdateProduct } from "@/apis";
+import { apiCreateOrder, apiGetSelectedCart, apiPaymentVNPay, apiSendEmail, getUserById } from "@/apis";
 import { Button, InputForm } from "@/components";
 import { useForm } from "react-hook-form";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -18,11 +18,10 @@ const Checkout = () => {
     const location = useLocation();
     const { selectedItems } = location.state || {};
     const navigate = useNavigate()
-    const dispatch = useDispatch()
 
     const fetchCart = async () => {
         const response = await apiGetSelectedCart(selectedItems);
-        const fetchedCart = response?.data; // Lưu trữ dữ liệu trong biến riêng biệt
+        const fetchedCart = response?.data;
         setCart(fetchedCart);
         // Cập nhật trạng thái isCart dựa trên fetchedCart
         setIsCart(fetchedCart && fetchedCart?.length > 0);
@@ -37,94 +36,60 @@ const Checkout = () => {
     }
     const handlePayment = async (data, event) => {
         const paymentMethod = event.nativeEvent.submitter.value;
-        const formData = new FormData();
-        formData.append("userId", current?.id);
-        formData.append("address", data.address);
-        formData.append("phone", data.phone);
-        formData.append("totalPrice", cart?.reduce((sum, el) =>
-            +el?.price * el.quantity + sum, 0));
-        formData.append("paymentMethod", paymentMethod);
 
-        // Thêm từng sản phẩm trong giỏ hàng vào formData
-        const items = cart?.map((item) => ({
-            productId: item?.id,
-            productName: item?.productName,
-            quantity: item?.quantity,
-            unit_price: item?.price
-        }));
-        formData.append("items", new Blob([JSON.stringify(items)], { type: "application/json" }));
-        const response = await apiCreateOrder(formData);
-        const delay = 2000
+        // Create the request object in the format expected by the backend
+        const requestBody = {
+            address: data.address,
+            phone: data.phone,
+            totalPrice: cart?.reduce((sum, el) => +el?.price * el.quantity + sum, 0),
+            paymentMethod: paymentMethod,
+            items: cart?.map((item) => ({
+                productId: item?.id,
+                productName: item?.productName,
+                quantity: item?.quantity,
+                unit_price: item?.price
+            }))
+        };
+
+        const response = await apiCreateOrder(requestBody);
+        const delay = 2000;
+
         if (paymentMethod === 'VNPAY') {
-            const vnpayRes = await apiPaymentVNPay({ amount: formData.get("totalPrice"), bankCode: "NCB" })
+            const vnpayRes = await apiPaymentVNPay({
+                amount: requestBody.totalPrice,
+                bankCode: "NCB"
+            });
+
             if (vnpayRes?.statusCode === 200 && vnpayRes?.data?.data?.code === "ok") {
                 const paymentUrl = vnpayRes?.data?.data?.paymentUrl;
-                // Chuyển đổi FormData thành đối tượng
-                const formObject = {};
-
-                const promises = [];
-                formData.forEach((value, key) => {
-                    // Nếu key là "items", sử dụng FileReader để đọc Blob
-                    if (key === "items") {
-                        const reader = new FileReader();
-                        const promise = new Promise((resolve) => {
-                            reader.onload = () => {
-                                const itemsString = reader.result; // Kết quả là chuỗi
-                                formObject[key] = JSON.parse(itemsString); // Chuyển đổi từ JSON string về mảng
-                                resolve();
-                            };
-                        });
-                        reader.readAsText(value); // Đọc Blob dưới dạng chuỗi
-                        promises.push(promise); // Thêm promise vào danh sách
-                    } else {
-                        // Kiểm tra xem value có phải là đối tượng File không
-                        if (value instanceof File) {
-                            formObject[key] = value.name; // Hoặc xử lý theo cách mà bạn muốn
-                        } else {
-                            formObject[key] = value; // Chỉ lưu trữ giá trị cho các kiểu khác
-                        }
-                    }
-                });
-
-                await Promise.all(promises); // Chờ cho tất cả promises hoàn thành
-                localStorage.setItem('paymentData', JSON.stringify(JSON.stringify(formObject)));
-                location.state = {}
+                localStorage.setItem('paymentData', JSON.stringify(requestBody));
+                location.state = {};
                 window.location.href = paymentUrl;
-                //console.log(vnpayRes)
             }
         } else {
             if (response?.statusCode === 201) {
-                toast.success(response?.data?.message, {
-                    hideProgressBar: false, // Bật thanh tiến trình
-                    autoClose: delay, // Tùy chọn để tự động đóng sau 3 giây (hoặc thời gian bạn muốn)
-                })
+                toast.success("Đặt hàng thành công", {
+                    hideProgressBar: false,
+                    autoClose: delay,
+                });
 
-                // Sử dụng Promise.all để xử lý tất cả các yêu cầu song song
-                await Promise.all(cart.map(async (item) => {
-                    const productData = {
-                        quantity: item?.quantity,
-                    };
-                    // Cập nhật lại số lượng sản phẩm sau khi thanh toán
-                    await apiUpdateProduct(item?.id, productData);
+                // Send confirmation email
+                await apiSendEmail(requestBody);
 
-                    // Xóa sản phẩm đó khỏi cart
-                    await apiDeleteCart(item?.id);
-                }));
-
-                await apiSendEmail(formData);
-                location.state = {}
+                // Reset location state and navigate home
+                location.state = {};
                 setTimeout(() => {
-                    navigate('/')
-                    window.location.reload()
+                    navigate('/');
+                    window.location.reload();
                 }, delay);
             } else {
                 toast.error(response?.data?.error, {
                     hideProgressBar: false,
                     autoClose: delay,
-                })
+                });
             }
         }
-    }
+    };
     useEffect(() => {
         if (current && selectedItems) {
             fetchCart()
@@ -222,10 +187,10 @@ const Checkout = () => {
                                     },
                                 }}
                             />
-                      
-                                {<button className={"px-4 py-2 rounded-md text-white bg-green-600 hover:bg-green-500 shadow-lg transition duration-300 w-full"} type="submit" name="paymentMethod" value="COD">Thanh toán khi nhận hàng</button>}
-                                {<button className={"px-4 py-2 rounded-md text-white bg-blue-600 hover:bg-blue-500 shadow-lg transition duration-300 w-full"} type="submit" name="paymentMethod" value="VNPAY">Thanh toán bằng VNPAY</button>}
-                          
+
+                            {<button className={"px-4 py-2 rounded-md text-white bg-green-600 hover:bg-green-500 shadow-lg transition duration-300 w-full"} type="submit" name="paymentMethod" value="COD">Thanh toán khi nhận hàng</button>}
+                            {<button className={"px-4 py-2 rounded-md text-white bg-blue-600 hover:bg-blue-500 shadow-lg transition duration-300 w-full"} type="submit" name="paymentMethod" value="VNPAY">Thanh toán bằng VNPAY</button>}
+
 
                         </form>
                     </div>

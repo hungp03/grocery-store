@@ -6,7 +6,7 @@ module.exports = {
   ],
   theme: {
     fontFamily: {
-      main: ["Open Sans", "sans-serif"],
+      main: ["Segoe UI", "sans-serif"],
     },
     extend: {
       width: {
@@ -15,7 +15,6 @@ module.exports = {
       gridTemplateRows: {
 
         '10': 'repeat(10, minmax(0, 1fr))',
-        // Complex site-specific row configuration
         'layout': '200px minmax(900px, 1fr) 100px',
       },
 
