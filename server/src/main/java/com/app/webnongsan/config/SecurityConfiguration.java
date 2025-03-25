@@ -1,7 +1,7 @@
 
 package com.app.webnongsan.config;
 
-import com.app.webnongsan.service.CustomOAuth2UserService;
+import com.app.webnongsan.service.impl.CustomOAuth2UserService;
 import com.app.webnongsan.util.SecurityUtil;
 import com.nimbusds.jose.jwk.source.ImmutableSecret;
 import com.nimbusds.jose.util.Base64;

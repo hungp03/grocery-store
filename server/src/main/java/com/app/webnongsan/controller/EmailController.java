@@ -1,6 +1,7 @@
 package com.app.webnongsan.controller;
 
 import com.app.webnongsan.domain.User;
+import com.app.webnongsan.domain.request.CheckoutRequestDTO;
 import com.app.webnongsan.domain.response.RestResponse;
 import com.app.webnongsan.domain.response.order.OrderDetailDTO;
 import com.app.webnongsan.repository.UserRepository;
@@ -24,34 +25,27 @@ public class EmailController {
     private final UserRepository userRepository;
 
     @PostMapping("checkout/email")
-    @ApiMessage("Create a checkout payment")
-    public ResponseEntity<RestResponse<Long>> create(
-            @RequestParam("userId") Long userId,
-            @RequestParam("address") String address,
-            @RequestParam("phone") String phone,
-            @RequestParam("paymentMethod") String paymentMethod,
-            @RequestParam("totalPrice") Double totalPrice,
-            @RequestPart("items") List<OrderDetailDTO> items
-    ) throws ResourceInvalidException {
-        RestResponse<Long> response = new RestResponse<>();
+    @ApiMessage("Create a checkout email")
+    public ResponseEntity<Void> sendOrderEmail(@RequestBody CheckoutRequestDTO checkoutRequestDTO) {
         try {
             long uid = SecurityUtil.getUserId();
-            User u = this.userRepository.findById(uid).orElseThrow(() -> new UserNotFoundException("User không tồn tại"));
-            String templateName = "checkout";
+            User u = this.userRepository.findById(uid)
+                    .orElseThrow(() -> new UserNotFoundException("User không tồn tại"));
 
-            // Gửi email sau khi thanh toán thành công
+            String templateName = "checkout";
             String subject = "Thông tin đơn hàng";
 
-            emailService.sendEmailFromTemplateSyncCheckout(u.getEmail(), subject, templateName, u.getName(), address, phone, paymentMethod, totalPrice,items);
-            response.setStatusCode(HttpStatus.CREATED.value());
-            response.setMessage("Gửi email thành công");
+            emailService.sendEmailFromTemplateSyncCheckout(
+                    u.getEmail(), subject, templateName, u.getName(),
+                    checkoutRequestDTO.getAddress(), checkoutRequestDTO.getPhone(),
+                    checkoutRequestDTO.getPaymentMethod(), checkoutRequestDTO.getTotalPrice(),
+                    checkoutRequestDTO.getItems()
+            );
 
-            return new ResponseEntity<>(response, HttpStatus.CREATED);
+            return ResponseEntity.ok().build();
         } catch (Exception e) {
-            response.setStatusCode(HttpStatus.INTERNAL_SERVER_ERROR.value());
-            response.setError(e.getMessage());
-            response.setMessage("Có lỗi xảy ra trong quá trình thanh toán");
-            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
+
 }

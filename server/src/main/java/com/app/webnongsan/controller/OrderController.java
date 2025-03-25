@@ -48,7 +48,7 @@ public class OrderController {
             @RequestParam("status") int status) {
 
         orderService.updateOrderStatus(orderId, status);
-        return ResponseEntity.ok(null);
+        return ResponseEntity.ok().build();
     }
 
     @PostMapping("checkout")

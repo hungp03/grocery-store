@@ -1,97 +1,19 @@
 package com.app.webnongsan.service;
 
 import com.app.webnongsan.domain.Cart;
-import com.app.webnongsan.domain.CartId;
-import com.app.webnongsan.domain.Product;
-import com.app.webnongsan.domain.User;
 import com.app.webnongsan.domain.response.PaginationDTO;
 import com.app.webnongsan.domain.response.cart.CartItemDTO;
-import com.app.webnongsan.repository.CartRepository;
-import com.app.webnongsan.repository.UserRepository;
-import com.app.webnongsan.util.PaginationHelper;
-import com.app.webnongsan.util.SecurityUtil;
-import com.app.webnongsan.util.exception.ResourceInvalidException;
-import com.app.webnongsan.util.exception.UserNotFoundException;
-import lombok.AllArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Optional;
 
-@Service
-@AllArgsConstructor
-public class CartService {
-    private final CartRepository cartRepository;
-    private final ProductService productService;
-    private final UserRepository userRepository;
-    private final PaginationHelper paginationHelper;
 
-    public Cart addOrUpdateCart(Cart cart) {
-        long uid = SecurityUtil.getUserId();
-        User u = this.userRepository.findById(uid).orElseThrow(() -> new UserNotFoundException("User không tồn tại"));
-        Product p = this.productService.findById(cart.getId().getProductId());
+public interface CartService {
+    Cart addOrUpdateCart(Cart cart);
+    void deleteFromCart(long productId);
+    PaginationDTO getCartByCurrentUser(Pageable pageable);
+    List<CartItemDTO> getCartItemsByProductIds(List<Long> productIds, Pageable pageable);
+    void deleteSelectedItems(List<Long> productIds);
+    long countProductInCart(long userId);
 
-        if (cart.getQuantity() > p.getQuantity()) {
-            throw new ResourceInvalidException("Số lượng hàng không đủ");
-        }
-
-        Optional<Cart> existingCart = cartRepository.findById(new CartId(u.getId(), p.getId()));
-        if (existingCart.isPresent()) {
-            Cart cartItem = existingCart.get();
-            int newQuantity = cartItem.getQuantity() + cart.getQuantity();
-            if (newQuantity < 0) {
-                throw new ResourceInvalidException("Số lượng sản phẩm không hợp lệ");
-            }
-            if (newQuantity > p.getQuantity()) {
-                throw new ResourceInvalidException("Số lượng hàng trong kho không đủ");
-            }
-            cartItem.setQuantity(newQuantity);
-            return this.cartRepository.save(cartItem);
-        } else {
-            cart.setUser(u);
-            cart.setProduct(p);
-            return this.cartRepository.save(cart);
-        }
-
-    }
-
-    public void deleteFromCart(long productId) {
-        long uid = SecurityUtil.getUserId();
-        User u = this.userRepository.findById(uid).orElseThrow(() -> new UserNotFoundException("User không tồn tại"));
-        boolean exists = this.cartRepository.existsById(new CartId(uid, productId));
-        if (!exists) {
-            throw new ResourceInvalidException("Sản phẩm không tồn tại trong giỏ hàng");
-        }
-        CartId cartId = new CartId(uid, productId);
-        this.cartRepository.deleteById(cartId);
-    }
-
-    public PaginationDTO getCartByCurrentUser(Pageable pageable) {
-        long uid = SecurityUtil.getUserId();
-        User u = this.userRepository.findById(uid).orElseThrow(() -> new UserNotFoundException("User không tồn tại"));
-
-        Page<CartItemDTO> cartItems = this.cartRepository.findCartItemsByUserId(uid, pageable);
-        return this.paginationHelper.fetchAllEntities(cartItems);
-    }
-
-    public List<CartItemDTO> getCartItemsByProductIds(List<Long> productIds, Pageable pageable) {
-        long uid = SecurityUtil.getUserId();
-        User u = this.userRepository.findById(uid).orElseThrow(() -> new UserNotFoundException("User không tồn tại"));
-        return this.cartRepository.findCartItemsByUserIdAndProductId(uid, productIds, pageable);
-    }
-
-    @Transactional
-    public void deleteSelectedItems(List<Long> productIds) {
-        long uid = SecurityUtil.getUserId();
-        List<CartId> cartIds = productIds.stream()
-                .map(productId -> new CartId(uid, productId))
-                .toList();
-        cartRepository.deleteByIdIn(cartIds);
-    }
-    public long countProductInCart(long userId) {
-        return this.cartRepository.countById_UserId(userId);
-    }
 }

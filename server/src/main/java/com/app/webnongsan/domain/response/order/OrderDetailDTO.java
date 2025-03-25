@@ -6,6 +6,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.text.NumberFormat;
+import java.util.Locale;
+
 @Getter
 @Setter
 @NoArgsConstructor
@@ -16,4 +19,5 @@ public class OrderDetailDTO {
     private int quantity;
     private Double unit_price;
     private String imageUrl;
+
 }
