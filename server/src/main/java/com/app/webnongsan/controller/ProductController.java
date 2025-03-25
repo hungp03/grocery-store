@@ -2,12 +2,12 @@ package com.app.webnongsan.controller;
 
 import com.app.webnongsan.domain.Product;
 import com.app.webnongsan.domain.response.PaginationDTO;
-import com.app.webnongsan.service.DataExportService;
 import com.app.webnongsan.service.ProductService;
 import com.app.webnongsan.util.annotation.ApiMessage;
 import com.app.webnongsan.util.exception.ResourceInvalidException;
 import com.turkraft.springfilter.boot.Filter;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpHeaders;
@@ -20,14 +20,9 @@ import java.io.IOException;
 
 @RestController
 @RequestMapping("api/v2")
+@RequiredArgsConstructor
 public class ProductController {
     private final ProductService productService;
-    private final DataExportService dataExportService;
-
-    public ProductController(ProductService productService, DataExportService dataExportService) {
-        this.productService = productService;
-        this.dataExportService = dataExportService;
-    }
 
     @PostMapping("products")
     @ApiMessage("Create product")
@@ -45,7 +40,7 @@ public class ProductController {
     @ApiMessage("Delete product")
     public ResponseEntity<Void> delete(@PathVariable("id") long id) throws ResourceInvalidException {
         this.productService.delete(id);
-        return ResponseEntity.ok(null);
+        return ResponseEntity.ok().build();
     }
 
     @GetMapping("products")
@@ -75,7 +70,7 @@ public class ProductController {
     @GetMapping("products/exportExcel")
     @ApiMessage("Export product data to excel")
     public ResponseEntity<byte[]> exportProductDataToExcel() throws IOException {
-        byte[] excelData = dataExportService.exportDataToExcel();
+        byte[] excelData = productService.exportDataToExcel();
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=product_data.xlsx")

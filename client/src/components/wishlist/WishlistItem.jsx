@@ -14,11 +14,15 @@ const WishlistItem = ({ item, loadingDeletes, removeItem }) => {
                 to={`/products/${encodeURIComponent(item.category)}/${item.id}/${convertToSlug(item.productName)}`}
                 className={`flex items-center flex-1 ${item.stock <= 0 ? 'opacity-50' : ''}`}
             >
-                <img
-                    src={item.imageUrl || product_default}
-                    alt={item.productName}
-                    className="w-20 h-20 object-cover rounded-md mr-4"
-                />
+                <img className='w-20 h-20 object-cover rounded-md mr-4'
+                    src={
+                        item?.imageUrl
+                            ? item?.imageUrl.startsWith("https")
+                                ? item?.imageUrl
+                                : `${import.meta.env.VITE_BACKEND_TARGET}/storage/product/${item?.imageUrl
+                                }`
+                            : product_default
+                    } />
                 <div className="flex flex-col">
                     <h3 className="truncate hover:underline">{item.productName}</h3>
                     <p className="text-sm text-gray-500">{item.category}</p>

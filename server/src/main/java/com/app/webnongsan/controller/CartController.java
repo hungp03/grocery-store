@@ -29,7 +29,7 @@ public class CartController {
     @ApiMessage("Delete product from cart")
     public ResponseEntity<Void> delete(@PathVariable long productId){
         this.cartService.deleteFromCart(productId);
-        return ResponseEntity.ok(null);
+        return ResponseEntity.ok().build();
     }
 
     @GetMapping("cart")

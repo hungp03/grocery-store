@@ -65,17 +65,17 @@ const History = ({ navigate, location }) => {
         try {
             dispatch(showModal({
                 isShowModal: true,
-                modalChildren: <OrderCard 
-                    order={order} 
-                    onClose={() => dispatch(showModal({ isShowModal: false }))} 
-                    updateOrderStatus={updateOrderStatus} 
+                modalChildren: <OrderCard
+                    order={order}
+                    onClose={() => dispatch(showModal({ isShowModal: false }))}
+                    updateOrderStatus={updateOrderStatus}
                 />
             }));
         } catch (error) {
             console.error("Lỗi khi mở modal:", error);
         }
     };
-    
+
 
 
     const updateOrderStatus = (orderId, newStatus) => {
@@ -120,7 +120,7 @@ const History = ({ navigate, location }) => {
             key: "action",
             align: "center",
             render: (_, record) => (
-                <Tooltip title="Xem chi tiết">
+                <Tooltip title="Xem chi tiết" key={`action-${record.orderId}`}>
                     <Button
                         type="text"
                         icon={<FaEye size={20} color="green" />}
@@ -146,9 +146,9 @@ const History = ({ navigate, location }) => {
                         onChange={handleChangeStatusValue}
                         placeholder="Chọn trạng thái"
                     >
-                        {statusOrder.map(item => (
-                            <Option key={item.value} value={item.value}>{item.label}</Option>
-                        ))}
+                        {statusOrder.map((item) => (
+    <Option key={item.value} value={item.value}>{item.label}</Option>
+))}
                     </Select>
                 </Space>
             </div>
@@ -157,7 +157,7 @@ const History = ({ navigate, location }) => {
                 <Table
                     columns={columns}
                     dataSource={ordersPage}
-                    rowKey={(record) => record.productId + "-" + record.orderId}
+                    rowKey={(record) => record.id}
                     pagination={{
                         current: currentPage,
                         pageSize: paginate?.pageSize || 10,

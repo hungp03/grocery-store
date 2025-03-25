@@ -115,7 +115,7 @@ public class AuthController {
     @ApiMessage("Forgot password - OTP")
     public ResponseEntity<Void> forgotPassword(@Valid @RequestBody EmailRequestDTO emailRequest) {
         this.authService.forgotPassword(emailRequest.getEmail());
-        return ResponseEntity.ok(null);
+        return ResponseEntity.ok().build();
     }
 
     @PostMapping("auth/validate-otp")
@@ -130,7 +130,7 @@ public class AuthController {
             @RequestParam("token") String token,
             @Valid @RequestBody ResetPasswordDTO request) {
         this.authService.resetPassword(token, request);
-        return ResponseEntity.ok(null);
+        return ResponseEntity.ok().build();
     }
 
     @PostMapping("auth/signin/google")

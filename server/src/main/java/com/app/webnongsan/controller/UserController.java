@@ -40,7 +40,7 @@ public class UserController {
     @ApiMessage("Delete user")
     public ResponseEntity<Void> deleteUser(@PathVariable("id") long id) throws ResourceInvalidException {
         this.userService.delete(id);
-        return ResponseEntity.ok(null);
+        return ResponseEntity.ok().build();
     }
 
     @GetMapping("users/{id}")
@@ -60,14 +60,14 @@ public class UserController {
     @ApiMessage("Change password")
     public ResponseEntity<Void> changePassword(@Valid @RequestBody UpdatePasswordDTO dto){
         this.userService.changePassword(dto);
-        return ResponseEntity.ok(null);
+        return ResponseEntity.ok().build();
     }
 
     @PutMapping("users/status")
     @ApiMessage("Update user status")
     public ResponseEntity<Void> updateUser(@RequestBody UserStatusDTO user) throws ResourceInvalidException {
         this.userService.updateStatus(user);
-        return ResponseEntity.ok(null);
+        return ResponseEntity.ok().build();
     }
 
     @PutMapping("users/account")

@@ -26,7 +26,7 @@ public class WishlistController {
     @ApiMessage("Delete wishlist")
     public ResponseEntity<Void> delete(@PathVariable("pid") long productId){
         this.wishlistService.deleteWishlist(productId);
-        return ResponseEntity.ok(null);
+        return ResponseEntity.ok().build();
     }
 
     @GetMapping("wishlist")

@@ -40,7 +40,7 @@ public class CategoryController {
     @ApiMessage("Delete category")
     public ResponseEntity<Void> delete(@PathVariable("id") long id){
         this.categoryService.delete(id);
-        return ResponseEntity.ok(null);
+        return ResponseEntity.ok().build();
     }
 
     @GetMapping("categories")
