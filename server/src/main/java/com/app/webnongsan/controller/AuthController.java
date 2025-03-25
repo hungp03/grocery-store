@@ -58,9 +58,17 @@ public class AuthController {
                 .maxAge(refreshTokenExpiration)
                 .sameSite("Lax")
                 .build();
+        ResponseCookie deviceCookie = ResponseCookie.from("device", (String) response.get("device"))
+                .httpOnly(true)
+                .secure(false)
+                .path("/")
+                .maxAge(refreshTokenExpiration)
+                .sameSite("Lax")
+                .build();
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, responseCookie.toString())
+                .header(HttpHeaders.SET_COOKIE, deviceCookie.toString())
                 .body((ResLoginDTO) response.get("userInfo"));
     }
 
@@ -73,25 +81,35 @@ public class AuthController {
 
     @GetMapping("auth/refresh")
     @ApiMessage("Get new token")
-    public ResponseEntity<ResLoginDTO> getNewRefreshToken(@CookieValue(name = "refresh_token", defaultValue = "none") String refreshToken) {
-        Map<String, Object> response = this.authService.getNewRefreshToken(refreshToken);
+    public ResponseEntity<ResLoginDTO> getNewRefreshToken(@CookieValue(name = "refresh_token", defaultValue = "none") String refreshToken,
+            @CookieValue(name = "device", defaultValue = "none") String deviceHash) {
+        Map<String, Object> response = this.authService.getNewRefreshToken(refreshToken, deviceHash);
         // set cookies
-        ResponseCookie resCookies = ResponseCookie
+        ResponseCookie refreshCookie= ResponseCookie
                 .from("refresh_token", (String) response.get("refreshToken"))
                 .httpOnly(true)
                 .secure(true)
                 .path("/")
                 .maxAge(refreshTokenExpiration)
                 .build();
+        ResponseCookie deviceCookie = ResponseCookie
+                .from("device", deviceHash)
+                .httpOnly(true)
+                .secure(true)
+                .path("/")
+                .maxAge(refreshTokenExpiration) // Đồng bộ với refresh token
+                .build();
+
         return ResponseEntity.ok()
-                .header(HttpHeaders.SET_COOKIE, resCookies.toString())
+                .header(HttpHeaders.SET_COOKIE, refreshCookie.toString())
+                .header(HttpHeaders.SET_COOKIE, deviceCookie.toString())
                 .body((ResLoginDTO) response.get("userInfo"));
     }
 
     @PostMapping("auth/logout")
     @ApiMessage("Logout")
-    public ResponseEntity<Void> logout() {
-        this.authService.logout();
+    public ResponseEntity<Void> logout(@CookieValue(name = "device", defaultValue = "none") String deviceHash) {
+        this.authService.logout(deviceHash);
         ResponseCookie deleteCookie = ResponseCookie
                 .from("refresh_token", "")
                 .httpOnly(true)
@@ -99,10 +117,17 @@ public class AuthController {
                 .path("/")
                 .maxAge(0)
                 .build();
-
+        ResponseCookie deviceCookie = ResponseCookie.from("device", "")
+                .httpOnly(true)
+                .secure(true)
+                .path("/")
+                .maxAge(0)
+                .build();
         return ResponseEntity
                 .ok()
-                .header(HttpHeaders.SET_COOKIE, deleteCookie.toString()).body(null);
+                .header(HttpHeaders.SET_COOKIE, deleteCookie.toString())
+                .header(HttpHeaders.SET_COOKIE, deviceCookie.toString())
+                .build();
     }
 
     @PostMapping("auth/register")
@@ -146,8 +171,17 @@ public class AuthController {
                 .sameSite("Lax")
                 .build();
 
+        ResponseCookie deviceCookie = ResponseCookie.from("device", (String) response.get("device"))
+                .httpOnly(true)
+                .secure(false)
+                .path("/")
+                .maxAge(refreshTokenExpiration)
+                .sameSite("Lax")
+                .build();
+
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, responseCookie.toString())
+                .header(HttpHeaders.SET_COOKIE, deviceCookie.toString())
                 .body((ResLoginDTO) response.get("userInfo"));
     }
 }

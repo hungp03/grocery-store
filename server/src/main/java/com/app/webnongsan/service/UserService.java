@@ -2,14 +2,18 @@ package com.app.webnongsan.service;
 
 import com.app.webnongsan.domain.User;
 import com.app.webnongsan.domain.request.UpdatePasswordDTO;
+import com.app.webnongsan.domain.request.UpdateUserRequest;
 import com.app.webnongsan.domain.request.UserStatusDTO;
 import com.app.webnongsan.domain.response.PaginationDTO;
 import com.app.webnongsan.domain.response.user.CreateUserDTO;
+import com.app.webnongsan.domain.response.user.DeviceDTO;
 import com.app.webnongsan.domain.response.user.ResLoginDTO;
 import com.app.webnongsan.domain.response.user.UserDTO;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
 
 public interface UserService {
     User create(User user);
@@ -31,16 +35,16 @@ public interface UserService {
     //    UpdateUserDTO convertToUpdateUserDTO(User user);
     User getUserByUsername(String username);
 
-    void updateUserToken(String token, String email);
-
-    User getUserByRFTokenAndEmail(String email, String token);
-
     void updatePassword(String email, String newPassword);
 
     void checkAccountBanned(User user);
 
-    ResLoginDTO.UserGetAccount updateUser(String name, String phone, String address, MultipartFile avatar);
+    ResLoginDTO.UserGetAccount updateUser(UpdateUserRequest request, MultipartFile avatar);
 
     void changePassword(UpdatePasswordDTO dto);
+
+    void storeUserToken(User user, String refreshToken, String deviceInfo, String deviceHash);
+
+    List<DeviceDTO> getLoggedInDevices(String deviceHash);
 }
 

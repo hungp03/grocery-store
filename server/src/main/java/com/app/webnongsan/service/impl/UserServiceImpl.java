@@ -1,17 +1,21 @@
 package com.app.webnongsan.service.impl;
 
 import com.app.webnongsan.domain.User;
+import com.app.webnongsan.domain.UserToken;
 import com.app.webnongsan.domain.request.UpdatePasswordDTO;
+import com.app.webnongsan.domain.request.UpdateUserRequest;
 import com.app.webnongsan.domain.request.UserStatusDTO;
 import com.app.webnongsan.domain.response.PaginationDTO;
 import com.app.webnongsan.domain.response.user.CreateUserDTO;
+import com.app.webnongsan.domain.response.user.DeviceDTO;
 import com.app.webnongsan.domain.response.user.ResLoginDTO;
-import com.app.webnongsan.domain.response.user.UpdateUserDTO;
 import com.app.webnongsan.domain.response.user.UserDTO;
 import com.app.webnongsan.repository.UserRepository;
+import com.app.webnongsan.repository.UserTokenRepository;
 import com.app.webnongsan.service.CartService;
 import com.app.webnongsan.service.FileService;
 import com.app.webnongsan.service.UserService;
+import com.app.webnongsan.util.HashUtil;
 import com.app.webnongsan.util.SecurityUtil;
 import com.app.webnongsan.util.exception.*;
 import lombok.AllArgsConstructor;
@@ -26,7 +30,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -37,6 +43,7 @@ public class UserServiceImpl implements UserService {
     private final PasswordEncoder passwordEncoder;
     private final FileService fileService;
     private final CartService cartService;
+    private final UserTokenRepository userTokenRepository;
 
     @Override
     public User create(User user) {
@@ -63,7 +70,8 @@ public class UserServiceImpl implements UserService {
         log.debug("Checking if user ID exists: {}", id);
         return this.userRepository.existsById(id);
     }
-@Override
+
+    @Override
     public void delete(long id) {
         log.info("Attempting to delete user with ID: {}", id);
         boolean check = this.isExistedId(id);
@@ -74,7 +82,8 @@ public class UserServiceImpl implements UserService {
         this.userRepository.deleteById(id);
         log.info("Successfully deleted user with ID: {}", id);
     }
-@Override
+
+    @Override
     public CreateUserDTO convertToCreateDTO(User user) {
         log.debug("Converting User to CreateUserDTO for user ID: {}", user.getId());
         CreateUserDTO res = new CreateUserDTO();
@@ -84,7 +93,8 @@ public class UserServiceImpl implements UserService {
         res.setStatus(user.getStatus());
         return res;
     }
-@Override
+
+    @Override
     public UserDTO convertToUserDTO(User user) {
         log.debug("Converting User to UserDTO for user ID: {}", user.getId());
         UserDTO res = new UserDTO();
@@ -97,12 +107,14 @@ public class UserServiceImpl implements UserService {
         res.setAvatarUrl(user.getAvatarUrl());
         return res;
     }
-@Override
+
+    @Override
     public User getUserById(long id) {
         log.debug("Fetching user by ID: {}", id);
         return this.userRepository.findById(id).orElseThrow(() -> new UserNotFoundException("User không tồn tại"));
     }
-@Override
+
+    @Override
     public PaginationDTO fetchAllUser(Specification<User> specification, Pageable pageable) {
         log.info("Fetching all users with pagination");
         Page<User> userPage = this.userRepository.findAll(pageable);
@@ -126,7 +138,8 @@ public class UserServiceImpl implements UserService {
         log.debug("Found {} users", userPage.getTotalElements());
         return p;
     }
-@Override
+
+    @Override
     public void updateStatus(UserStatusDTO reqUser) {
         log.info("Updating status for user ID: {}", reqUser.getId());
         User currentUser = this.getUserById(reqUser.getId());
@@ -136,7 +149,8 @@ public class UserServiceImpl implements UserService {
             log.info("Successfully updated status for user ID: {}", reqUser.getId());
         }
     }
-//    @Override
+
+    //    @Override
 //    public UpdateUserDTO convertToUpdateUserDTO(User user) {
 //        log.debug("Converting User to UpdateUserDTO for user ID: {}", user.getId());
 //        UpdateUserDTO u = new UpdateUserDTO();
@@ -149,7 +163,7 @@ public class UserServiceImpl implements UserService {
 //        u.setAvatarUrl(user.getAvatarUrl());
 //        return u;
 //    }
-
+    @Override
     public User getUserByUsername(String username) {
         log.debug("Fetching user by username: {}", username);
         User u = this.userRepository.findByEmail(username);
@@ -160,19 +174,7 @@ public class UserServiceImpl implements UserService {
         return u;
     }
 
-    public void updateUserToken(String token, String email) {
-        log.info("Updating refresh token for user with email: {}", email);
-        User currentUser = this.getUserByUsername(email);
-        currentUser.setRefreshToken(token);
-        this.userRepository.save(currentUser);
-        log.info("Successfully updated refresh token for user with email: {}", email);
-    }
-
-    public User getUserByRFTokenAndEmail(String email, String token) {
-        log.debug("Fetching user by email and refresh token");
-        return this.userRepository.findByEmailAndRefreshToken(email, token);
-    }
-
+    @Override
     public void updatePassword(String email, String newPassword) {
         log.info("Resetting password for user with email: {}", email);
         User user = getUserByUsername(email);
@@ -181,6 +183,7 @@ public class UserServiceImpl implements UserService {
         log.info("Successfully reset password for user with email: {}", email);
     }
 
+    @Override
     public void checkAccountBanned(User user) {
         log.debug("Checking if account is banned for user ID: {}", user.getId());
         if (user.getStatus() == 0) {
@@ -189,16 +192,17 @@ public class UserServiceImpl implements UserService {
         }
     }
 
+    @Override
     public ResLoginDTO.UserGetAccount updateUser(
-            String name, String phone, String address, MultipartFile avatar) {
+            UpdateUserRequest request, MultipartFile avatar) {
         log.info("Updating user profile");
         long uid = SecurityUtil.getUserId();
         User currentUserDB = this.getUserById(uid);
 
         // Cập nhật thông tin người dùng
-        currentUserDB.setName(name);
-        currentUserDB.setPhone(phone);
-        currentUserDB.setAddress(address);
+        currentUserDB.setName(request.getName());
+        currentUserDB.setPhone(request.getPhone());
+        currentUserDB.setAddress(request.getAddress());
 
         // Nếu có avatar mới, lưu ảnh vào server
         if (avatar != null && !avatar.isEmpty()) {
@@ -226,6 +230,7 @@ public class UserServiceImpl implements UserService {
         return userGetAccount;
     }
 
+    @Override
     @Transactional
     public void changePassword(UpdatePasswordDTO dto) {
         log.info("Attempting to change password for user");
@@ -244,5 +249,37 @@ public class UserServiceImpl implements UserService {
         userRepository.save(user);
         log.info("Successfully changed password for user ID: {}", user.getId());
     }
+
+    @Override
+    public void storeUserToken(User user, String refreshToken, String deviceInfo, String deviceHash) {
+        Optional<UserToken> existingToken = userTokenRepository.findByUserAndDeviceInfo(user, deviceInfo);
+
+        if (existingToken.isPresent()) {
+            // Cập nhật refreshToken mới
+            UserToken userToken = existingToken.get();
+            userToken.setRefreshToken(refreshToken);
+            userToken.setDeviceInfo(deviceInfo);
+            userTokenRepository.save(userToken);
+        } else {
+            // Tạo mới UserToken
+            UserToken newUserToken = new UserToken();
+            newUserToken.setUser(user);
+            newUserToken.setRefreshToken(refreshToken);
+            newUserToken.setDeviceInfo(deviceInfo);
+            newUserToken.setDeviceHash(deviceHash);
+            newUserToken.setCreatedAt(Instant.now());
+            userTokenRepository.save(newUserToken);
+        }
+    }
+
+    @Override
+    public List<DeviceDTO> getLoggedInDevices(String deviceHash) {
+        long userId = SecurityUtil.getUserId();
+        List<UserToken> userTokens = userTokenRepository.findByUserId(userId);
+        return userTokens.stream()
+                .map(token -> new DeviceDTO(token.getDeviceInfo(), token.getCreatedAt(), token.getDeviceHash(), token.getDeviceHash().equals(deviceHash)))
+                .toList();
+    }
+
 }
 

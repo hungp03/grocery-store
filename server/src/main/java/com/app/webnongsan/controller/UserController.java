@@ -2,12 +2,10 @@ package com.app.webnongsan.controller;
 
 import com.app.webnongsan.domain.User;
 import com.app.webnongsan.domain.request.UpdatePasswordDTO;
+import com.app.webnongsan.domain.request.UpdateUserRequest;
 import com.app.webnongsan.domain.request.UserStatusDTO;
 import com.app.webnongsan.domain.response.PaginationDTO;
-import com.app.webnongsan.domain.response.user.CreateUserDTO;
-import com.app.webnongsan.domain.response.user.ResLoginDTO;
-import com.app.webnongsan.domain.response.user.UpdateUserDTO;
-import com.app.webnongsan.domain.response.user.UserDTO;
+import com.app.webnongsan.domain.response.user.*;
 import com.app.webnongsan.service.UserService;
 import com.app.webnongsan.util.annotation.ApiMessage;
 import com.app.webnongsan.util.exception.ResourceInvalidException;
@@ -17,11 +15,13 @@ import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.List;
 
 @RestController
 @RequestMapping("api/v2")
@@ -34,6 +34,12 @@ public class UserController {
     public ResponseEntity<CreateUserDTO> createNewUser(@Valid @RequestBody User user){
         User newUser = this.userService.create(user);
         return ResponseEntity.status(HttpStatus.CREATED).body(this.userService.convertToCreateDTO(newUser));
+    }
+
+    @GetMapping("users/devices")
+    @ApiMessage("Get logged in devices")
+    public ResponseEntity<List<DeviceDTO>> getLoggedInDevices(@CookieValue(name = "device", defaultValue = "none") String deviceHash){
+        return ResponseEntity.ok(this.userService.getLoggedInDevices(deviceHash));
     }
 
     @DeleteMapping("users/{id}")
@@ -70,13 +76,14 @@ public class UserController {
         return ResponseEntity.ok().build();
     }
 
-    @PutMapping("users/account")
+    @PutMapping(value = "users/account", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @ApiMessage("Update user information")
     public ResponseEntity<ResLoginDTO.UserGetAccount> updateUser(
-            @RequestParam("name") String name,
-            @RequestParam("phone") String phone,
-            @RequestParam("address") String address,
-            @RequestParam(value = "avatarUrl", required = false) MultipartFile avatar) throws IOException {
-        return ResponseEntity.ok(this.userService.updateUser(name, phone, address, avatar));
+            @RequestPart("user") UpdateUserRequest request,
+            @RequestPart(value = "avatarUrl", required = false) MultipartFile avatar) throws IOException {
+
+        return ResponseEntity.ok(this.userService.updateUser(request, avatar));
     }
+
+
 }

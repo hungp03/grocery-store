@@ -15,16 +15,16 @@ const PaymentSuccess = () => {
     useEffect(() => {
         const fetchPaymentData = async () => {
             // Lấy thông tin thanh toán từ localStorage
-        const paymentData = localStorage.getItem('paymentData');
-            if (paymentData) {
+        const user_address = localStorage.getItem('user_address');
+            if (user_address) {
                 // Phân tích cú pháp JSON
-                const parsedDataStr = JSON.parse(paymentData);
+                const parsedDataStr = JSON.parse(user_address);
                 const parsedData = JSON.parse(parsedDataStr)
                 const items = parsedData.items
                 setPaymentInfo(parsedData);
                 setCart(items)
                 // Xóa dữ liệu khỏi localStorage nếu không cần thiết nữa
-                localStorage.removeItem('paymentData');
+                localStorage.removeItem('user_address');
             }
         }
         fetchPaymentData();

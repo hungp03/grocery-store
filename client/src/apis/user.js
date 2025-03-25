@@ -16,11 +16,11 @@ export const apiLogin = async (data) =>
         withCredentials: true
     });
 
-export const apiLoginGoogle = async (idToken) => {
+export const apiLoginGoogle = async (data) => {
     return axiosInstance({
         url: "/auth/signin/google",
         method: "post",
-        data: { idToken },
+        data,
         withCredentials: true
     });
 };
@@ -76,15 +76,15 @@ export const apiGetAllUser = async (params) =>
         params,
     });
 
-export const apiUpdateCurrentUser = async (formData) =>
-    axiosInstance({
-        url: "/users/account",
-        method: 'put',
-        data: formData,
-        headers: {
-            'Content-Type': 'multipart/form-data'
-        }
+
+export const apiUpdateCurrentUser = async (formData) => {
+    return axiosInstance.put("/users/account", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
     });
+};
+
+
+
 
 export const getUserById = async (id) => {
     return axiosInstance({
@@ -201,3 +201,10 @@ export const apiPaymentVNPay = async (params) =>
         method: 'get',
         params,
     })
+
+export const apiGetLoggedInDevices = async () =>
+    axiosInstance({
+        url: '/users/devices',
+        method: 'get',
+        withCredentials: true
+    });

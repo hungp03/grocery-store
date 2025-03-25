@@ -48,9 +48,6 @@ public class User implements Serializable {
     private String provider;
     private String providerId;
     private String avatarUrl;
-
-    @Column(columnDefinition = "MEDIUMTEXT")
-    private String refreshToken;
     @ManyToOne
     @JoinColumn(name = "role_id")
     private Role role;

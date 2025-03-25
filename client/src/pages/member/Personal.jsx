@@ -79,16 +79,21 @@ const Personal = () => {
         });
     };
 
-    const handleUpdateInfor = async (data) => {
+    const handleUpdateInfo = async (data) => {
         const formData = new FormData();
+
+        // Thêm ảnh đại diện nếu có
         if (selectedFile) {
             formData.append('avatarUrl', selectedFile);
         }
-        for (let [key, value] of Object.entries(data)) {
-            if (key !== "avatarUrl" && key !== "email") {
-                formData.append(key, value);
-            }
-        }
+
+        const userData = { ...data };
+        // Tránh gửi field trùng lặp
+        delete userData.avatarUrl;
+        // Nếu email không cần cập nhật => xóa field email
+        delete userData.email;
+
+        formData.append("user", new Blob([JSON.stringify(userData)], { type: "application/json" }));
 
         const response = await apiUpdateCurrentUser(formData);
         const delay = 2000;
@@ -105,6 +110,7 @@ const Personal = () => {
         }
     };
 
+
     const currentAvatar = user?.avatarUrl
         ? user.avatarUrl.startsWith("https")
             ? user.avatarUrl
@@ -119,7 +125,7 @@ const Personal = () => {
                 Trang cá nhân
             </Title>
 
-            <Form layout="vertical" className="p-6 max-w-2xl mx-auto" onFinish={handleSubmit(handleUpdateInfor)}>
+            <Form layout="vertical" className="p-6 max-w-2xl mx-auto" onFinish={handleSubmit(handleUpdateInfo)}>
                 <div className="mb-8 text-center">
                     <Upload
                         accept="image/*"

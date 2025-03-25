@@ -14,12 +14,12 @@ import java.util.Map;
 public interface AuthService {
     void storeOTP(String otp, String email);
     ResLoginDTO.UserGetAccount getAccount();
-    void logout();
+    void logout(String deviceHash);
     CreateUserDTO register(User user);
     void forgotPassword(String email);
     Map<String, String> verifyOtp(String email, String inputOtp);
     void resetPassword(String token, ResetPasswordDTO request);
     Map<String, Object> login(LoginDTO loginDTO);
-    Map<String, Object> getNewRefreshToken(String refreshToken);
+    Map<String, Object> getNewRefreshToken(String refreshToken, String deviceHash);
     Map<String, Object> loginGoogle(GoogleTokenRequest request)throws IOException, GeneralSecurityException;
 }

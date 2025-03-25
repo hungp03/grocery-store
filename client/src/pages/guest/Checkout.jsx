@@ -62,7 +62,7 @@ const Checkout = () => {
 
             if (vnpayRes?.statusCode === 200 && vnpayRes?.data?.data?.code === "ok") {
                 const paymentUrl = vnpayRes?.data?.data?.paymentUrl;
-                localStorage.setItem('paymentData', JSON.stringify(requestBody));
+                localStorage.setItem('user_address', JSON.stringify(requestBody));
                 location.state = {};
                 window.location.href = paymentUrl;
             }
