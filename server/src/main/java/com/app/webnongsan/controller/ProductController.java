@@ -63,7 +63,6 @@ public class ProductController {
     @PutMapping("products/quantity/{id}")
     @ApiMessage("Update quantity product")
     public ResponseEntity<Product> updateQuantity(@PathVariable("id") long id, @RequestParam("quantity") int quantity) {
-
         return ResponseEntity.ok(this.productService.updateQuantity(id, quantity));
     }
 

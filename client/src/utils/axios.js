@@ -7,7 +7,7 @@ const axiosInstance = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 5000,
+  timeout: 10000,
 });
 
 
@@ -25,45 +25,111 @@ axiosInstance.interceptors.request.use(function (config) {
   return Promise.reject(error);
 });
 
+let isRefreshing = false;
+let refreshSubscribers = []; 
 
-axiosInstance.interceptors.response.use(function (response) {
-  return response.data;
-}, async function (error) {
-  if (error.response) {
-    const originalRequest = error.config;
-    // Kiểm tra có phải lỗi 401 do access_token hết hạn hay không
-    if (error.response.status === 401 && !originalRequest._retry) {
-      originalRequest._retry = true;
-      if (!state.user.isLoggedIn) {
-        return Promise.reject(error);
-      }
-      try {
-        const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/auth/refresh`, {
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          withCredentials: true,
-        });
-        const { access_token } = response.data.data;
-        if (access_token) {
-          // Cập nhật access token trong local storage
-          let localData = window.localStorage.getItem('persist:ogani_shop/user');
-          localData = JSON.parse(localData);
-          localData.token = JSON.stringify(access_token);
-          window.localStorage.setItem('persist:ogani_shop/user', JSON.stringify(localData));
+function onRefreshed(newToken) {
+  refreshSubscribers.forEach((callback) => callback(newToken));
+  refreshSubscribers = [];
+}
 
-          // Cập nhật lại header authorization và gửi lại request gốc
-          originalRequest.headers['authorization'] = `Bearer ${access_token}`;
-          return axios(originalRequest);
+// axiosInstance.interceptors.response.use(function (response) {
+//   return response.data;
+// }, async function (error) {
+  
+//   if (error.response) {
+//     const originalRequest = error.config;
+//     // Kiểm tra có phải lỗi 401 do access_token hết hạn hay không
+//     if (error.response.status === 401 && !originalRequest._retry) {
+//       originalRequest._retry = true;
+      
+//       if (!store.getState().user.isLoggedIn) {
+//         return Promise.reject(error);
+//       }
+//       try {
+//         const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/auth/refresh`, {
+//           headers: {
+//             'Content-Type': 'application/json',
+//           },
+//           withCredentials: true,
+//         });
+//         const { access_token } = response.data.data;
+//         if (access_token) {
+//           // Cập nhật access token trong local storage
+//           let localData = window.localStorage.getItem('persist:ogani_shop/user');
+//           localData = JSON.parse(localData);
+//           localData.token = JSON.stringify(access_token);
+//           window.localStorage.setItem('persist:ogani_shop/user', JSON.stringify(localData));
+
+//           // Cập nhật lại header authorization và gửi lại request gốc
+//           originalRequest.headers['authorization'] = `Bearer ${access_token}`;
+//           return axios(originalRequest);
+//         }
+//       } catch (err) {
+//         window.localStorage.removeItem('persist:ogani_shop/user');
+//         store.dispatch(setExpiredMessage());
+//         return Promise.reject(err);
+//       }
+//     }
+//   }
+//   return error.response.data
+// });
+
+axiosInstance.interceptors.response.use(
+  (response) => response.data,
+  async (error) => {
+    if (error.response) {
+      const originalRequest = error.config;
+      
+      if (error.response.status === 401 && !originalRequest._retry) {
+        originalRequest._retry = true;
+
+        if (!store.getState().user.isLoggedIn) {
+          return Promise.reject(error);
         }
-      } catch (err) {
-        window.localStorage.removeItem('persist:ogani_shop/user');
-        store.dispatch(setExpiredMessage());
-        return Promise.reject(err);
+
+        if (!isRefreshing) {
+          isRefreshing = true;
+
+          try {
+            const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/auth/refresh`, {
+              headers: { 'Content-Type': 'application/json' },
+              withCredentials: true,
+            });
+
+            const { access_token } = response.data.data;
+            if (access_token) {
+              // Cập nhật token mới vào localStorage
+              let localData = JSON.parse(window.localStorage.getItem('persist:ogani_shop/user') || '{}');
+              localData.token = JSON.stringify(access_token);
+              window.localStorage.setItem('persist:ogani_shop/user', JSON.stringify(localData));
+
+              // Đánh dấu đã refresh xong và gọi lại các request chờ
+              isRefreshing = false;
+              onRefreshed(access_token);
+
+              // Cập nhật header của request cũ và gửi lại
+              originalRequest.headers.authorization = `Bearer ${access_token}`;
+              return axios(originalRequest);
+            }
+          } catch (err) {
+            isRefreshing = false;
+            window.localStorage.removeItem('persist:ogani_shop/user');
+            store.dispatch(setExpiredMessage());
+            return Promise.reject(err);
+          }
+        }
+
+        // Nếu đang refresh, chờ token mới rồi gửi lại request
+        return new Promise((resolve) => {
+          refreshSubscribers.push((token) => {
+            originalRequest.headers.authorization = `Bearer ${token}`;
+            resolve(axios(originalRequest));
+          });
+        });
       }
     }
+    return error.response.data
   }
-  return error.response.data
-});
-
+);
 export default axiosInstance;

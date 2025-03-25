@@ -4,12 +4,14 @@ import com.app.webnongsan.config.CustomGoogleUserDetails;
 import com.app.webnongsan.domain.OTPCode;
 import com.app.webnongsan.domain.Role;
 import com.app.webnongsan.domain.User;
+import com.app.webnongsan.domain.UserToken;
 import com.app.webnongsan.domain.request.GoogleTokenRequest;
 import com.app.webnongsan.domain.request.LoginDTO;
 import com.app.webnongsan.domain.request.ResetPasswordDTO;
 import com.app.webnongsan.domain.response.user.CreateUserDTO;
 import com.app.webnongsan.domain.response.user.ResLoginDTO;
 import com.app.webnongsan.repository.OTPCodeRepository;
+import com.app.webnongsan.repository.UserTokenRepository;
 import com.app.webnongsan.service.*;
 import com.app.webnongsan.util.SecurityUtil;
 import com.app.webnongsan.util.exception.DuplicateResourceException;
@@ -30,6 +32,7 @@ import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.time.Instant;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Random;
 
 @Slf4j
@@ -42,6 +45,7 @@ public class AuthServiceImpl implements AuthService {
     private final CartService cartService;
     private final EmailService emailService;
     private final SecurityUtil securityUtil;
+    private final UserTokenRepository userTokenRepository;
     private final CustomOAuth2UserService oAuth2UserService;
 
     @Override
@@ -72,12 +76,13 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public void logout() {
-        String email = SecurityUtil.getCurrentUserLogin().isPresent() ? SecurityUtil.getCurrentUserLogin().get() : "";
-        if (email.isEmpty()) {
-            throw new ResourceInvalidException("Accesstoken không hợp lệ");
+    public void logout(String deviceHash) {
+       long uid = SecurityUtil.getUserId();
+        Optional<UserToken> userTokenOpt = this.userTokenRepository.findByUserIdAndDeviceHash(uid, deviceHash);
+        if (userTokenOpt.isEmpty()) {
+            throw new ResourceInvalidException("Không tìm thấy phiên đăng nhập trên thiết bị này.");
         }
-        this.userService.updateUserToken(null, email);
+        userTokenRepository.delete(userTokenOpt.get());
     }
 
     @Override
@@ -149,58 +154,70 @@ public class AuthServiceImpl implements AuthService {
         String accessToken = this.securityUtil.createAccessToken(authentication.getName(), res);
         res.setAccessToken(accessToken);
         String refreshToken = this.securityUtil.createRefreshToken(loginDTO.getEmail(), res);
-        this.userService.updateUserToken(refreshToken, loginDTO.getEmail());
+        String deviceHash = loginDTO.getDeviceHash();
+        this.userService.storeUserToken(currentUserDB, refreshToken, loginDTO.getDeviceInfo(), deviceHash);
+
         return Map.of(
                 "userInfo", res,
-                "refreshToken", refreshToken
+                "refreshToken", refreshToken,
+                "device", deviceHash
         );
     }
 
     @Override
-    public Map<String, Object> getNewRefreshToken(String refreshToken) {
-        if (refreshToken.equals("none")) {
+    public Map<String, Object> getNewRefreshToken(String refreshToken, String deviceHash) {
+        if ("none".equals(refreshToken)) {
             throw new ResourceInvalidException("Vui lòng đăng nhập");
         }
 
-        // Check RFtoken hợp lệ
+        // Kiểm tra refresh token hợp lệ
         Jwt decodedToken = this.securityUtil.checkValidToken(refreshToken);
         String email = decodedToken.getSubject();
-        User currentUser = this.userService.getUserByRFTokenAndEmail(email, refreshToken);
-        if (currentUser == null) {
-            throw new ResourceInvalidException("Refresh token không hợp lệ");
+
+        // Tìm token trong bảng user_tokens theo user và deviceInfo
+        Optional<UserToken> userTokenOpt = this.userTokenRepository.findByRefreshTokenAndDeviceHash(refreshToken, deviceHash);
+        if (userTokenOpt.isEmpty() || !userTokenOpt.get().getUser().getEmail().equals(email)) {
+            throw new ResourceInvalidException("Refresh token không hợp lệ hoặc không khớp với thiết bị.");
         }
+
+        User currentUser = userTokenOpt.get().getUser();
         this.userService.checkAccountBanned(currentUser);
+
         ResLoginDTO res = new ResLoginDTO();
-        ResLoginDTO.UserLogin userLogin = new ResLoginDTO.UserLogin(
+        res.setUser(new ResLoginDTO.UserLogin(
                 currentUser.getId(),
                 currentUser.getEmail(),
                 currentUser.getName(),
-                currentUser.getRole());
-        res.setUser(userLogin);
+                currentUser.getRole()
+        ));
 
-        // create access token
-        String access_token = this.securityUtil.createAccessToken(email, res);
-        res.setAccessToken(access_token);
+        // Tạo Access Token mới
+        String accessToken = this.securityUtil.createAccessToken(email, res);
+        res.setAccessToken(accessToken);
 
-        // create refresh token
-        String new_refresh_token = this.securityUtil.createRefreshToken(email, res);
+        // Tạo Refresh Token mới
+        String newRefreshToken = this.securityUtil.createRefreshToken(email, res);
 
-        // update user
-        this.userService.updateUserToken(new_refresh_token, email);
+        // Cập nhật lại refresh token trong DB cho thiết bị đó
+        UserToken userToken = userTokenOpt.get();
+        userToken.setRefreshToken(newRefreshToken);
+        userTokenRepository.save(userToken);
+
         return Map.of(
                 "userInfo", res,
-                "refreshToken", new_refresh_token
+                "refreshToken", newRefreshToken
         );
     }
+
 
     @Override
     public Map<String, Object> loginGoogle(GoogleTokenRequest request) throws IOException, GeneralSecurityException {
         // Xử lý token từ Google
-        OAuth2User oauth2User = oAuth2UserService.processOAuth2User(request.getIdToken());
+        OAuth2User oauth2User = oAuth2UserService.processOAuth2User(request.getCredential());
         CustomGoogleUserDetails userDetails = (CustomGoogleUserDetails) oauth2User;
         User currentUserDB = userDetails.getUser();
 
-        // Kiểm tra tài khoản bị ban
+        // Kiểm tra tài khoản bị khóa
         this.userService.checkAccountBanned(currentUserDB);
 
         // Tạo authentication với CustomGoogleUserDetails
@@ -226,11 +243,13 @@ public class AuthServiceImpl implements AuthService {
 
         // Tạo refresh token
         String refresh_token = securityUtil.createRefreshToken(currentUserDB.getEmail(), res);
-        userService.updateUserToken(refresh_token, currentUserDB.getEmail());
+        String deviceHash = request.getDeviceHash();
+        this.userService.storeUserToken(currentUserDB, refresh_token, request.getDeviceInfo(), deviceHash);
 
         return Map.of(
                 "userInfo", res,
-                "refreshToken", refresh_token
+                "refreshToken", refresh_token,
+                "device", deviceHash
         );
     }
 }
