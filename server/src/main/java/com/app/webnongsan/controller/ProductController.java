@@ -60,11 +60,6 @@ public class ProductController {
     public ResponseEntity<PaginationDTO> search(@Filter Specification<Product> spec, Pageable pageable) {
         return ResponseEntity.ok(this.productService.search(spec, pageable));
     }
-    @PutMapping("products/quantity/{id}")
-    @ApiMessage("Update quantity product")
-    public ResponseEntity<Product> updateQuantity(@PathVariable("id") long id, @RequestParam("quantity") int quantity) {
-        return ResponseEntity.ok(this.productService.updateQuantity(id, quantity));
-    }
 
     @GetMapping("products/exportExcel")
     @ApiMessage("Export product data to excel")

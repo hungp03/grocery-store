@@ -49,8 +49,8 @@ public class AuthController {
 
     @PostMapping("auth/login")
     @ApiMessage("Login")
-    public ResponseEntity<ResLoginDTO> login(@Valid @RequestBody LoginDTO loginDTO) {
-        Map<String, Object> response = this.authService.login(loginDTO);
+    public ResponseEntity<ResLoginDTO> login(@Valid @RequestBody LoginDTO loginDTO, @RequestHeader("User-Agent") String userAgent) {
+        Map<String, Object> response = this.authService.login(loginDTO, userAgent);
         ResponseCookie responseCookie = ResponseCookie.from("refresh_token", (String) response.get("refreshToken"))
                 .httpOnly(true)
                 .secure(false)
@@ -82,10 +82,11 @@ public class AuthController {
     @GetMapping("auth/refresh")
     @ApiMessage("Get new token")
     public ResponseEntity<ResLoginDTO> getNewRefreshToken(@CookieValue(name = "refresh_token", defaultValue = "none") String refreshToken,
-            @CookieValue(name = "device", defaultValue = "none") String deviceHash) {
+                                                          @CookieValue(name = "device", defaultValue = "none") String deviceHash
+                                                          ) {
         Map<String, Object> response = this.authService.getNewRefreshToken(refreshToken, deviceHash);
         // set cookies
-        ResponseCookie refreshCookie= ResponseCookie
+        ResponseCookie refreshCookie = ResponseCookie
                 .from("refresh_token", (String) response.get("refreshToken"))
                 .httpOnly(true)
                 .secure(true)
@@ -160,8 +161,9 @@ public class AuthController {
 
     @PostMapping("auth/signin/google")
     @ApiMessage("Login with Google")
-    public ResponseEntity<ResLoginDTO> loginWithGoogle(@Valid @RequestBody GoogleTokenRequest request) throws GeneralSecurityException, IOException {
-        Map<String, Object> response = this.authService.loginGoogle(request);
+    public ResponseEntity<ResLoginDTO> loginWithGoogle(@Valid @RequestBody GoogleTokenRequest request,
+                                                       @RequestHeader("User-Agent") String userAgent) throws GeneralSecurityException, IOException {
+        Map<String, Object> response = this.authService.loginGoogle(request, userAgent);
         // Tạo cookie cho refresh token
         ResponseCookie responseCookie = ResponseCookie.from("refresh_token", (String) response.get("refreshToken"))
                 .httpOnly(true)

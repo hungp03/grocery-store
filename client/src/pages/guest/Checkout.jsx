@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import payment from '@/assets/payment/payment.svg';
-import { apiCreateOrder, apiGetSelectedCart, apiPaymentVNPay, apiSendEmail, getUserById } from "@/apis";
+import { apiCreateOrder, apiGetSelectedCart, apiPaymentVNPay, getUserById } from "@/apis";
 import { Button, InputForm } from "@/components";
 import { useForm } from "react-hook-form";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -72,9 +72,6 @@ const Checkout = () => {
                     hideProgressBar: false,
                     autoClose: delay,
                 });
-
-                // Send confirmation email
-                await apiSendEmail(requestBody);
 
                 // Reset location state and navigate home
                 location.state = {};

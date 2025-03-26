@@ -21,7 +21,7 @@ import java.util.List;
 public class OrderDetailController {
     private final OrderDetailService orderDetailService;
 
-    @GetMapping("OrderDetails/{orderId}")
+    @GetMapping("order-detail/{orderId}")
     @ApiMessage("Get all Order Details by Order ID")
     public ResponseEntity<List<OrderDetailDTO>> getAllOrderDetailsByOrderId(@PathVariable("orderId") long orderId) {
         return ResponseEntity.ok(this.orderDetailService.getOrderDetailById(orderId));

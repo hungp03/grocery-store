@@ -50,7 +50,7 @@ public class GlobalException {
 
     @ExceptionHandler(ResourceInvalidException.class)
     public ResponseEntity<RestResponse<Object>> handleResourceException(ResourceInvalidException ex) {
-        return buildResponse(-5, "Resource not found", ex.getMessage(), HttpStatus.NOT_FOUND);
+        return buildResponse(-5, "Resource not found", ex.getMessage(), HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(UserNotFoundException.class)

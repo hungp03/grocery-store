@@ -1,4 +1,3 @@
-import { apiDeleteCart, apiSendEmail, apiUpdateProduct } from '@/apis';
 import path from '@/utils/path';
 import React, { useEffect, useState } from 'react';
 import { FaCheckCircle } from 'react-icons/fa';
@@ -31,45 +30,6 @@ const PaymentSuccess = () => {
         location.state = {}
         
     }, [current]);
-    useEffect(()=>{
-        const handleProductUpdate = async ()=>{
-            if (Array.isArray(cart) && cart?.length > 0) {
-                await Promise.all(cart.map(async (item) => {
-                    const productData = {
-                        quantity:  item?.quantity,
-                    };
-                    // Cập nhật lại số lượng sản phẩm sau khi thanh toán
-                    await apiUpdateProduct(item?.productId, productData);
-        
-                    // Xóa sản phẩm đó khỏi cart
-                    await apiDeleteCart(item?.productId);
-                }));
-            }
-        }
-        handleProductUpdate();
-    },[cart])
-    useEffect(()=>{
-        const handleEmail = async ()=>{
-            if(paymentInfo){
-                const formData = new FormData();
-                formData.append("userId", paymentInfo?.userId);
-                formData.append("address", paymentInfo?.address);
-                formData.append("totalPrice", paymentInfo?.totalPrice);
-                formData.append("paymentMethod", paymentInfo?.paymentMethod);
-                formData.append("phone", paymentInfo?.phone);
-                // Thêm từng sản phẩm trong giỏ hàng vào formData
-                const items = cart?.map((item) => ({
-                    productId: item?.productId,
-                    productName: item?.productName,
-                    quantity: item?.quantity,
-                    unit_price: item?.unit_price
-                }));
-                formData.append("items", new Blob([JSON.stringify(items)], { type: "application/json" }));
-                await apiSendEmail(formData);
-            }
-        }
-        handleEmail();
-    },[paymentInfo])
     return (
         
         <div className="flex items-center justify-center mt-8">

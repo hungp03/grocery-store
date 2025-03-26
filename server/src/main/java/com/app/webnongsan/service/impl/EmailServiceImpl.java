@@ -1,11 +1,18 @@
 package com.app.webnongsan.service.impl;
 
+import com.app.webnongsan.domain.User;
+import com.app.webnongsan.domain.request.CheckoutRequestDTO;
 import com.app.webnongsan.domain.response.order.OrderDetailDTO;
+import com.app.webnongsan.repository.UserRepository;
 import com.app.webnongsan.service.EmailService;
+import com.app.webnongsan.util.SecurityUtil;
+import com.app.webnongsan.util.exception.UserNotFoundException;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.mail.MailException;
 import org.springframework.mail.MailSender;
 import org.springframework.mail.SimpleMailMessage;
@@ -27,7 +34,8 @@ import java.util.Locale;
 @Service
 @RequiredArgsConstructor
 public class EmailServiceImpl implements EmailService {
-    private final MailSender mailSender;
+//    private final MailSender mailSender;
+    private final UserRepository userRepository;
     private final JavaMailSender javaMailSender;
     private final SpringTemplateEngine templateEngine;
 
@@ -92,6 +100,29 @@ public class EmailServiceImpl implements EmailService {
         String content = this.templateEngine.process(templateName, context);
         this.sendEmailSync(to, subject, content, false, true);
     }
+
+    @Override
+    @Async
+    public void sendOrderEmail(CheckoutRequestDTO checkoutRequestDTO) {
+        try {
+            long uid = SecurityUtil.getUserId();
+            User u = this.userRepository.findById(uid)
+                    .orElseThrow(() -> new UserNotFoundException("User không tồn tại"));
+
+            String templateName = "checkout";
+            String subject = "Thông tin đơn hàng";
+
+            sendEmailFromTemplateSyncCheckout(
+                    u.getEmail(), subject, templateName, u.getName(),
+                    checkoutRequestDTO.getAddress(), checkoutRequestDTO.getPhone(),
+                    checkoutRequestDTO.getPaymentMethod(), checkoutRequestDTO.getTotalPrice(),
+                    checkoutRequestDTO.getItems()
+            );
+        } catch (Exception e) {
+
+        }
+    }
+
     private String formatCurrency(Double amount) {
         Locale locale = new Locale("vi", "VN");
         NumberFormat currencyFormatter = NumberFormat.getCurrencyInstance(locale);

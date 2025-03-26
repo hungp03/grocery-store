@@ -82,13 +82,6 @@ export const apiGetOrders = async (params) =>
         params
     });
 
-// Cập nhật số lượng sản phẩm
-export const apiUpdateProduct = async (pid, params) =>
-    axiosInstance({
-        url: `/products/quantity/${pid}`,
-        method: 'put',
-        params,
-    });
 export const apiGetAllRatingsPage = async (params) =>
     axiosInstance({
         url: `/ratings`,

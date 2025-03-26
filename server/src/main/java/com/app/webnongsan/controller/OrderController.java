@@ -29,19 +29,19 @@ import org.springframework.http.HttpStatus;
 public class OrderController {
     private final OrderService orderService;
 
-    @GetMapping("allOrders")
+    @GetMapping("all-orders")
     @ApiMessage("Get all Orders")
     public ResponseEntity<PaginationDTO> getAll(@Filter Specification<Order> spec, Pageable pageable) {
         return ResponseEntity.ok(this.orderService.getAll(spec, pageable));
     }
 
-    @GetMapping("orderInfo/{orderId}")
+    @GetMapping("order-info/{orderId}")
     @ApiMessage("Get order information")
     public ResponseEntity<Optional<OrderDTO>> getOrderInfo(@PathVariable("orderId") long orderId) {
         return ResponseEntity.ok(this.orderService.findOrder(orderId));
     }
 
-    @PutMapping("updateOrderStatus/{orderId}")
+    @PutMapping("update-order-status/{orderId}")
     @ApiMessage("Update order status")
     public ResponseEntity<Void> updateOrderStatus(
             @PathVariable Long orderId,
