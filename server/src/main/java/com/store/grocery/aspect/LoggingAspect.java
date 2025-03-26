@@ -19,17 +19,17 @@ import java.time.Instant;
 @Component
 public class LoggingAspect {
 
-    @Before("execution(* com.app.webnongsan.service..*(..))")
+    @Before("execution(* com.store.grocery.service..*(..))")
     public void logBeforeService(JoinPoint joinPoint) {
         logBefore(joinPoint, "Service");
     }
 
-    @AfterReturning(value = "execution(* com.app.webnongsan.service..*(..))", returning = "result")
+    @AfterReturning(value = "execution(* com.store.grocery.service..*(..))", returning = "result")
     public void logAfterReturningService(JoinPoint joinPoint, Object result) {
         logAfterReturning(joinPoint, result, "Service");
     }
 
-    @AfterThrowing(value = "execution(* com.app.webnongsan.util.exception..*(..))", throwing = "ex")
+    @AfterThrowing(value = "execution(* com.store.grocery.util.exception..*(..))", throwing = "ex")
     public void logAfterThrowing(JoinPoint joinPoint, Exception ex) {
         String clientIp = getClientIp();
         String method = joinPoint.getSignature().toShortString();
@@ -40,12 +40,12 @@ public class LoggingAspect {
         saveLogToFile(logMessage);
     }
 
-    @Around("execution(* com.app.webnongsan.controller..*(..))")
+    @Around("execution(* com.store.grocery.controller..*(..))")
     public Object logExecutionTimeController(ProceedingJoinPoint joinPoint) throws Throwable {
         return logExecutionTime(joinPoint, "Controller");
     }
 
-    @Around("execution(* com.app.webnongsan.service..*(..))")
+    @Around("execution(* com.store.grocery.service..*(..))")
     public Object logExecutionTimeService(ProceedingJoinPoint joinPoint) throws Throwable {
         return logExecutionTime(joinPoint, "Service");
     }

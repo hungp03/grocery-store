@@ -67,13 +67,13 @@ public interface CartRepository extends JpaRepository<Cart, CartId>, JpaSpecific
 
     void deleteByIdIn(List<CartId> cartIds);
 
-//    @Query("SELECT new com.app.webnongsan.domain.response.cart.CartItemDTO" +
+//    @Query("SELECT new com.store.grocery.domain.response.cart.CartItemDTO" +
 //            "(p.id, p.productName, p.price, c.quantity, p.imageUrl, cate.name, p.quantity) " +
 //            "FROM Cart c JOIN c.product p JOIN p.category cate " +
 //            "WHERE c.user.id = :userId " +
 //            "ORDER BY c.timestamp DESC")
 //    Page<CartItemDTO> findCartItemsByUserId(@Param("userId") Long userId, Pageable pageable);
-//    @Query("SELECT new com.app.webnongsan.domain.response.cart.CartItemDTO" +
+//    @Query("SELECT new com.store.grocery.domain.response.cart.CartItemDTO" +
 //            "(p.id, p.productName, p.price, c.quantity, p.imageUrl, cate.name, p.quantity) " +
 //            "FROM Cart c JOIN c.product p JOIN p.category cate " +
 //            "WHERE c.user.id = :userId AND p.id IN :productIds " +

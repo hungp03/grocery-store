@@ -8,11 +8,11 @@
 		<version>3.3.3</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
-	<groupId>com.app</groupId>
-	<artifactId>webnongsan</artifactId>
+	<groupId>com.store</groupId>
+	<artifactId>grocery</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>webnongsan</name>
-	<description>Webnongsan v2.0</description>
+	<name>grocery</name>
+	<description>Grocery Store v2.0</description>
 	<url/>
 	<licenses>
 		<license/>
