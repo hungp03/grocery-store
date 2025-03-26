@@ -4,6 +4,7 @@ import { useSelector } from "react-redux";
 import { useNavigate, useSearchParams, createSearchParams } from "react-router-dom";
 import { apiGetAllUser, apiSetStatusUser } from "@/apis";
 import avatarDefault from "@/assets/avatarDefault.png";
+import { FaS } from "react-icons/fa6";
 const PAGE_SIZE = 10;
 const User = () => {
   const { current } = useSelector((state) => state.user);
@@ -37,7 +38,7 @@ const User = () => {
       message.warning("Bạn không thể thay đổi trạng thái của chính mình");
       return;
     }
-    const newStatus = user.status === 1 ? 0 : 1;
+    const newStatus = user.status === true ? false : true;
     Modal.confirm({
       title: `Xác nhận thay đổi trạng thái cho người dùng ${user.name}?`,
       onOk: async () => {
@@ -80,10 +81,10 @@ const User = () => {
       key: "status",
       render: (status, user) => (
         <Button className="w-20 "
-          type={status === 1 ? "primary" : "default"}
+          type={status === true ? "primary" : "default"}
           onClick={() => handleStatusChange(user)}
         >
-          {status === 1 ? "Active" : "Lock"}
+          {status === true ? "Active" : "Lock"}
         </Button>
       ),
     },

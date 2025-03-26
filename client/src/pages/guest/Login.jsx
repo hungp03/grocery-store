@@ -41,7 +41,7 @@ const Login = () => {
         Swal.fire('Oops!', res.message, 'error');
       }
     } else {
-      const result = await apiLogin({...data, deviceInfo: userAgent});
+      const result = await apiLogin(data);
       setLoading(false);
       if (result.statusCode === 200) {
         dispatch(login({ isLoggedIn: true, token: result.data.access_token, userData: result.data.user }));
@@ -58,7 +58,7 @@ const Login = () => {
     const { credential } = response;
     console.log(credential)
     if (credential) {
-      const result = await apiLoginGoogle({credential, deviceInfo: userAgent});
+      const result = await apiLoginGoogle({ credential });
       if (result.statusCode === 200) {
         dispatch(login({ isLoggedIn: true, token: result.data.access_token, userData: result.data.user }));
         navigate(`/${path.HOME}`);
@@ -98,7 +98,7 @@ const Login = () => {
                 }
               }}
               // Disable input during loading
-              disabled={loading} 
+              disabled={loading}
             />
           )}
           <InputField

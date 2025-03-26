@@ -106,7 +106,7 @@ const Feedback = ({ navigate, location }) => {
             const feedback = feedbacksPage.find(feedback => feedback.id === id);
             const response = await apiHideRating(feedback?.id);
             if (+response.statusCode === 201) {
-                message.success(feedback?.status === 0 ? "Ẩn đánh giá thành công" : "Hiện đánh giá thành công");
+                message.success(feedback?.status === true ? "Ẩn đánh giá thành công" : "Hiện đánh giá thành công");
                 setTimeout(() => {
                     dispatch(getCurrentUser());
                 }, 1000);
@@ -139,8 +139,8 @@ const Feedback = ({ navigate, location }) => {
             render: (_, record) => <Button 
             type="link" 
             onClick={() => handleHideFeedback(record.id)} 
-            icon={<MdOutlineBlock color={record.status === 0 ? "red" : "gray"} />} 
-            title={record.status === 0 ? "Ẩn" : "Hiện"}/>
+            icon={<MdOutlineBlock color={record.status === true ? "red" : "gray"} />} 
+            title={record.status === true ? "Ẩn" : "Hiện"}/>
         }
     ];
 
@@ -171,15 +171,6 @@ const Feedback = ({ navigate, location }) => {
                     total: paginate?.total,
                   }}
             />
-            {/* {paginate?.pages > 1 && (
-                <Pagination
-                    current={currentPage}
-                    total={paginate?.total}
-                    pageSize={paginate?.pageSize}
-                    onChange={(page) => setCurrentPage(page)}
-                    style={{ textAlign: "center", marginTop: 16 }}
-                />
-            )} */}
         </div>
     );
 };

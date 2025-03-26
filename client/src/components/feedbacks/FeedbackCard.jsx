@@ -1,7 +1,7 @@
 import React, { memo, useRef, useEffect} from "react";
 import avatar from "@/assets/avatarDefault.png"
 import productDF from "@/assets/product_default.png"
-import { FaClock, FaRegStar, FaStar, FaX } from "react-icons/fa6";
+import { FaClock, FaStar, FaX } from "react-icons/fa6";
 import { GrStatusCritical, GrStatusCriticalSmall } from "react-icons/gr";
 
 const FeedbackCard = ({ data, onClose }) => {
@@ -63,7 +63,7 @@ const FeedbackCard = ({ data, onClose }) => {
                 </div>
 
                 <div className="flex items-center justify-start w-full text-sm text-muted-foreground mb-1">
-                     {data?.status === 0 ?
+                     {data?.status === true ?
                         (<span className="flex items-center gap-2"> <GrStatusCriticalSmall size={16} color="red"/> {"Trạng thái :"}
                         <div className="flex items-center"><span>Hiện</span></div></span>)
                         :(<span className="flex items-center gap-2"><GrStatusCritical size={16} color="gray"/>{"Trạng thái :"}

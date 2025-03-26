@@ -130,11 +130,11 @@ export const statusHideOrder = [
   },
   {
     label: 'Unhide',
-    value: 0
+    value: true
   },
   {
     label: "Hide",
-    value: 1
+    value: false
   }
 ]
 export const sortFeedbackOrder = [
