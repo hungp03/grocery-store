@@ -3,8 +3,10 @@ package com.app.webnongsan.util;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
-public class HashUtil {
+public class DeviceUtil {
     public static String generateDeviceHash(String deviceInfo) {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");

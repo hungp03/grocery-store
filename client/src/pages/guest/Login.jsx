@@ -56,6 +56,7 @@ const Login = () => {
 
   const responseGoogle = async (response) => {
     const { credential } = response;
+    console.log(credential)
     if (credential) {
       const result = await apiLoginGoogle({credential, deviceInfo: userAgent});
       if (result.statusCode === 200) {

@@ -31,6 +31,7 @@ public class UserController {
 
     @PostMapping("users")
     @ApiMessage("Create new user")
+    // Not use
     public ResponseEntity<CreateUserDTO> createNewUser(@Valid @RequestBody User user){
         User newUser = this.userService.create(user);
         return ResponseEntity.status(HttpStatus.CREATED).body(this.userService.convertToCreateDTO(newUser));
@@ -44,6 +45,7 @@ public class UserController {
 
     @DeleteMapping("users/{id}")
     @ApiMessage("Delete user")
+    // Not use
     public ResponseEntity<Void> deleteUser(@PathVariable("id") long id) throws ResourceInvalidException {
         this.userService.delete(id);
         return ResponseEntity.ok().build();

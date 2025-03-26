@@ -13,6 +13,7 @@ import com.app.webnongsan.domain.response.user.ResLoginDTO;
 import com.app.webnongsan.repository.OTPCodeRepository;
 import com.app.webnongsan.repository.UserTokenRepository;
 import com.app.webnongsan.service.*;
+import com.app.webnongsan.util.DeviceUtil;
 import com.app.webnongsan.util.SecurityUtil;
 import com.app.webnongsan.util.exception.DuplicateResourceException;
 import com.app.webnongsan.util.exception.ResourceInvalidException;
@@ -135,7 +136,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public Map<String, Object> login(LoginDTO loginDTO) {
+    public Map<String, Object> login(LoginDTO loginDTO, String userAgent) {
         User currentUserDB = this.userService.getUserByUsername(loginDTO.getEmail());
         this.userService.checkAccountBanned(currentUserDB);
         UsernamePasswordAuthenticationToken authenticationToken =
@@ -154,8 +155,8 @@ public class AuthServiceImpl implements AuthService {
         String accessToken = this.securityUtil.createAccessToken(authentication.getName(), res);
         res.setAccessToken(accessToken);
         String refreshToken = this.securityUtil.createRefreshToken(loginDTO.getEmail(), res);
-        String deviceHash = loginDTO.getDeviceHash();
-        this.userService.storeUserToken(currentUserDB, refreshToken, loginDTO.getDeviceInfo(), deviceHash);
+        String deviceHash = DeviceUtil.generateDeviceHash(userAgent);
+        this.userService.storeUserToken(currentUserDB, refreshToken, userAgent, deviceHash);
 
         return Map.of(
                 "userInfo", res,
@@ -211,7 +212,7 @@ public class AuthServiceImpl implements AuthService {
 
 
     @Override
-    public Map<String, Object> loginGoogle(GoogleTokenRequest request) throws IOException, GeneralSecurityException {
+    public Map<String, Object> loginGoogle(GoogleTokenRequest request, String userAgent) throws IOException, GeneralSecurityException {
         // Xử lý token từ Google
         OAuth2User oauth2User = oAuth2UserService.processOAuth2User(request.getCredential());
         CustomGoogleUserDetails userDetails = (CustomGoogleUserDetails) oauth2User;
@@ -243,8 +244,8 @@ public class AuthServiceImpl implements AuthService {
 
         // Tạo refresh token
         String refresh_token = securityUtil.createRefreshToken(currentUserDB.getEmail(), res);
-        String deviceHash = request.getDeviceHash();
-        this.userService.storeUserToken(currentUserDB, refresh_token, request.getDeviceInfo(), deviceHash);
+        String deviceHash = DeviceUtil.generateDeviceHash(userAgent);
+        this.userService.storeUserToken(currentUserDB, refresh_token, userAgent, deviceHash);
 
         return Map.of(
                 "userInfo", res,

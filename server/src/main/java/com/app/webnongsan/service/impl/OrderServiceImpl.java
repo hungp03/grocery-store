@@ -10,6 +10,7 @@ import com.app.webnongsan.repository.OrderRepository;
 import com.app.webnongsan.repository.ProductRepository;
 import com.app.webnongsan.repository.UserRepository;
 import com.app.webnongsan.service.CartService;
+import com.app.webnongsan.service.EmailService;
 import com.app.webnongsan.service.OrderService;
 import com.app.webnongsan.service.UserService;
 import com.app.webnongsan.util.PaginationHelper;
@@ -24,6 +25,8 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -42,6 +45,7 @@ public class OrderServiceImpl implements OrderService {
     private final ProductRepository productRepository;
     private final PaginationHelper paginationHelper;
     private final CartService cartService;
+    private final EmailService emailService;
 
     private Order get(long id) {
         log.debug("Fetching order by ID: {}", id);
@@ -179,6 +183,13 @@ public class OrderServiceImpl implements OrderService {
         // Lưu tất cả orderDetails bằng batch save
         orderDetailRepository.saveAll(orderDetails);
         log.info("Successfully created order details for order ID: {}", savedOrder.getId());
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                log.info("Transaction committed successfully, sending order email...");
+                emailService.sendOrderEmail(request);
+            }
+        });
     }
 
     @Override

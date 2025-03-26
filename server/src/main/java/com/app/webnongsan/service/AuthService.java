@@ -19,7 +19,7 @@ public interface AuthService {
     void forgotPassword(String email);
     Map<String, String> verifyOtp(String email, String inputOtp);
     void resetPassword(String token, ResetPasswordDTO request);
-    Map<String, Object> login(LoginDTO loginDTO);
+    Map<String, Object> login(LoginDTO loginDTO, String userAgent);
     Map<String, Object> getNewRefreshToken(String refreshToken, String deviceHash);
-    Map<String, Object> loginGoogle(GoogleTokenRequest request)throws IOException, GeneralSecurityException;
+    Map<String, Object> loginGoogle(GoogleTokenRequest request, String userAgent)throws IOException, GeneralSecurityException;
 }
