@@ -6,7 +6,7 @@ export const apiGetAllOrders = async (params = {}) => {
     };
 
     return axiosInstance({
-        url: "/allOrders",
+        url: "/all-orders",
         method: "get",
         params: defaultParams,
         paramsSerializer: {
@@ -22,12 +22,12 @@ export const apiGetAllOrders = async (params = {}) => {
 
 export const apiGetOrderDetail = async (oid) =>
     axiosInstance({
-        url: `/OrderDetails/${oid}`,
+        url: `/order-detail/${oid}`,
         method: "get",
     })
 export const apiGetOrderInfor = async (oid) =>
     axiosInstance({
-        url: `/orderInfo/${oid}`,
+        url: `/order-info/${oid}`,
         method: "get",
     })
 
@@ -43,7 +43,7 @@ export const apiGetMonthlyRevenue = async (month, year) =>
 
 export const apiUpdateOrderStatus = async (orderId, status) =>
     axiosInstance({
-        url: `updateOrderStatus/${orderId}`,
+        url: `update-order-status/${orderId}`,
         params: { status: status },
         method: 'put'
     })
