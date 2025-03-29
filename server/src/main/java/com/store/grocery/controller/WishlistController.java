@@ -5,6 +5,7 @@ import com.store.grocery.domain.response.PaginationDTO;
 import com.store.grocery.service.WishlistService;
 import com.store.grocery.util.annotation.ApiMessage;
 import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -12,7 +13,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("api/v2")
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class WishlistController {
     private final WishlistService wishlistService;
 

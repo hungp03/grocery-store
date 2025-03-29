@@ -52,3 +52,30 @@ export const apiGetSummary = async () =>
     axiosInstance({
         url: `admin/summary`,
     })
+
+export const apiPaymentVNPay = async (params) =>
+    axiosInstance({
+        url: `payment/vn-pay`,
+        method: 'post',
+        params,
+    })
+
+// Tạo order
+export const apiCreateOrder = async (data) => {
+    const requestBody = {
+        address: data.address,
+        phone: data.phone,
+        paymentMethod: data.paymentMethod,
+        totalPrice: data.totalPrice,
+        items: data.items
+    };
+
+    return axiosInstance({
+        url: `/checkout`,
+        method: 'post',
+        data: requestBody,
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    });
+}

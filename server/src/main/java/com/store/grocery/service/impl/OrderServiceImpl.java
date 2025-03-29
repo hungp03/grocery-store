@@ -16,7 +16,7 @@ import com.store.grocery.service.UserService;
 import com.store.grocery.util.PaginationHelper;
 import com.store.grocery.util.SecurityUtil;
 import com.store.grocery.util.exception.ResourceInvalidException;
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -35,8 +35,8 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
-@AllArgsConstructor
 @Slf4j
+@RequiredArgsConstructor
 public class OrderServiceImpl implements OrderService {
     private final OrderRepository orderRepository;
     private final UserRepository userRepository;
@@ -140,11 +140,11 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     @Transactional
-    public void create(CheckoutRequestDTO request) {
+    public Long create(CheckoutRequestDTO request) {
         log.info("Creating new order for user ID: {}", SecurityUtil.getUserId());
         long uid = SecurityUtil.getUserId();
         User currentUser = userService.getUserById(uid);
-        // Tạo order mới
+
         Order order = new Order();
         order.setUser(currentUser);
         order.setAddress(request.getAddress());
@@ -155,8 +155,8 @@ public class OrderServiceImpl implements OrderService {
 
         Order savedOrder = orderRepository.save(order);
         log.info("Successfully created order with ID: {}", savedOrder.getId());
-        List<Long> purchasedProductIds = new ArrayList<>();
 
+        List<Long> purchasedProductIds = new ArrayList<>();
         List<OrderDetail> orderDetails = request.getItems().stream().map(item -> {
             log.debug("Processing order item for product ID: {}", item.getProductId());
             Product product = productRepository.findById(item.getProductId())
@@ -169,7 +169,7 @@ public class OrderServiceImpl implements OrderService {
             product.setQuantity(product.getQuantity() - item.getQuantity());
             productRepository.save(product);
             purchasedProductIds.add(product.getId());
-            // Tạo order detail
+
             OrderDetailId id = new OrderDetailId(savedOrder.getId(), product.getId());
             OrderDetail orderDetail = new OrderDetail();
             orderDetail.setId(id);
@@ -179,10 +179,11 @@ public class OrderServiceImpl implements OrderService {
             orderDetail.setUnit_price(product.getPrice());
             return orderDetail;
         }).toList();
+
         cartService.deleteSelectedItems(purchasedProductIds);
-        // Lưu tất cả orderDetails bằng batch save
         orderDetailRepository.saveAll(orderDetails);
         log.info("Successfully created order details for order ID: {}", savedOrder.getId());
+
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
             @Override
             public void afterCommit() {
@@ -190,7 +191,10 @@ public class OrderServiceImpl implements OrderService {
                 emailService.sendOrderEmail(request);
             }
         });
+
+        return savedOrder.getId(); // Trả về orderId
     }
+
 
     @Override
     public PaginationDTO getOrdersByCurrentUser(Integer status, Pageable pageable) {
@@ -218,7 +222,7 @@ public class OrderServiceImpl implements OrderService {
     @Transactional
     public List<WeeklyRevenue> getMonthlyRevenue(int month, int year) {
         log.info("Fetching monthly revenue for month: {} and year: {}", month, year);
-        List<Object[]> res = orderRepository.GetRevenueByWeekCycle(month, year);
+        List<Object[]> res = orderRepository.GetMonthlyWeeklyRevenue(month, year);
         List<WeeklyRevenue> weeklyRevenues = new ArrayList<>();
 
         for (Object[] result : res) {

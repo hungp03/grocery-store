@@ -45,7 +45,7 @@ export const apiDeleteProduct = async (pid) =>
 export const apiRatings = async (data) =>
     axiosInstance({
         url: `/product/ratings`,
-        method: "put",
+        method: "post",
         data
     });
 
@@ -88,7 +88,7 @@ export const apiGetAllRatingsPage = async (params) =>
         method: "get",
         params
     });
-export const apiHideRating = async (id) =>
+export const apiChangeRatingStatus = async (id) =>
     axiosInstance({
         url: `ratings/${id}`,
         method: "put",

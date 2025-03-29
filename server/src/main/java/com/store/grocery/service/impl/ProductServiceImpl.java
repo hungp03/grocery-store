@@ -22,11 +22,13 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 @Slf4j
 @Service
@@ -69,6 +71,7 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public PaginationDTO getAll(Specification<Product> spec, Pageable pageable) {
+        
         Page<Product> productPage = this.productRepository.findAll(spec, pageable);
         PaginationDTO p = new PaginationDTO();
         PaginationDTO.Meta meta = new PaginationDTO.Meta();
@@ -183,38 +186,40 @@ public class ProductServiceImpl implements ProductService {
         return new PageImpl<>(resultList, pageable, totalCount);
     }
 
+    @Async
     @Override
-    public byte[] exportDataToExcel() throws IOException {
-        try (Workbook workbook = new XSSFWorkbook(); ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
-            // Tạo sheet và ghi dữ liệu vào workbook
-            Sheet sheet = workbook.createSheet("Products");
+    public CompletableFuture<byte[]> exportDataToExcelAsync() {
+        return CompletableFuture.supplyAsync(() -> {
+            try (Workbook workbook = new XSSFWorkbook(); ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
+                Sheet sheet = workbook.createSheet("Products");
 
-            // Tiêu đề cột
-            List<String> headers = List.of("ID", "Category", "Name", "Quantity", "Price", "Sold", "Unit", "Rating", "Description");
-            Row headerRow = sheet.createRow(0);
-            for (int i = 0; i < headers.size(); i++) {
-                headerRow.createCell(i).setCellValue(headers.get(i));
+                // Tiêu đề cột
+                List<String> headers = List.of("ID", "Category", "Name", "Quantity", "Price", "Sold", "Unit", "Rating", "Description");
+                Row headerRow = sheet.createRow(0);
+                for (int i = 0; i < headers.size(); i++) {
+                    headerRow.createCell(i).setCellValue(headers.get(i));
+                }
+
+                // Lấy dữ liệu từ database
+                List<Product> products = productRepository.findAll();
+                int rowIndex = 1;
+                for (Product p : products) {
+                    Row row = sheet.createRow(rowIndex++);
+                    row.createCell(0).setCellValue(p.getId());
+                    row.createCell(2).setCellValue(p.getProductName());
+                    row.createCell(3).setCellValue(p.getQuantity());
+                    row.createCell(4).setCellValue(p.getPrice());
+                    row.createCell(5).setCellValue(p.getSold());
+                    row.createCell(6).setCellValue(p.getUnit());
+                    row.createCell(7).setCellValue(p.getRating());
+                    row.createCell(8).setCellValue(p.getDescription());
+                }
+
+                workbook.write(outputStream);
+                return outputStream.toByteArray();
+            } catch (IOException e) {
+                throw new RuntimeException("Lỗi khi tạo file Excel", e);
             }
-
-            // Thêm dữ liệu (ví dụ)
-            List<Product> products = productRepository.findAll(); // Lấy từ DB
-            int rowIndex = 1;
-            for (Product p : products) {
-                Row row = sheet.createRow(rowIndex++);
-                row.createCell(0).setCellValue(p.getId());
-                row.createCell(1).setCellValue(p.getCategory().getName());
-                row.createCell(2).setCellValue(p.getProductName());
-                row.createCell(3).setCellValue(p.getQuantity());
-                row.createCell(4).setCellValue(p.getPrice());
-                row.createCell(5).setCellValue(p.getSold());
-                row.createCell(6).setCellValue(p.getUnit());
-                row.createCell(7).setCellValue(p.getRating());
-                row.createCell(8).setCellValue(p.getDescription());
-            }
-
-            // Ghi workbook ra byte array
-            workbook.write(outputStream);
-            return outputStream.toByteArray();
-        }
+        });
     }
 }

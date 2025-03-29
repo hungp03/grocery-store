@@ -96,60 +96,7 @@ export const getUserById = async (id) => {
 export const apiUpdatePassword = async (data) =>
     axiosInstance({ url: "/users/update-password", method: 'put', data });
 
-export const apiAddOrUpdateCart = async (pid, quantity) => {
-    return axiosInstance({
-        url: '/cart',
-        method: 'post',
-        data: {
-            id: {
-                productId: pid
-            },
-            quantity: quantity
-        }
-    })
-}
 
-export const apiDeleteCart = async (pid) => {
-    return axiosInstance({
-        url: `/cart/${pid}`,
-        method: 'delete'
-    })
-}
-
-export const apiGetCart = async (page, size) => {
-    return axiosInstance({
-        url: '/cart',
-        method: 'get',
-        params: { page, size }
-    })
-}
-
-export const apiDeleteWishlist = async (pid) => {
-    return axiosInstance({
-        url: `/wishlist/${pid}`,
-        method: 'delete',
-    })
-}
-
-export const apiGetWishlist = async (page, size) => {
-    return axiosInstance({
-        url: '/wishlist',
-        method: 'get',
-        params: { page, size }
-    })
-}
-
-export const apiAddWishList = async (pid) => {
-    return axiosInstance({
-        url: '/wishlist',
-        method: 'post',
-        data: {
-            id: {
-                productId: pid
-            }
-        }
-    })
-}
 
 export const apiSetStatusUser = async (user) => {
     return axiosInstance({
@@ -158,39 +105,7 @@ export const apiSetStatusUser = async (user) => {
         data: user
     });
 };
-// Tạo order
-export const apiCreateOrder = async (data) => {
-    const requestBody = {
-        address: data.address,
-        phone: data.phone,
-        paymentMethod: data.paymentMethod,
-        totalPrice: data.totalPrice,
-        items: data.items
-    };
 
-    return axiosInstance({
-        url: `/checkout`,
-        method: 'post',
-        data: requestBody,
-        headers: {
-            'Content-Type': 'application/json'
-        }
-    });
-}
-// Lấy các sản phẩm được chọn trong cart
-export const apiGetSelectedCart = async (pids) => {
-    return axiosInstance({
-        url: `cart/product-selected?productIds=${pids?.join(',')}`,
-        method: 'get',
-    });
-};
-
-export const apiPaymentVNPay = async (params) =>
-    axiosInstance({
-        url: `payment/vn-pay`,
-        method: 'get',
-        params,
-    })
 
 export const apiGetLoggedInDevices = async () =>
     axiosInstance({
@@ -198,3 +113,16 @@ export const apiGetLoggedInDevices = async () =>
         method: 'get',
         withCredentials: true
     });
+
+export const apiRequestDeactivateAccount = async () =>
+    axiosInstance({
+        url: '/deactivate/account',
+        method: 'post'
+    });
+
+export const apiDeactivateAccount = async (data) =>
+    axiosInstance({
+        url: '/deactivate/confirm',
+        method: 'post',
+        data
+});

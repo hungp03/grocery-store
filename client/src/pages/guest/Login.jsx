@@ -4,7 +4,6 @@ import Swal from 'sweetalert2';
 import { apiLogin, apiRegister, apiLoginGoogle } from "@/apis";
 import { useNavigate, Link } from "react-router-dom";
 import path from "@/utils/path";
-import { getUserAgent } from "@/utils/helper";
 import { login } from '@/store/user/userSlice';
 import { useDispatch } from "react-redux";
 import { useForm } from 'react-hook-form';
@@ -12,7 +11,6 @@ import { ClipLoader } from "react-spinners";
 import { GoogleLogin } from '@react-oauth/google';
 
 const Login = () => {
-  const userAgent = getUserAgent();
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
@@ -56,13 +54,13 @@ const Login = () => {
 
   const responseGoogle = async (response) => {
     const { credential } = response;
-    console.log(credential)
     if (credential) {
       const result = await apiLoginGoogle({ credential });
       if (result.statusCode === 200) {
         dispatch(login({ isLoggedIn: true, token: result.data.access_token, userData: result.data.user }));
         navigate(`/${path.HOME}`);
-      } else {
+      }
+       else {
         Swal.fire('Oops!', result.message, 'error');
       }
     }

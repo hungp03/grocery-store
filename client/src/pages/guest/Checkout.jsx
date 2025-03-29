@@ -7,6 +7,7 @@ import { useForm } from "react-hook-form";
 import { useLocation, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { FaRegCreditCard } from "react-icons/fa6";
+import vnpayLogo from "@/assets/vnpay_logo.png"
 
 
 const Checkout = () => {
@@ -36,7 +37,6 @@ const Checkout = () => {
     }
     const handlePayment = async (data, event) => {
         const paymentMethod = event.nativeEvent.submitter.value;
-
         // Create the request object in the format expected by the backend
         const requestBody = {
             address: data.address,
@@ -51,22 +51,28 @@ const Checkout = () => {
             }))
         };
 
-        const response = await apiCreateOrder(requestBody);
-        const delay = 2000;
-
         if (paymentMethod === 'VNPAY') {
+            // Mã hóa orderData trước khi gửi
+            const orderData = btoa(encodeURIComponent(JSON.stringify(requestBody)));
             const vnpayRes = await apiPaymentVNPay({
                 amount: requestBody.totalPrice,
-                bankCode: "NCB"
+                bankCode: "NCB",
+                orderData: orderData
             });
 
+            // if (vnpayRes?.statusCode === 200 && vnpayRes?.data?.data?.code === "ok") {
+            //     const paymentUrl = vnpayRes?.data?.data?.paymentUrl;
+            //     window.location.href = paymentUrl;
+            // }
             if (vnpayRes?.statusCode === 200 && vnpayRes?.data?.data?.code === "ok") {
                 const paymentUrl = vnpayRes?.data?.data?.paymentUrl;
-                localStorage.setItem('user_address', JSON.stringify(requestBody));
-                location.state = {};
-                window.location.href = paymentUrl;
+                console.log(paymentUrl)
+                window.open(paymentUrl, "_blank");
             }
+
         } else {
+            const response = await apiCreateOrder(requestBody);
+            const delay = 2000;
             if (response?.statusCode === 201) {
                 toast.success("Đặt hàng thành công", {
                     hideProgressBar: false,
@@ -114,7 +120,6 @@ const Checkout = () => {
                     </span>
                     <Button
                         handleOnClick={() => navigate('/cart')}
-
                     >
                         Quay về giỏ hàng
                     </Button>
@@ -186,9 +191,19 @@ const Checkout = () => {
                             />
 
                             {<button className={"px-4 py-2 rounded-md text-white bg-green-600 hover:bg-green-500 shadow-lg transition duration-300 w-full"} type="submit" name="paymentMethod" value="COD">Thanh toán khi nhận hàng</button>}
-                            {<button className={"px-4 py-2 rounded-md text-white bg-blue-600 hover:bg-blue-500 shadow-lg transition duration-300 w-full"} type="submit" name="paymentMethod" value="VNPAY">Thanh toán bằng VNPAY</button>}
-
-
+                            {<button
+                                className="px-4 py-2 rounded-md bg-blue-600 hover:bg-blue-500 shadow-lg transition duration-300 w-full flex items-center justify-center gap-2"
+                                type="submit"
+                                name="paymentMethod"
+                                value="VNPAY"
+                            >
+                                <span className="text-white">Thanh toán qua</span>
+                                <img
+                                    src={vnpayLogo}
+                                    alt="VNPay"
+                                    className="h-8"
+                                />
+                            </button>}
                         </form>
                     </div>
                 </div>

@@ -47,6 +47,7 @@ public interface UserService {
 
     List<DeviceDTO> getLoggedInDevices(String deviceHash);
 
-    void deactiveAccount();
+    void requestDeactiveAccount();
+    void verifyOTPAndDisableAccount(String inputOtp);
 }
 

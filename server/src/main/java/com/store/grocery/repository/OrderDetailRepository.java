@@ -14,6 +14,5 @@ import java.util.List;
 @Repository
 public interface OrderDetailRepository extends JpaRepository<OrderDetail, OrderDetailId>, JpaSpecificationExecutor<OrderDetail> {
     List<OrderDetail> findByOrderId(Long orderId);
-//    Page<OrderDetail> findByOrderId(Long orderId, Pageable pageable);
 }
 

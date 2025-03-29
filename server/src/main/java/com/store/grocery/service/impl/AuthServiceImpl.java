@@ -18,6 +18,7 @@ import com.store.grocery.service.EmailService;
 import com.store.grocery.service.UserService;
 import com.store.grocery.util.DeviceUtil;
 import com.store.grocery.util.SecurityUtil;
+import com.store.grocery.util.enums.OTPType;
 import com.store.grocery.util.exception.DuplicateResourceException;
 import com.store.grocery.util.exception.ResourceInvalidException;
 import com.store.grocery.util.exception.UserNotFoundException;
@@ -53,12 +54,11 @@ public class AuthServiceImpl implements AuthService {
     private final CustomOAuth2UserService oAuth2UserService;
 
     @Override
-    public void storeOTP(String otp, String email) {
-        OTPCode otpCode = otpCodeRepository.findByEmail(email)
-                .orElse(new OTPCode());
+    public void storeOTP(String otp, String email, OTPType otpType) {
+        OTPCode otpCode = otpCodeRepository.findByEmailAndType(email, otpType).orElse(new OTPCode());
         otpCode.setEmail(email);
-
         otpCode.setOtpCode(otp);
+        otpCode.setType(otpType);
         otpCodeRepository.save(otpCode);
     }
 
@@ -82,7 +82,7 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public void logout(String deviceHash) {
-       long uid = SecurityUtil.getUserId();
+        long uid = SecurityUtil.getUserId();
         Optional<UserToken> userTokenOpt = this.userTokenRepository.findByUserIdAndDeviceHash(uid, deviceHash);
         if (userTokenOpt.isEmpty()) {
             throw new ResourceInvalidException("Không tìm thấy phiên đăng nhập trên thiết bị này.");
@@ -108,18 +108,18 @@ public class AuthServiceImpl implements AuthService {
             throw new UserNotFoundException("Email " + email + " không tồn tại");
         }
         String otp = String.format("%06d", new Random().nextInt(1000000));
-        this.storeOTP(otp, email);
+        this.storeOTP(otp, email, OTPType.RESET_PASSWORD);
         this.emailService.sendEmailFromTemplateSync(email, "Reset password", "forgotPassword", email, otp);
     }
 
     @Override
     @Transactional
     public Map<String, String> verifyOtp(String email, String inputOtp) {
-        return otpCodeRepository.findByEmail(email)
+        return otpCodeRepository.findByEmailAndType(email, OTPType.RESET_PASSWORD)
                 .filter(otp -> otp.getOtpCode().equals(inputOtp) && otp.getExpiresAt().isAfter(Instant.now()))
                 .map(otp -> {
                     String tempToken = securityUtil.createResetToken(email);
-                    otpCodeRepository.deleteByEmail(email); // Xóa OTP sau khi xác thực
+                    otpCodeRepository.deleteByEmailAndType(email, OTPType.RESET_PASSWORD); // Xóa OTP sau khi xác thực
                     return Map.of("tempToken", tempToken);
                 })
                 .orElseThrow(() -> new ResourceInvalidException("Mã OTP không hợp lệ hoặc đã hết hạn."));
@@ -142,7 +142,6 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public Map<String, Object> login(LoginDTO loginDTO, String userAgent) {
         User currentUserDB = this.userService.getUserByUsername(loginDTO.getEmail());
-        this.userService.checkAccountBanned(currentUserDB);
         UsernamePasswordAuthenticationToken authenticationToken =
                 new UsernamePasswordAuthenticationToken(loginDTO.getEmail(), loginDTO.getPassword());
 
@@ -220,11 +219,8 @@ public class AuthServiceImpl implements AuthService {
         // Xử lý token từ Google
         OAuth2User oauth2User = oAuth2UserService.processOAuth2User(request.getCredential());
         CustomGoogleUserDetails userDetails = (CustomGoogleUserDetails) oauth2User;
-        User currentUserDB = userDetails.getUser();
-
-        // Kiểm tra tài khoản bị khóa
-        this.userService.checkAccountBanned(currentUserDB);
-
+        User currentUser = userDetails.getUser();
+        userService.checkAccountBanned(currentUser);
         // Tạo authentication với CustomGoogleUserDetails
         Authentication authentication = new UsernamePasswordAuthenticationToken(
                 userDetails,
@@ -232,24 +228,22 @@ public class AuthServiceImpl implements AuthService {
                 userDetails.getAuthorities()
         );
         SecurityContextHolder.getContext().setAuthentication(authentication);
-
-        // Tạo response
         ResLoginDTO res = new ResLoginDTO();
         ResLoginDTO.UserLogin userLogin = new ResLoginDTO.UserLogin(
-                currentUserDB.getId(),
-                currentUserDB.getEmail(),
-                currentUserDB.getName(),
-                currentUserDB.getRole());
+                currentUser.getId(),
+                currentUser.getEmail(),
+                currentUser.getName(),
+                currentUser.getRole());
         res.setUser(userLogin);
 
         // Tạo access token
-        String accessToken = securityUtil.createAccessToken(currentUserDB.getEmail(), res);
+        String accessToken = securityUtil.createAccessToken(currentUser.getEmail(), res);
         res.setAccessToken(accessToken);
 
         // Tạo refresh token
-        String refresh_token = securityUtil.createRefreshToken(currentUserDB.getEmail(), res);
+        String refresh_token = securityUtil.createRefreshToken(currentUser.getEmail(), res);
         String deviceHash = DeviceUtil.generateDeviceHash(userAgent);
-        this.userService.storeUserToken(currentUserDB, refresh_token, userAgent, deviceHash);
+        this.userService.storeUserToken(currentUser, refresh_token, userAgent, deviceHash);
 
         return Map.of(
                 "userInfo", res,

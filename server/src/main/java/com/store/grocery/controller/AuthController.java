@@ -2,13 +2,12 @@ package com.store.grocery.controller;
 
 import com.store.grocery.domain.User;
 import com.store.grocery.domain.request.auth.*;
-import com.store.grocery.domain.request.auth.*;
 import com.store.grocery.domain.response.user.CreateUserDTO;
 import com.store.grocery.domain.response.user.ResLoginDTO;
-import com.store.grocery.service.*;
 import com.store.grocery.service.AuthService;
 import com.store.grocery.util.annotation.ApiMessage;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -22,15 +21,12 @@ import java.util.*;
 
 @RestController
 @RequestMapping("api/v2")
+@RequiredArgsConstructor
 public class AuthController {
 
     private final AuthService authService;
     @Value("${jwt.refreshtoken-validity-in-seconds}")
     private long refreshTokenExpiration;
-
-    public AuthController(AuthService authService) {
-        this.authService = authService;
-    }
 
     @PostMapping("auth/login")
     @ApiMessage("Login")

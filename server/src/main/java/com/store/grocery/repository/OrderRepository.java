@@ -17,7 +17,7 @@ public interface OrderRepository extends JpaRepository<Order, Long>, JpaSpecific
     Page<Order> findByUserId(Long userId, Pageable pageable);
 
     @Procedure
-    List<Object[]> GetRevenueByWeekCycle(
+    List<Object[]> GetMonthlyWeeklyRevenue(
             @Param("month") int month,
             @Param("year") int year
     );
