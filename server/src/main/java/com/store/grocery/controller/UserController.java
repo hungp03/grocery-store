@@ -3,6 +3,7 @@ package com.store.grocery.controller;
 import com.store.grocery.domain.User;
 import com.store.grocery.domain.request.user.UpdatePasswordDTO;
 import com.store.grocery.domain.request.user.UpdateUserRequest;
+import com.store.grocery.domain.request.user.UserDisableOTP;
 import com.store.grocery.domain.request.user.UserStatusDTO;
 import com.store.grocery.domain.response.PaginationDTO;
 import com.store.grocery.domain.response.user.CreateUserDTO;
@@ -14,7 +15,7 @@ import com.store.grocery.util.annotation.ApiMessage;
 import com.store.grocery.util.exception.ResourceInvalidException;
 import com.turkraft.springfilter.boot.Filter;
 import jakarta.validation.Valid;
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
@@ -28,7 +29,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("api/v2")
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class UserController {
     private final UserService userService;
 
@@ -90,5 +91,18 @@ public class UserController {
         return ResponseEntity.ok(this.userService.updateUser(request, avatar));
     }
 
+    @PostMapping("deactivate/account")
+    @ApiMessage("Request deactivate account")
+    public ResponseEntity<Void> requestDisableOTP() {
+        userService.requestDeactiveAccount();
+        return ResponseEntity.ok().build();
+    }
 
+    @PostMapping("/deactivate/confirm")
+    @ApiMessage("Confirm deactivate account")
+    public ResponseEntity<Void> confirmDisableAccount(
+            @RequestBody UserDisableOTP otpCode) {
+        userService.verifyOTPAndDisableAccount(otpCode.getOtpCode());
+        return ResponseEntity.ok().build();
+    }
 }

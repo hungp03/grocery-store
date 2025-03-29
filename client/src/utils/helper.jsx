@@ -61,14 +61,3 @@ export const convertToSlug = (text) => {
 
   return newText;
 }
-
-export const getUserAgent = () => {
-  const ua = navigator.userAgent;
-    const osMatch = ua.match(/\((.*?)\)/);
-    const osInfo = osMatch ? osMatch[1].split(";").slice(0, 2).join(" ") : "Unknown OS";
-
-    const browserMatch = ua.match(/(Chrome|Edg)\/([\d.]+)/g);
-    const browserInfo = browserMatch ? browserMatch.join(" ") : "Unknown Browser";
-
-    return `${osInfo} ${browserInfo}`;
-}

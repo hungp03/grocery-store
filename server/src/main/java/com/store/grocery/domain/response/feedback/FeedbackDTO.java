@@ -1,5 +1,6 @@
 package com.store.grocery.domain.response.feedback;
 
+import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -13,17 +14,12 @@ import java.time.Instant;
 @NoArgsConstructor
 public class FeedbackDTO {
     private long id;
-    //Usser
-    private Long userId;
     private String userName;
     private String userAvatarUrl;
-    //Product
-    private Long productId;
     private String product_name;
-    private String imageUrl;
-    //Feedback
     private int ratingStar;
     private String description;
     private boolean status;
     private Instant updatedAt;
+
 }

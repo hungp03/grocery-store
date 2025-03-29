@@ -15,7 +15,7 @@ public interface OrderService {
     Optional<OrderDTO> findOrder(long id);
     PaginationDTO getAll(Specification<Order> spec, Pageable pageable);
     void updateOrderStatus(Long orderId, int status);
-    void create(CheckoutRequestDTO request);
+    Long create(CheckoutRequestDTO request);
     PaginationDTO getOrdersByCurrentUser(Integer status, Pageable pageable);
     List<WeeklyRevenue> getMonthlyRevenue(int month, int year);
     List<Object> getOverviewStats();

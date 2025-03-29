@@ -60,7 +60,7 @@ const ProductDetail = ({ isQuickView, data }) => {
     const response = await apiGetRatingsPage(pid, { page, size: 5 });
     if (response.statusCode === 200) {
       setFeedbacks(response.data?.result);
-      setFeedbacksPage(response.data?.result); 
+      setFeedbacksPage(response.data?.result);
       setCurrentPage(page);
     }
   };
@@ -76,14 +76,14 @@ const ProductDetail = ({ isQuickView, data }) => {
       if (pid) {
         await fetchProductData();
         await fetchRecommended();
-        
+
         // Chỉ gọi fetchFeedbacksData nếu không ở chế độ Quick View
         if (!isQuickView) {
           await fetchFeedbacksData(currentPage);
         }
       }
     };
-  
+
     fetchData();
   }, [pid, currentPage, update, isQuickView])
 
@@ -111,7 +111,7 @@ const ProductDetail = ({ isQuickView, data }) => {
       alert("Vui lòng nhập đầy đủ thông tin");
       return;
     }
-    await apiRatings({ description: comment, ratingStar: score, productId: pid, userId: uid });
+    await apiRatings({ description: comment, rating: score, productId: pid, userId: uid });
     dispatch(showModal({ isShowModal: false, modalChildren: null }));
     rerender();
   };
@@ -176,17 +176,16 @@ const ProductDetail = ({ isQuickView, data }) => {
         <div className={clsx('flex-4 flex flex-col gap-4 ', isQuickView ? 'w-1/2' : 'w-2/5')}>
           <div className='w-[450px]'>
             <div className='px-2' >
-              <img 
-              src={
-                product?.imageUrl
-                  ? product?.imageUrl.startsWith("https")
-                    ? product?.imageUrl
-                    : `${import.meta.env.VITE_BACKEND_TARGET}/storage/product/${
-                      product?.imageUrl
+              <img
+                src={
+                  product?.imageUrl
+                    ? product?.imageUrl.startsWith("https")
+                      ? product?.imageUrl
+                      : `${import.meta.env.VITE_BACKEND_TARGET}/storage/product/${product?.imageUrl
                       }`
-                  : product_default
-              }
-              alt='product' className='object-cover' />
+                    : product_default
+                }
+                alt='product' className='object-cover' />
             </div>
           </div>
         </div>

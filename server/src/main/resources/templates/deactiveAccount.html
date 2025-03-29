@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <title>Deactive Account</title>
+</head>
+<body>
+<div style="padding: 20px; background-color: #f4f4f4; max-width: 600px; margin: 0 auto; border-radius: 10px; box-shadow: 0 2px 3px rgba(0, 0, 0, 0.1); text-align: center;">
+  <h2 style="color: #333;">Xin chào <span th:text="${NAME}"></span>,</h2>
+
+  <p style="color: #555; font-size: 16px;">
+    Bạn đã yêu cầu vô hiệu hóa tài khoản từ Ogani. Đây là mã xác thực OTP của bạn:
+  </p>
+
+  <div style="font-size: 24px; font-weight: bold; background-color: #10B981; color: white; padding: 10px; display: inline-block; border-radius: 5px;">
+    <span th:text="${OTP}"></span>
+  </div>
+
+  <p style="color: #555; font-size: 14px; margin-top: 20px;">
+    Mã OTP này có hiệu lực trong vòng <b>5 phút</b>. Vui lòng không chia sẻ mã này với bất kỳ ai.
+  </p>
+
+  <p style="color: #777; font-size: 12px;">
+    Nếu bạn không yêu cầu, hãy bỏ qua email này. Bạn có thể khôi phục tài khoản bằng cách liên hệ chúng tôi. Cảm ơn bạn đã sử dụng Ogani.
+  </p>
+</div>
+</body>
+</html>

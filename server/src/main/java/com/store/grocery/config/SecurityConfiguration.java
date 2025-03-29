@@ -1,10 +1,12 @@
 
 package com.store.grocery.config;
 
+import com.store.grocery.controller.ProductController;
 import com.store.grocery.service.impl.CustomOAuth2UserService;
 import com.store.grocery.util.SecurityUtil;
 import com.nimbusds.jose.jwk.source.ImmutableSecret;
 import com.nimbusds.jose.util.Base64;
+import com.store.grocery.util.constants.WhiteListAPI;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -24,7 +26,10 @@ import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
+import org.springframework.security.oauth2.server.resource.web.authentication.BearerTokenAuthenticationFilter;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.intercept.FilterSecurityInterceptor;
+import org.springframework.security.web.context.SecurityContextPersistenceFilter;
 
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
@@ -38,7 +43,7 @@ public class SecurityConfiguration {
 
     private final CustomOAuth2UserService customOauth2;
     private final OAuth2AuthenticationSuccessHandler authenticationSuccessHandler;
-
+    private final AccountLockFilter accountLockFilter;
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
@@ -47,23 +52,14 @@ public class SecurityConfiguration {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http,
                                            CustomAuthenticationEntryPoint customAuthenticationEntryPoint) throws Exception {
-        String[] whiteList = {
-                "/", "/api/v2/auth/login",
-                "/api/v2/auth/refresh",
-                "/api/v2/auth/register",
-                "/api/v2/auth/forgot",
-                "/api/v2/auth/reset-password",
-                "/api/v2/auth/validate-otp",
-                "/api/v2/auth/signin/google",
-                "/storage/**",
-                "/oauth2/**",
-                "/v3/api-docs/**",
-                "/swagger-ui/**",
-                "/swagger-ui.html"
-        };
+        String[] whiteList = WhiteListAPI.whiteList;
 
         http.csrf(AbstractHttpConfigurer::disable)
                 .cors(Customizer.withDefaults())
+                .addFilterAfter(
+                        accountLockFilter,
+                        BearerTokenAuthenticationFilter.class
+                )
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(whiteList).permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v2/products/exportExcel").hasRole("ADMIN")
@@ -71,8 +67,8 @@ public class SecurityConfiguration {
                         .requestMatchers(HttpMethod.GET, "/api/v2/categories/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v2/product/ratings/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v2/files").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/v2/payment/vn-pay/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/v2/payment/vn-pay").permitAll()
+                        // .requestMatchers(HttpMethod.GET, "/api/v2/payment/vn-pay/**").permitAll()
+                        // .requestMatchers(HttpMethod.GET, "/api/v2/payment/vn-pay").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v2/payment/vn-pay-callback").permitAll()
                         .requestMatchers("/favicon.ico").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v2/ratings").hasRole("ADMIN")

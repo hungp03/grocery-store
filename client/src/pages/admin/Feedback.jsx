@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { Button, Select, Table, Modal, message } from "antd";
-import { apiGetAllRatingsPage, apiHideRating } from "@/apis";
+import { apiGetAllRatingsPage, apiChangeRatingStatus } from "@/apis";
 import { useDispatch, useSelector } from "react-redux";
 import { showModal } from '@/store/app/appSlice';
-import {  useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import { sortFeedbackOrder, statusHideOrder } from "@/utils/constants";
 import withBaseComponent from "@/hocs/withBaseComponent";
 import { FaEye } from "react-icons/fa6";
@@ -104,8 +104,8 @@ const Feedback = ({ navigate, location }) => {
             });
         } else {
             const feedback = feedbacksPage.find(feedback => feedback.id === id);
-            const response = await apiHideRating(feedback?.id);
-            if (+response.statusCode === 201) {
+            const response = await apiChangeRatingStatus(feedback?.id);
+            if (+response.statusCode === 200) {
                 message.success(feedback?.status === true ? "Ẩn đánh giá thành công" : "Hiện đánh giá thành công");
                 setTimeout(() => {
                     dispatch(getCurrentUser());
@@ -126,21 +126,21 @@ const Feedback = ({ navigate, location }) => {
             title: 'Xem chi tiết',
             key: 'viewDetail',
             align: 'center',
-            render: (_, record) => <Button 
-            type="link" 
-            onClick={() => handleViewDetail(record.id)} 
-            icon={<FaEye color="green" />} 
-            title="Xem chi tiết"/>
+            render: (_, record) => <Button
+                type="link"
+                onClick={() => handleViewDetail(record.id)}
+                icon={<FaEye color="green" />}
+                title="Xem chi tiết" />
         },
         {
             title: 'Ẩn',
             key: 'hide',
             align: 'center',
-            render: (_, record) => <Button 
-            type="link" 
-            onClick={() => handleHideFeedback(record.id)} 
-            icon={<MdOutlineBlock color={record.status === true ? "red" : "gray"} />} 
-            title={record.status === true ? "Ẩn" : "Hiện"}/>
+            render: (_, record) => <Button
+                type="link"
+                onClick={() => handleHideFeedback(record.id)}
+                icon={<MdOutlineBlock color={record.status === true ? "red" : "gray"} />}
+                title={record.status === true ? "Ẩn" : "Hiện"} />
         }
     ];
 
@@ -169,7 +169,7 @@ const Feedback = ({ navigate, location }) => {
                     pageSize: paginate?.pageSize,
                     onChange: (page) => setCurrentPage(page),
                     total: paginate?.total,
-                  }}
+                }}
             />
         </div>
     );

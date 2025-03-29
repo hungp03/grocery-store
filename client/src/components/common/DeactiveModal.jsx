@@ -1,52 +1,209 @@
-import { useState } from "react"
-import { Button, Form, Input, Modal, message } from "antd"
-
-export default function DeactivateAccountModal({ open, onClose }) {
-  const [form] = Form.useForm()
+import { useRef, useState } from "react"
+import { useNavigate } from "react-router-dom"
+import { Button, Input, Modal, message } from "antd"
+import { apiRequestDeactivateAccount, apiDeactivateAccount } from "@/apis"
+import path from "@/utils/path"
+export default function OtpVerificationModal({ open, onClose }) {
+  const navigate = useNavigate()
   const [loading, setLoading] = useState(false)
+  const [otp, setOtp] = useState(['', '', '', '', '', ''])
+  const [step, setStep] = useState('confirmation') // 'confirmation' or 'otp'
 
-  const handleDeactivate = async (values) => {
-    try {
-      setLoading(true)
-      // Simulate API call - replace with actual API
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+  // Create refs for each input
+  const inputRefs = [
+    useRef(null),
+    useRef(null),
+    useRef(null),
+    useRef(null),
+    useRef(null),
+    useRef(null),
+  ]
 
-      message.success("Tài khoản đã được vô hiệu hóa")
-      form.resetFields()
+  const handleProceedToOtp = async () => {
+    setStep('otp')
+    const response = await apiRequestDeactivateAccount();
+    if (response.statusCode === 200) {
+      message.success("OTP đã được gửi đến email của bạn");
+    } else {
+      message.error(response.message || "Có lỗi xảy ra khi gửi OTP");
+    }
+    // Focus the first input field after a short delay to ensure it's rendered
+    setTimeout(() => {
+      if (inputRefs[0].current) {
+        inputRefs[0].current.focus()
+      }
+    }, 100)
+  }
+
+  const handleVerify = async () => {
+    // Check if OTP is complete
+    if (otp.some(digit => digit === '')) {
+      message.error("Vui lòng nhập đầy đủ mã OTP 6 chữ số")
+      return
+    }
+  
+    setLoading(true)
+    const otpValue = otp.join('')
+  
+    const response = await apiDeactivateAccount({otpCode: otpValue})
+  
+    if (response.statusCode === 200) {
+      message.success("Xác thực OTP thành công")
+      setOtp(['', '', '', '', '', ''])
+      setStep('confirmation')
       onClose()
-    } catch (error) {
-      message.error(error.message || "Có lỗi xảy ra khi vô hiệu hóa tài khoản")
-    } finally {
-      setLoading(false)
+      setTimeout(() => {
+        navigate(path.HOME)
+      }, 1000)
+    } else {
+      message.error(response.message || "Có lỗi xảy ra khi xác thực OTP")
+      setOtp(['', '', '', '', '', ''])
+    }
+  
+    setLoading(false)
+  }  
+
+  const handleCancel = () => {
+    setOtp(['', '', '', '', '', ''])
+    setStep('confirmation')
+    onClose()
+  }
+
+  const handleInputChange = (e, index) => {
+    const { value } = e.target
+
+    // Only allow numeric input
+    if (!/^\d*$/.test(value)) return
+
+    // Update the OTP array
+    const newOtp = [...otp]
+    newOtp[index] = value.slice(0, 1)
+    setOtp(newOtp)
+
+    // Move focus to next input if current input is filled
+    if (value && index < 5) {
+      inputRefs[index + 1].current.focus()
     }
   }
 
-  return (
-    <Modal title="Vô hiệu hóa tài khoản" open={open} onCancel={onClose} footer={null} width={500}>
-      <div className="py-2">
-        <p className="text-red-500 mb-4">
-          Cảnh báo: Hành động này sẽ vô hiệu hóa tài khoản của bạn. Bạn sẽ không thể đăng nhập cho đến khi liên hệ với
-          đội ngũ hỗ trợ để kích hoạt lại.
-        </p>
+  const handleKeyDown = (e, index) => {
+    // Handle backspace
+    if (e.key === 'Backspace') {
+      if (otp[index] === '' && index > 0) {
+        // If current field is empty and backspace is pressed, move to previous field
+        const newOtp = [...otp]
+        newOtp[index - 1] = ''
+        setOtp(newOtp)
+        inputRefs[index - 1].current.focus()
+      } else if (otp[index] !== '') {
+        // If current field has a value, clear it
+        const newOtp = [...otp]
+        newOtp[index] = ''
+        setOtp(newOtp)
+      }
+    }
 
-        <Form form={form} layout="vertical" onFinish={handleDeactivate}>
-          <Form.Item
-            label="Nhập mật khẩu để xác nhận"
-            name="password"
-            rules={[{ required: true, message: "Vui lòng nhập mật khẩu để xác nhận" }]}
-          >
-            <Input.Password placeholder="Nhập mật khẩu của bạn" />
-          </Form.Item>
+    // Handle left arrow key
+    if (e.key === 'ArrowLeft' && index > 0) {
+      inputRefs[index - 1].current.focus()
+    }
 
-          <div className="flex justify-end gap-2 mt-4">
-            <Button onClick={onClose}>Hủy</Button>
-            <Button danger type="primary" htmlType="submit" loading={loading}>
-              Xác nhận vô hiệu hóa
-            </Button>
-          </div>
-        </Form>
+    // Handle right arrow key
+    if (e.key === 'ArrowRight' && index < 5) {
+      inputRefs[index + 1].current.focus()
+    }
+  }
+
+  // Handle paste event
+  const handlePaste = (e) => {
+    e.preventDefault()
+    const pastedData = e.clipboardData.getData('text')
+
+    // Check if pasted content is numeric and has appropriate length
+    if (/^\d+$/.test(pastedData)) {
+      const digits = pastedData.slice(0, 6).split('')
+      const newOtp = [...otp]
+
+      digits.forEach((digit, index) => {
+        if (index < 6) newOtp[index] = digit
+      })
+
+      setOtp(newOtp)
+
+      // Focus the next empty field or the last field if all are filled
+      const nextEmptyIndex = newOtp.findIndex(digit => digit === '')
+      if (nextEmptyIndex !== -1) {
+        inputRefs[nextEmptyIndex].current.focus()
+      } else if (digits.length < 6) {
+        inputRefs[digits.length].current.focus()
+      } else {
+        inputRefs[5].current.focus()
+      }
+    }
+  }
+
+  const renderConfirmationStep = () => (
+    <div className="py-4">
+      <p className="mb-6">
+        Bạn chắc chắn muốn vô hiệu hóa tài khoản của mình?
+      </p>
+      <p className="text-gray-500 mb-6">
+        Chúng tôi sẽ gửi mã OTP xác thực đến email của bạn để hoàn tất quá trình.
+      </p>
+      <div className="flex justify-end gap-2 mt-4">
+        <Button type="primary" onClick={handleCancel}>Hủy</Button>
+        <Button danger onClick={handleProceedToOtp}>
+          Tiếp tục
+        </Button>
       </div>
+    </div>
+  )
+
+  const renderOtpStep = () => (
+    <div className="py-2">
+      <p className="mb-4">
+        Vui lòng nhập mã OTP 6 chữ số đã được gửi đến email của bạn để xác thực.
+      </p>
+
+      <div className="my-6">
+        <label className="block text-sm font-medium mb-2">Nhập mã OTP 6 chữ số</label>
+        <div
+          className="flex justify-center gap-2"
+          onPaste={handlePaste}
+        >
+          {otp.map((digit, index) => (
+            <Input
+              key={index}
+              ref={inputRefs[index]}
+              className="w-12 h-12 text-center text-lg"
+              value={digit}
+              onChange={(e) => handleInputChange(e, index)}
+              onKeyDown={(e) => handleKeyDown(e, index)}
+              maxLength={1}
+              autoComplete={index === 0 ? "one-time-code" : "off"}
+            />
+          ))}
+        </div>
+      </div>
+
+      <div className="flex justify-end gap-2 mt-6">
+        <Button onClick={handleCancel}>Hủy</Button>
+        <Button type="primary" onClick={handleVerify} loading={loading}>
+          Xác nhận
+        </Button>
+      </div>
+    </div>
+  )
+
+  return (
+    <Modal
+      title={step === 'confirmation' ? "Xác nhận" : "Xác thực OTP"}
+      open={open}
+      onCancel={handleCancel}
+      footer={null}
+      width={500}
+    >
+      {step === 'confirmation' ? renderConfirmationStep() : renderOtpStep()}
     </Modal>
   )
 }
-

@@ -33,54 +33,20 @@ function onRefreshed(newToken) {
   refreshSubscribers = [];
 }
 
-// axiosInstance.interceptors.response.use(function (response) {
-//   return response.data;
-// }, async function (error) {
-  
-//   if (error.response) {
-//     const originalRequest = error.config;
-//     // Kiểm tra có phải lỗi 401 do access_token hết hạn hay không
-//     if (error.response.status === 401 && !originalRequest._retry) {
-//       originalRequest._retry = true;
-      
-//       if (!store.getState().user.isLoggedIn) {
-//         return Promise.reject(error);
-//       }
-//       try {
-//         const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/auth/refresh`, {
-//           headers: {
-//             'Content-Type': 'application/json',
-//           },
-//           withCredentials: true,
-//         });
-//         const { access_token } = response.data.data;
-//         if (access_token) {
-//           // Cập nhật access token trong local storage
-//           let localData = window.localStorage.getItem('persist:ogani_shop/user');
-//           localData = JSON.parse(localData);
-//           localData.token = JSON.stringify(access_token);
-//           window.localStorage.setItem('persist:ogani_shop/user', JSON.stringify(localData));
-
-//           // Cập nhật lại header authorization và gửi lại request gốc
-//           originalRequest.headers['authorization'] = `Bearer ${access_token}`;
-//           return axios(originalRequest);
-//         }
-//       } catch (err) {
-//         window.localStorage.removeItem('persist:ogani_shop/user');
-//         store.dispatch(setExpiredMessage());
-//         return Promise.reject(err);
-//       }
-//     }
-//   }
-//   return error.response.data
-// });
-
 axiosInstance.interceptors.response.use(
   (response) => response.data,
   async (error) => {
     if (error.response) {
       const originalRequest = error.config;
       
+      // Handle 403 (Forbidden/Account Locked) error
+      if (error.response.status === 403) {
+        // Remove token from localStorage
+        window.localStorage.removeItem('persist:ogani_shop/user');
+        return error.response.data
+      }
+      
+      // Existing 401 (Unauthorized/Token Expired) handling
       if (error.response.status === 401 && !originalRequest._retry) {
         originalRequest._retry = true;
 

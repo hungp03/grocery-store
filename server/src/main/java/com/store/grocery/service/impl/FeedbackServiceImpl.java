@@ -3,6 +3,7 @@ package com.store.grocery.service.impl;
 import com.store.grocery.domain.Feedback;
 import com.store.grocery.domain.Product;
 import com.store.grocery.domain.User;
+import com.store.grocery.domain.request.feedback.CreateFeedbackDTO;
 import com.store.grocery.domain.response.PaginationDTO;
 import com.store.grocery.domain.response.feedback.FeedbackDTO;
 import com.store.grocery.repository.FeedbackRepository;
@@ -30,30 +31,27 @@ public class FeedbackServiceImpl implements FeedbackService {
     private final ProductRepository productRepository;
     private final UserService userService;
 
-    @Override
-    public Feedback addFeedback(FeedbackDTO feedbackDTO) {
-        long uid = SecurityUtil.getUserId();
-        User u = this.userService.getUserById(uid);
-        Product p = productRepository.findById(feedbackDTO.getProductId()).orElseThrow(() -> new ResourceInvalidException("Sản phẩm không tồn tại"));
-        boolean exists = this.feedbackRepository.existsByUserIdAndProductId(u.getId(), p.getId());
+    public FeedbackDTO addFeedback(CreateFeedbackDTO feedbackDTO) {
+        User user = userService.getUserById(SecurityUtil.getUserId());
+        Product product = productRepository.findById(feedbackDTO.getProductId())
+                .orElseThrow(() -> new ResourceInvalidException("Sản phẩm không tồn tại"));
 
-        Feedback f;
-        if (!exists) {
-            f = new Feedback();
-            f.setProduct(p);
-            f.setUser(u);
-            f.setDescription(feedbackDTO.getDescription());
-            f.setStatus(false);
-        } else {
-            f = feedbackRepository.findByUserIdAndProductId(u.getId(), p.getId());
-            f.setDescription(feedbackDTO.getDescription());
-        }
-        f.setRatingStar(feedbackDTO.getRatingStar());
-        this.feedbackRepository.save(f);
-        double averageRating = feedbackRepository.calculateAverageRatingByProductId(p.getId());
-        p.setRating(averageRating);
-        productRepository.save(p);
-        return f;
+        Feedback feedback = feedbackRepository.findByUserIdAndProductId(user.getId(), product.getId())
+                .orElseGet(() -> {
+                    Feedback newFeedback = new Feedback();
+                    newFeedback.setUser(user);
+                    newFeedback.setProduct(product);
+                    newFeedback.setStatus(true);
+                    return newFeedback;
+                });
+
+        feedback.setDescription(feedbackDTO.getDescription());
+        feedback.setRatingStar(feedbackDTO.getRating());
+
+        feedbackRepository.save(feedback);
+        product.setRating(feedbackRepository.calculateAverageRatingByProductId(product.getId()));
+        productRepository.save(product);
+        return convertToFeedbackDTO(feedback);
     }
 
     @Override
@@ -61,48 +59,25 @@ public class FeedbackServiceImpl implements FeedbackService {
         if (sort != null) {
             pageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(sort).descending());
         }
-        Page<Feedback> feedbackPage = this.feedbackRepository.findByStatus(status, pageable);
-
+        Page<FeedbackDTO> feedbackPage = this.feedbackRepository.findByStatus(status, pageable);
         PaginationDTO p = new PaginationDTO();
         PaginationDTO.Meta meta = new PaginationDTO.Meta();
-
         meta.setPage(pageable.getPageNumber() + 1);
         meta.setPageSize(pageable.getPageSize());
         meta.setPages(feedbackPage.getTotalPages());
         meta.setTotal(feedbackPage.getTotalElements());
-
         p.setMeta(meta);
-
-        List<FeedbackDTO> listFeedback = feedbackPage.getContent().stream()
-                .map(this::convertToFeedbackDTO).toList();
-        p.setResult(listFeedback);
+        p.setResult(feedbackPage.getContent());
         return p;
     }
     @Override
-    public FeedbackDTO hideFeedback(Long id) {
-
-        Optional<Feedback> feedbackOptional = feedbackRepository.findById(id);
-        Feedback f;
-        FeedbackDTO feedbackDTO = new FeedbackDTO();
-        if (feedbackOptional.isPresent()) {
-            f = feedbackOptional.get();
-            f.setStatus(!f.isStatus());
-            this.feedbackRepository.save(f);
-            feedbackDTO.setId(f.getId());
-
-            feedbackDTO.setUserAvatarUrl(f.getUser().getAvatarUrl());
-
-            feedbackDTO.setProductId(f.getProduct().getId());
-            feedbackDTO.setProduct_name(f.getProduct().getProductName());
-            feedbackDTO.setImageUrl(f.getProduct().getImageUrl());
-
-            feedbackDTO.setStatus(f.isStatus());
-            feedbackDTO.setDescription(f.getDescription());
-            feedbackDTO.setRatingStar(f.getRatingStar());
-            feedbackDTO.setUpdatedAt(f.getUpdatedAt());
-        }
-        return feedbackDTO;
+    public void changeFeedbackStatus(Long id) {
+        feedbackRepository.findById(id).ifPresent(feedback -> {
+            feedback.setStatus(!feedback.isStatus());
+            feedbackRepository.save(feedback);
+        });
     }
+
     @Override
     public PaginationDTO getFeedbacksWithAdjustedSize(Long productId, Integer size, Pageable pageable) {
         if (size == null || size < 1) {
@@ -116,7 +91,7 @@ public class FeedbackServiceImpl implements FeedbackService {
     @Override
     public PaginationDTO getByProductId(Long productId, Pageable pageable) {
 
-        Page<Feedback> feedbackPage = this.feedbackRepository.findByProductId(productId, pageable);
+        Page<FeedbackDTO> feedbackPage = this.feedbackRepository.findByProductId(productId, pageable);
         PaginationDTO p = new PaginationDTO();
         PaginationDTO.Meta meta = new PaginationDTO.Meta();
         meta.setPage(pageable.getPageNumber() + 1);
@@ -124,30 +99,20 @@ public class FeedbackServiceImpl implements FeedbackService {
         meta.setPages(feedbackPage.getTotalPages());
         meta.setTotal(feedbackPage.getTotalElements());
         p.setMeta(meta);
-        List<FeedbackDTO> listFeedback = feedbackPage.getContent().stream()
-                .map(this::convertToFeedbackDTO).toList();
-        p.setResult(listFeedback);
+        p.setResult(feedbackPage.getContent());
         return p;
     }
 
     private FeedbackDTO convertToFeedbackDTO(Feedback feedback) {
-        FeedbackDTO feedbackDTO = new FeedbackDTO();
-        User u = this.userService.getUserById(feedback.getUser().getId());
-        if (u != null) {
-            feedbackDTO.setId(feedback.getId());
-            feedbackDTO.setUserId(u.getId());
-            feedbackDTO.setUserName(u.getName());
-            feedbackDTO.setUserAvatarUrl(feedback.getUser().getAvatarUrl());
-
-            feedbackDTO.setProductId(feedback.getProduct().getId());
-            feedbackDTO.setProduct_name(feedback.getProduct().getProductName());
-            feedbackDTO.setImageUrl(feedback.getProduct().getImageUrl());
-
-            feedbackDTO.setStatus(feedback.isStatus());
-            feedbackDTO.setDescription(feedback.getDescription());
-            feedbackDTO.setRatingStar(feedback.getRatingStar());
-            feedbackDTO.setUpdatedAt(feedback.getUpdatedAt());
-        }
-        return feedbackDTO;
+        return new FeedbackDTO(
+                feedback.getId(),
+                feedback.getUser().getName(),
+                feedback.getUser().getAvatarUrl(),
+                feedback.getProduct().getProductName(),
+                feedback.getRatingStar(),
+                feedback.getDescription(),
+                feedback.isStatus(),
+                feedback.getUpdatedAt()
+        );
     }
 }

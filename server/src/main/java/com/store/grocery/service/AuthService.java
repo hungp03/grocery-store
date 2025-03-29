@@ -6,13 +6,14 @@ import com.store.grocery.domain.request.auth.LoginDTO;
 import com.store.grocery.domain.request.auth.ResetPasswordDTO;
 import com.store.grocery.domain.response.user.CreateUserDTO;
 import com.store.grocery.domain.response.user.ResLoginDTO;
+import com.store.grocery.util.enums.OTPType;
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.util.Map;
 
 public interface AuthService {
-    void storeOTP(String otp, String email);
+    void storeOTP(String otp, String email, OTPType otpType);
     ResLoginDTO.UserGetAccount getAccount();
     void logout(String deviceHash);
     CreateUserDTO register(User user);

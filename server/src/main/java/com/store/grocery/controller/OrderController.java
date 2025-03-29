@@ -9,8 +9,8 @@ import com.store.grocery.domain.response.order.WeeklyRevenue;
 import com.store.grocery.service.OrderService;
 import com.store.grocery.util.exception.ResourceInvalidException;
 import jakarta.validation.Valid;
-import lombok.AllArgsConstructor;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import com.store.grocery.util.annotation.ApiMessage;
 import org.springframework.data.domain.Pageable;
@@ -25,7 +25,7 @@ import org.springframework.http.HttpStatus;
 
 @RestController
 @RequestMapping("api/v2")
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class OrderController {
     private final OrderService orderService;
 
@@ -55,7 +55,7 @@ public class OrderController {
     @ApiMessage("Create a checkout payment")
     public ResponseEntity<Void> create(@RequestBody @Valid CheckoutRequestDTO request) {
         orderService.create(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(null);
+        return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
     @GetMapping("orders")

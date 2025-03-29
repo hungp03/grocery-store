@@ -20,11 +20,8 @@ public class UserDetailsCustom implements UserDetailsService {
     @SneakyThrows
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        com.store.grocery.domain.User user = null;
-        user = this.userService.getUserByUsername(username);
-        if (user == null){
-            throw new UsernameNotFoundException("Tài khoản không hợp lệ");
-        }
+        com.store.grocery.domain.User user = this.userService.getUserByUsername(username);
+        userService.checkAccountBanned(user);
         return new User(user.getEmail(), user.getPassword(), Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + user.getRole().getRoleName())));
     }
 }

@@ -5,7 +5,7 @@ import com.store.grocery.domain.response.PaginationDTO;
 import com.store.grocery.domain.response.cart.CartItemDTO;
 import com.store.grocery.service.CartService;
 import com.store.grocery.util.annotation.ApiMessage;
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -15,7 +15,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("api/v2")
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class CartController {
     private final CartService cartService;
 

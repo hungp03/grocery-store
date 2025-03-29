@@ -1,5 +1,6 @@
 package com.store.grocery.service.impl;
 
+import com.store.grocery.domain.OTPCode;
 import com.store.grocery.domain.User;
 import com.store.grocery.domain.UserToken;
 import com.store.grocery.domain.request.user.UpdatePasswordDTO;
@@ -10,14 +11,14 @@ import com.store.grocery.domain.response.user.CreateUserDTO;
 import com.store.grocery.domain.response.user.DeviceDTO;
 import com.store.grocery.domain.response.user.ResLoginDTO;
 import com.store.grocery.domain.response.user.UserDTO;
+import com.store.grocery.repository.OTPCodeRepository;
 import com.store.grocery.repository.UserRepository;
 import com.store.grocery.repository.UserTokenRepository;
-import com.store.grocery.service.CartService;
-import com.store.grocery.service.FileService;
-import com.store.grocery.service.UserService;
+import com.store.grocery.service.*;
 import com.store.grocery.util.SecurityUtil;
+import com.store.grocery.util.enums.OTPType;
 import com.store.grocery.util.exception.*;
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -32,17 +33,20 @@ import java.io.IOException;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
+import java.util.Random;
 import java.util.stream.Collectors;
 
 @Slf4j
 @Service
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final FileService fileService;
     private final CartService cartService;
     private final UserTokenRepository userTokenRepository;
+    private final EmailService emailService;
+    private final OTPCodeRepository otpCodeRepository;
 
     @Override
     public User create(User user) {
@@ -280,10 +284,33 @@ public class UserServiceImpl implements UserService {
                 .toList();
     }
 
-    @Override
-    public void deactiveAccount() {
 
+    @Override
+    public void requestDeactiveAccount() {
+        String email = SecurityUtil.getCurrentUserLogin().orElse("");
+        if (!isExistedEmail(email)) {
+            throw new UserNotFoundException("Email " + email + " không tồn tại");
+        }
+        String otp = String.format("%06d", new Random().nextInt(1000000));
+        OTPCode otpCode = otpCodeRepository.findByEmailAndType(email, OTPType.DEACTIVE_ACCOUNT).orElse(new OTPCode());
+        otpCode.setEmail(email);
+        otpCode.setOtpCode(otp);
+        otpCode.setType(OTPType.DEACTIVE_ACCOUNT);
+        otpCodeRepository.save(otpCode);
+        this.emailService.sendEmailFromTemplateSync(email, "Deactive Account", "deactiveAccount", email, otp);
     }
 
+    @Override
+    public void verifyOTPAndDisableAccount(String inputOtp) {
+        String email = SecurityUtil.getCurrentUserLogin().orElse("");
+        OTPCode otp = otpCodeRepository.findByEmailAndType(email, OTPType.DEACTIVE_ACCOUNT)
+                .filter(o -> o.getOtpCode().equals(inputOtp) && o.getExpiresAt().isAfter(Instant.now()))
+                .orElseThrow(() -> new ResourceInvalidException("OTP không hợp lệ hoặc đã hết hạn"));
+
+        User u = getUserByUsername(email);
+        u.setStatus(false);
+        userRepository.save(u);
+        otpCodeRepository.delete(otp);
+    }
 }
 
