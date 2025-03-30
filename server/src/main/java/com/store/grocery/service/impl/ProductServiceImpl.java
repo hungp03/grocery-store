@@ -40,6 +40,7 @@ public class ProductServiceImpl implements ProductService {
     private final PaginationHelper paginationHelper;
 
     private boolean checkValidCategoryId(long categoryId) {
+        log.debug("Checking if category ID: {} is valid", categoryId);
         return this.categoryRepository.existsById(categoryId);
     }
 
@@ -71,7 +72,7 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public PaginationDTO getAll(Specification<Product> spec, Pageable pageable) {
-        
+        log.info("Fetching all products");
         Page<Product> productPage = this.productRepository.findAll(spec, pageable);
         PaginationDTO p = new PaginationDTO();
         PaginationDTO.Meta meta = new PaginationDTO.Meta();
@@ -82,6 +83,7 @@ public class ProductServiceImpl implements ProductService {
         p.setMeta(meta);
         List<ResProductDTO> listProducts = productPage.getContent().stream().map(this::convertToProductDTO).toList();
         p.setResult(listProducts);
+        log.info("Successfully fetched all products");
         return p;
     }
 
@@ -145,6 +147,7 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public PaginationDTO search(Specification<Product> spec, Pageable pageable) {
+        log.info("Searching for products");
         Page<SearchProductDTO> productPage = this.searchProduct(spec, pageable);
         return this.paginationHelper.buildPaginationDTO(productPage);
     }
@@ -189,6 +192,7 @@ public class ProductServiceImpl implements ProductService {
     @Async
     @Override
     public CompletableFuture<byte[]> exportDataToExcelAsync() {
+        log.info("Exporting data to Excel asynchronously");
         return CompletableFuture.supplyAsync(() -> {
             try (Workbook workbook = new XSSFWorkbook(); ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
                 Sheet sheet = workbook.createSheet("Products");

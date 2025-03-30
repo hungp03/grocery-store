@@ -38,6 +38,7 @@ public class FeedbackServiceImpl implements FeedbackService {
 
         Feedback feedback = feedbackRepository.findByUserIdAndProductId(user.getId(), product.getId())
                 .orElseGet(() -> {
+                    log.info("Creating new feedback for product: {} by user: {}", product.getId(), user.getId());
                     Feedback newFeedback = new Feedback();
                     newFeedback.setUser(user);
                     newFeedback.setProduct(product);
@@ -51,11 +52,13 @@ public class FeedbackServiceImpl implements FeedbackService {
         feedbackRepository.save(feedback);
         product.setRating(feedbackRepository.calculateAverageRatingByProductId(product.getId()));
         productRepository.save(product);
+        log.info("Feedback has been added");
         return convertToFeedbackDTO(feedback);
     }
 
     @Override
     public PaginationDTO getBySortAndFilter(Pageable pageable, Boolean status, String sort) {
+        log.info("Getting feedbacks with status and sort");
         if (sort != null) {
             pageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(sort).descending());
         }
@@ -68,14 +71,16 @@ public class FeedbackServiceImpl implements FeedbackService {
         meta.setTotal(feedbackPage.getTotalElements());
         p.setMeta(meta);
         p.setResult(feedbackPage.getContent());
+        log.info("Feedbacks have been retrieved");
         return p;
     }
     @Override
     public void changeFeedbackStatus(Long id) {
-        feedbackRepository.findById(id).ifPresent(feedback -> {
+        feedbackRepository.findById(id).ifPresentOrElse(feedback -> {
             feedback.setStatus(!feedback.isStatus());
             feedbackRepository.save(feedback);
-        });
+            log.info("Feedback status updated for ID {}", id, feedback.isStatus());
+        }, () -> log.warn("Feedback not found with ID: {}", id));
     }
 
     @Override
@@ -90,7 +95,7 @@ public class FeedbackServiceImpl implements FeedbackService {
     }
     @Override
     public PaginationDTO getByProductId(Long productId, Pageable pageable) {
-
+        log.info("Getting feedbacks by product ID: {}", productId);
         Page<FeedbackDTO> feedbackPage = this.feedbackRepository.findByProductId(productId, pageable);
         PaginationDTO p = new PaginationDTO();
         PaginationDTO.Meta meta = new PaginationDTO.Meta();
@@ -100,10 +105,12 @@ public class FeedbackServiceImpl implements FeedbackService {
         meta.setTotal(feedbackPage.getTotalElements());
         p.setMeta(meta);
         p.setResult(feedbackPage.getContent());
+        log.info("Feedbacks have been retrieved");
         return p;
     }
 
     private FeedbackDTO convertToFeedbackDTO(Feedback feedback) {
+        log.info("Converting feedback to feedback DTO");
         return new FeedbackDTO(
                 feedback.getId(),
                 feedback.getUser().getName(),
