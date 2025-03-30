@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { ProductBanner, ProductCard } from "@/components";
 import { apiGetProducts } from "@/apis";
-
+import { RESPONSE_STATUS } from "@/utils/responseStatus";
 const FeatureProduct = ({ flag = 'new' }) => {
   const [products, setProducts] = useState(null);
 
@@ -12,7 +12,7 @@ const FeatureProduct = ({ flag = 'new' }) => {
     } else if (flag === "recommendation") {
       response = await apiGetProducts({page: 1, size: 12, sort: "sold,rating,desc"});
     }
-    if (response.statusCode === 200) {
+    if (response.statusCode === RESPONSE_STATUS.SUCCESS) {
       setProducts(response.data.result);
     }
   };

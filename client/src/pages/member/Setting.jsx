@@ -1,29 +1,55 @@
-import { useState } from "react";
-import { Button, Form, Input, Tabs, Divider, message, Typography } from "antd";
-import { LockIcon, ShieldIcon, AlertTriangleIcon } from "lucide-react";
-import { apiUpdatePassword, apiGetLoggedInDevices } from "@/apis";
-import { DevicesModal, DeactivateAccountModal } from "@/components";
+"use client"
 
-const { Title } = Typography;
+import { useState } from "react"
+import { Button, Form, Input, Tabs, Divider, message, Typography } from "antd"
+import { LockIcon, ShieldIcon, AlertTriangleIcon } from "lucide-react"
+import { apiUpdatePassword, apiGetLoggedInDevices } from "@/apis"
+import { DevicesModal, DeactivateAccountModal } from "@/components"
+import { RESPONSE_STATUS } from "@/utils/responseStatus"
+const { Title } = Typography
 
 export default function Settings() {
-  const [form] = Form.useForm();
-  const [deactivateModalOpen, setDeactivateModalOpen] = useState(false);
-  const [messageApi, contextHolder] = message.useMessage();
-  const [loading, setLoading] = useState(false);
-  const [devicesModalOpen, setDevicesModalOpen] = useState(false);
-  const [loggedInDevices, setLoggedInDevices] = useState([]);
-  const [isSecurityTabLoaded, setIsSecurityTabLoaded] = useState(false);
+  const [form] = Form.useForm()
+  const [deactivateModalOpen, setDeactivateModalOpen] = useState(false)
+  const [messageApi, contextHolder] = message.useMessage()
+  const [loading, setLoading] = useState(false)
+  const [devicesModalOpen, setDevicesModalOpen] = useState(false)
+  const [loggedInDevices, setLoggedInDevices] = useState([])
 
-  // Gọi API lấy danh sách thiết bị chỉ khi mở tab "Bảo mật" lần đầu tiên
-  const loadSecurityTabData = async () => {
-    if (isSecurityTabLoaded) return;
-    const res = await apiGetLoggedInDevices();
-    if (res.statusCode === 200) {
-      setLoggedInDevices(res.data);
-      setIsSecurityTabLoaded(true); 
-    } else {
-      throw new Error(res.message || "Không thể tải danh sách thiết bị");
+  // Modified to handle loading devices when the button is clicked
+  const handleViewDevices = async () => {
+    try {
+      // Show the modal first for better UX
+      setDevicesModalOpen(true)
+
+      // Then fetch the devices
+      const res = await apiGetLoggedInDevices()
+      if (res.statusCode === RESPONSE_STATUS.SUCCESS) {
+        setLoggedInDevices(res.data)
+      } else {
+        throw new Error(res.message || "Không thể tải danh sách thiết bị")
+      }
+    } catch (error) {
+      messageApi.error(error.message)
+      // Optionally close the modal on error
+      // setDevicesModalOpen(false);
+    }
+  }
+
+  const handleUpdatePassword = async (values) => {
+    try {
+      setLoading(true);
+      const res = await apiUpdatePassword(values);
+      if (res.statusCode === RESPONSE_STATUS.SUCCESS) {
+        messageApi.success("Đổi mật khẩu thành công!");
+        form.resetFields();
+      } else {
+        throw new Error(res.message || "Có lỗi xảy ra");
+      }
+    } catch (error) {
+      messageApi.error(error.message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -37,9 +63,6 @@ export default function Settings() {
       <Tabs
         className="p-6 max-w-2xl mx-auto"
         defaultActiveKey="1"
-        onChange={(key) => {
-          if (key === "2") loadSecurityTabData(); // Chỉ gọi API khi chuyển sang tab "Bảo mật"
-        }}
         items={[
           {
             key: "1",
@@ -50,22 +73,10 @@ export default function Settings() {
               </span>
             ),
             children: (
-              <Form form={form} layout="vertical" onFinish={async (values) => {
-                try {
-                  setLoading(true);
-                  const res = await apiUpdatePassword(values);
-                  if (res.statusCode === 200) {
-                    messageApi.success("Đổi mật khẩu thành công!");
-                    form.resetFields();
-                  } else {
-                    throw new Error(res.message || "Có lỗi xảy ra");
-                  }
-                } catch (error) {
-                  messageApi.error(error.message);
-                } finally {
-                  setLoading(false);
-                }
-              }}>
+              <Form
+                form={form}
+                layout="vertical"
+                onFinish={handleUpdatePassword}>
                 <Form.Item
                   label="Mật khẩu hiện tại"
                   name="currentPassword"
@@ -94,9 +105,9 @@ export default function Settings() {
                     ({ getFieldValue }) => ({
                       validator(_, value) {
                         if (!value || getFieldValue("newPassword") === value) {
-                          return Promise.resolve();
+                          return Promise.resolve()
                         }
-                        return Promise.reject(new Error("Mật khẩu xác nhận không khớp"));
+                        return Promise.reject(new Error("Mật khẩu xác nhận không khớp"))
                       },
                     }),
                   ]}
@@ -128,7 +139,8 @@ export default function Settings() {
                       <h3 className="text-base font-medium">Thiết bị đã đăng nhập</h3>
                       <p className="text-sm text-gray-500">Quản lý các thiết bị đã đăng nhập vào tài khoản của bạn</p>
                     </div>
-                    <Button type="primary" onClick={() => setDevicesModalOpen(true)} className="bg-main">
+                    {/* Changed to use the new handler */}
+                    <Button type="primary" onClick={handleViewDevices} className="bg-main">
                       Xem thiết bị
                     </Button>
                   </div>
@@ -159,5 +171,6 @@ export default function Settings() {
 
       <DeactivateAccountModal open={deactivateModalOpen} onClose={() => setDeactivateModalOpen(false)} />
     </div>
-  );
+  )
 }
+

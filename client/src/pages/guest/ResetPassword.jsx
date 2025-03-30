@@ -5,7 +5,7 @@ import { apiResetPassword} from '@/apis';
 import { toast } from 'react-toastify';
 import { useForm } from 'react-hook-form';
 import path from '@/utils/path';
-
+import { RESPONSE_STATUS } from "@/utils/responseStatus";
 const ResetPassword = () => {
     const location = useLocation();
     const navigate = useNavigate();
@@ -22,7 +22,7 @@ const ResetPassword = () => {
             confirmPassword: data.confirmPassword
         });
     
-        if (response.statusCode !== 200) {
+        if (response.statusCode !== RESPONSE_STATUS.SUCCESS) {
             if (response.message.toLowerCase().includes('jwt expired')) {
                 toast.info("Đã hết thời gian đặt lại mật khẩu, vui lòng thực hiện lại");
             } else {

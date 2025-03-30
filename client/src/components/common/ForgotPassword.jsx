@@ -4,6 +4,7 @@ import { useForm } from "react-hook-form"
 import { toast } from "react-toastify"
 import { apiForgotPassword, apiVerifyOtp } from "@/apis"
 import { Button } from "@/components/index"
+import { RESPONSE_STATUS } from "@/utils/responseStatus"
 
 const ForgotPassword = ({ onClose }) => {
   const navigate = useNavigate()
@@ -15,18 +16,69 @@ const ForgotPassword = ({ onClose }) => {
   const [email, setEmail] = useState("")
   const [showOtpInput, setShowOtpInput] = useState(false)
   const [otpValues, setOtpValues] = useState(["", "", "", "", "", ""])
+  const [loading, setLoading] = useState(false)
+  const [countdown, setCountdown] = useState(0)
 
   // Create refs for each OTP input
   const otpRefs = [useRef(null), useRef(null), useRef(null), useRef(null), useRef(null), useRef(null)]
 
+  // Handle countdown timer
+  useEffect(() => {
+    let timer
+    if (countdown > 0) {
+      timer = setTimeout(() => setCountdown(countdown - 1), 1000)
+    }
+    return () => clearTimeout(timer)
+  }, [countdown])
+
   const handleForgotPassword = async (data) => {
-    setEmail(data.email)
-    const response = await apiForgotPassword({ email: data.email })
-    if (response.statusCode !== 200) {
-      toast.info(response?.message)
-    } else {
-      toast.success("Mã OTP đã được gửi, vui lòng nhập OTP")
-      setShowOtpInput(true)
+    try {
+      setLoading(true)
+      const emailToUse = data?.email || email
+      if (!emailToUse) {
+        toast.error("Vui lòng nhập email")
+        setLoading(false)
+        return
+      }
+
+      setEmail(emailToUse)
+      const response = await apiForgotPassword({ email: emailToUse })
+
+      if (response.statusCode !== RESPONSE_STATUS.SUCCESS) {
+        toast.info(response?.message)
+      } else {
+        toast.success("Mã OTP đã được gửi, vui lòng nhập OTP")
+        setShowOtpInput(true)
+        setCountdown(60) // Start 60s countdown
+        // Reset OTP values when requesting a new OTP
+        setOtpValues(["", "", "", "", "", ""])
+      }
+    } catch (error) {
+      toast.error("Có lỗi xảy ra khi gửi yêu cầu")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleResendOtp = async () => {
+    if (countdown > 0) return // Prevent resending if countdown is active
+
+    try {
+      setLoading(true)
+      const response = await apiForgotPassword({ email })
+
+      if (response.statusCode !== RESPONSE_STATUS.SUCCESS) {
+        toast.info(response?.message)
+      } else {
+        toast.success("Mã OTP mới đã được gửi")
+        setCountdown(60) // Reset countdown
+        // Reset OTP values when requesting a new OTP
+        setOtpValues(["", "", "", "", "", ""])
+      }
+    } catch (error) {
+      toast.error("Có lỗi xảy ra khi gửi lại OTP")
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -107,12 +159,24 @@ const ForgotPassword = ({ onClose }) => {
       return
     }
 
-    const response = await apiVerifyOtp(email, otpString)
-    if (response.statusCode === 200) {
-      toast.success("Xác minh OTP thành công, vui lòng đặt lại mật khẩu")
-      navigate(`/reset-password?token=${response.data.tempToken}`)
-    } else {
-      toast.error("Mã OTP không hợp lệ")
+    try {
+      setLoading(true)
+      const response = await apiVerifyOtp(email, otpString)
+      if (response.statusCode === RESPONSE_STATUS.SUCCESS) {
+        toast.success("Xác minh OTP thành công, vui lòng đặt lại mật khẩu")
+        navigate(`/reset-password?token=${response.data?.tempToken}`)
+      } else {
+        toast.error("Mã OTP không hợp lệ")
+        setOtpValues(["", "", "", "", "", ""])
+        // Focus first input after reset
+        if (otpRefs[0].current) {
+          otpRefs[0].current.focus()
+        }
+      }
+    } catch (error) {
+      toast.error("Có lỗi xảy ra khi xác minh OTP")
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -140,8 +204,8 @@ const ForgotPassword = ({ onClose }) => {
               })}
             />
             {errors.email && <span className="text-red-500 text-sm">{errors.email.message}</span>}
-            <Button fw={true} handleOnClick={handleSubmit(handleForgotPassword)}>
-              Xác nhận
+            <Button fw={true} handleOnClick={handleSubmit(handleForgotPassword)} disabled={loading}>
+              {loading ? "Đang xử lý..." : "Xác nhận"}
             </Button>
           </>
         ) : (
@@ -166,21 +230,31 @@ const ForgotPassword = ({ onClose }) => {
               ))}
             </div>
 
-            <Button fw={true} handleOnClick={handleVerifyOtp}>
-              Xác minh OTP
+            <Button fw={true} handleOnClick={handleVerifyOtp} disabled={loading}>
+              {loading ? "Đang xử lý..." : "Xác minh OTP"}
             </Button>
 
-            <p className="text-sm text-gray-600 mt-2">
-              Không nhận được mã?{" "}
-              <button className="text-blue-600 hover:underline" onClick={handleSubmit(handleForgotPassword)}>
-                Gửi lại
-              </button>
-            </p>
+            <div className="text-sm text-gray-600 mt-2 flex justify-center">
+              {countdown > 0 ? (
+                <p className="text-gray-500">
+                  Gửi lại OTP sau <span className="font-semibold">{countdown}</span> giây
+                </p>
+              ) : (
+                <button
+                  className="text-blue-600 hover:underline"
+                  onClick={handleResendOtp}
+                  disabled={loading || countdown > 0}
+                >
+                  Gửi lại OTP
+                </button>
+              )}
+            </div>
           </>
         )}
         <button
           className="w-full text-gray-700 hover:text-blue-700 hover:underline cursor-pointer mt-2"
           onClick={onClose}
+          disabled={loading}
         >
           Cancel
         </button>

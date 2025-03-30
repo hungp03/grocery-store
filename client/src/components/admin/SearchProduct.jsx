@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { apiExportExcel } from "@/apis";
-import { toast } from "react-toastify";
 import icons from "@/utils/icons";
-import "react-toastify/dist/ReactToastify.css";
+import { message } from "antd";
 
 const { FaFileExport } = icons
 function SearchProduct({ onSearch }) {
@@ -26,7 +25,7 @@ function SearchProduct({ onSearch }) {
       link.parentNode.removeChild(link);
     } catch (error) {
       console.error('Error exporting Excel:', error);
-      toast.error('Lỗi khi tải file!', { autoClose: 2000 });
+      message.error('Lỗi khi tải file!', { autoClose: 2000 });
     }
   };
 

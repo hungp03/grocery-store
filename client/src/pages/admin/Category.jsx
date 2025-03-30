@@ -6,7 +6,7 @@ import { apiDeleteCategory, apiGetCategories } from "@/apis";
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import category_default from "@/assets/category_default.png";
 import { AddButton } from '@/components/admin';
-
+import { RESPONSE_STATUS } from "@/utils/responseStatus";
 const PAGE_SIZE = 10;
 
 const Category = () => {
@@ -34,7 +34,7 @@ const Category = () => {
   const handleDeleteCategory = async (cid) => {
     try {
       const response = await apiDeleteCategory(cid);
-      if (response.statusCode === 200) {
+      if (response.statusCode === RESPONSE_STATUS.SUCCESS) {
         message.success('Xóa danh mục thành công!', 2);
         fetchCategories({ page: currentPage, size: PAGE_SIZE });
       } else {

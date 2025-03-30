@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { apiGetProduct, apiUpdateProduct2 } from "@/apis";
 import { EditProductForm, BackButton } from "@/components/admin/index";
-import { toast } from "react-toastify";
-
+import { RESPONSE_STATUS } from "@/utils/responseStatus";
+import { message } from "antd";
 function EditProduct() {
   const [product, setProduct] = useState(null);
   const [inputCount, setInputCount] = useState(0);
@@ -22,8 +22,7 @@ function EditProduct() {
         throw new Error("Không tìm thấy sản phẩm.");
       }
     } catch (error) {
-      console.error("Lỗi khi lấy sản phẩm:", error);
-      toast.error("Có lỗi xảy ra khi tải sản phẩm.");
+      message.error("Có lỗi xảy ra khi tải sản phẩm.");
     }
   };
 
@@ -60,18 +59,15 @@ function EditProduct() {
       category: { id: product?.category?.id },
     };
 
-    try {
-      const resAddQuantity = await apiUpdateProduct2(productToAddQuantity);
-      if (resAddQuantity.statusCode !== 200) {
-        throw new Error(resAddQuantity.message || "Có lỗi xảy ra khi cập nhật sản phẩm.");
-      }
-      toast.success("Cập nhật sản phẩm thành công!");
-      handleCloseMessage();
-      await fetchProduct(pid);
+    const res = await apiUpdateProduct2(productToAddQuantity);
 
-    } catch (err) {
-      toast.error("Có lỗi xảy ra: " + err.message);
+    if (res.statusCode !== RESPONSE_STATUS.SUCCESS) {
+      message.error(res.message || "Có lỗi xảy ra khi cập nhật sản phẩm.");
     }
+
+    message.success("Cập nhật sản phẩm thành công!");
+    handleCloseMessage();
+    await fetchProduct(pid);
   };
 
   if (!product) {

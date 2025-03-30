@@ -150,11 +150,4 @@ public class SecurityUtil {
 
         throw new AuthException("User ID not found or invalid token");
     }
-//    public static Long getCurrentUserId() {
-//        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-//        if (authentication != null && authentication.getPrincipal() instanceof CustomUserDetails) {
-//            return ((CustomUserDetails) authentication.getPrincipal()).getId();
-//        }
-//        throw new AuthException("Người dùng chưa đăng nhập hoặc token không hợp lệ");
-//    }
 }

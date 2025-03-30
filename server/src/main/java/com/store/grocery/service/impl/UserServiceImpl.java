@@ -239,14 +239,14 @@ public class UserServiceImpl implements UserService {
         log.info("Attempting to change password for user");
         if (!dto.getNewPassword().equals(dto.getConfirmPassword())) {
             log.error("Password confirmation does not match");
-            throw new AuthException("Mật khẩu xác nhận không trùng khớp");
+            throw new ResourceInvalidException("Mật khẩu xác nhận không trùng khớp");
         }
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         User user = this.getUserByUsername(username);
 
         if (!passwordEncoder.matches(dto.getCurrentPassword(), user.getPassword())) {
             log.error("Current password is incorrect for user ID: {}", user.getId());
-            throw new AuthException("Mật khẩu cũ không đúng");
+            throw new ResourceInvalidException("Mật khẩu cũ không đúng");
         }
         user.setPassword(passwordEncoder.encode(dto.getNewPassword()));
         userRepository.save(user);

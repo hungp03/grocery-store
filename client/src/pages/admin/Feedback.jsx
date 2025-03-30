@@ -10,6 +10,7 @@ import { FaEye } from "react-icons/fa6";
 import { MdOutlineBlock } from "react-icons/md";
 import { getCurrentUser } from "@/store/user/asyncActions";
 import { FeedbackCard } from "@/components";
+import { RESPONSE_STATUS } from "@/utils/responseStatus";
 
 const Feedback = ({ navigate, location }) => {
     const { isLoggedIn } = useSelector(state => state.user);
@@ -20,28 +21,21 @@ const Feedback = ({ navigate, location }) => {
     const dispatch = useDispatch();
     const { current } = useSelector(state => state.user);
     const [params, setParams] = useSearchParams();
-    const status = params.get("status");
-    const sort = params.get("sort");
-
+ 
     const fetchRatings = async (page = 1, safParam = {}) => {
         const { status, sort } = safParam;
-        let response;
-        if (status === "default" && sort !== "default" && sort !== "product_name") {
-            response = await apiGetAllRatingsPage({ page, sort })
-        } else if (status !== "default" && sort === "default") {
-            response = await apiGetAllRatingsPage({ page, status })
-        } else if (status !== "default" && sort === "product_name") {
-            response = await apiGetAllRatingsPage({ page, status })
-        } else if (status === "default" && sort === "product_name") {
-            response = await apiGetAllRatingsPage({ page })
-        } else if (status === "default" && sort === "default") {
-            response = await apiGetAllRatingsPage({ page })
-        } else {
-            response = await apiGetAllRatingsPage({ page, ...safParam })
+        
+        // Build API parameters
+        const params = { page };
+        if (status !== "default") {
+            params.status = status;
         }
-
-        if (response.statusCode === 200) {
-            let feedbacksList = response.data?.result
+        if (sort !== "default" && sort !== "product_name") {
+            params.sort = sort;
+        }
+        const response = await apiGetAllRatingsPage(params);
+        if (response.statusCode === RESPONSE_STATUS.SUCCESS) {
+            let feedbacksList = response.data?.result;
             if (sort === "product_name") {
                 feedbacksList = feedbacksList.sort((a, b) => {
                     if (a.product_name < b.product_name) return 1;
@@ -49,12 +43,11 @@ const Feedback = ({ navigate, location }) => {
                     return 0;
                 });
             }
-            setFeedbacksPage(feedbacksList)
-            setPaginate(response.data?.meta)
-            setCurrentPage(page)
+            setFeedbacksPage(feedbacksList);
+            setPaginate(response.data?.meta);
+            setCurrentPage(page);
         }
-    }
-
+    };
     useEffect(() => {
         if (current) {
             fetchRatings(currentPage, paramPage);
@@ -105,7 +98,7 @@ const Feedback = ({ navigate, location }) => {
         } else {
             const feedback = feedbacksPage.find(feedback => feedback.id === id);
             const response = await apiChangeRatingStatus(feedback?.id);
-            if (+response.statusCode === 200) {
+            if (+response.statusCode === RESPONSE_STATUS.SUCCESS) {
                 message.success(feedback?.status === true ? "Ẩn đánh giá thành công" : "Hiện đánh giá thành công");
                 setTimeout(() => {
                     dispatch(getCurrentUser());
