@@ -198,7 +198,7 @@ const AddProduct = () => {
                 </Button>
               </div>
             </div>
-            <div className="mt-2 text-xs text-gray-500">Hỗ trợ: JPG, PNG, GIF (tối đa 5MB)</div>
+            <div className="mt-2 text-xs text-gray-500">Hỗ trợ: JPG, PNG, JPEG (tối đa 5MB)</div>
           </Form.Item>
         </Form>
       </Card>

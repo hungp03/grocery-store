@@ -3,6 +3,7 @@ import { Form, Input, InputNumber, Button, Upload, Card, message } from "antd"
 import { UploadOutlined } from "@ant-design/icons"
 import { apiUploadImage, apiUpdateProduct2 } from "@/apis"
 import product_default from "@/assets/product_default.png"
+import { RESPONSE_STATUS } from "@/utils/responseStatus";
 
 const { TextArea } = Input
 
@@ -59,7 +60,7 @@ const EditProductForm = ({ initialProductData }) => {
       if (productImage) {
         try {
           const resUpLoad = await apiUploadImage(productImage, "product")
-          if (resUpLoad?.statusCode === 400) {
+          if (resUpLoad?.statusCode === RESPONSE_STATUS.BAD_REQUEST) {
             throw new Error(resUpLoad.message || "Lỗi khi tải lên hình ảnh")
           }
           productToUpdate.imageUrl = resUpLoad?.data?.fileName || initialProductData?.imageUrl
@@ -72,17 +73,18 @@ const EditProductForm = ({ initialProductData }) => {
 
       // Cập nhật thông tin sản phẩm
       const resUpdate = await apiUpdateProduct2(productToUpdate)
-      if (resUpdate.statusCode === 400) {
-        throw new Error(resUpdate.message || "Có lỗi xảy ra khi cập nhật sản phẩm.")
+
+      if (resUpdate.statusCode !== RESPONSE_STATUS.SUCCESS) {
+        // Cập nhật state local với dữ liệu mới
+        setProductData({
+          ...productData,
+          ...productToUpdate,
+        })
+
+        message.success("Sửa sản phẩm thành công!")
       }
-
-      // Cập nhật state local với dữ liệu mới
-      setProductData({
-        ...productData,
-        ...productToUpdate,
-      })
-
-      message.success("Sửa sản phẩm thành công!")
+      else
+        throw new Error(resUpdate.message || "Có lỗi xảy ra khi cập nhật sản phẩm.")
     } catch (err) {
       message.error("Có lỗi xảy ra: " + err.message)
     } finally {
@@ -121,7 +123,7 @@ const EditProductForm = ({ initialProductData }) => {
 
       const isLt2M = file.size / 1024 / 1024 < 5
       if (!isLt2M) {
-        message.error("Hình ảnh phải nhỏ hơn 2MB!")
+        message.error("Hình ảnh phải nhỏ hơn 5MB!")
         return false
       }
 
@@ -198,7 +200,7 @@ const EditProductForm = ({ initialProductData }) => {
           <Upload {...uploadProps} listType="picture">
             <Button icon={<UploadOutlined />}>Chọn ảnh</Button>
           </Upload>
-          <div className="mt-2 text-xs text-gray-500">Hỗ trợ: JPG, PNG, GIF (tối đa 5MB)</div>
+          <div className="mt-2 text-xs text-gray-500">Hỗ trợ: JPG, PNG, JPEG (tối đa 5MB)</div>
         </Form.Item>
 
         <Form.Item>

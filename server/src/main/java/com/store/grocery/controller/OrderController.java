@@ -6,6 +6,7 @@ import com.store.grocery.domain.request.order.CheckoutRequestDTO;
 import com.store.grocery.domain.response.PaginationDTO;
 import com.store.grocery.domain.response.order.OrderDTO;
 import com.store.grocery.domain.response.order.WeeklyRevenue;
+import com.store.grocery.service.EmailService;
 import com.store.grocery.service.OrderService;
 import com.store.grocery.util.exception.ResourceInvalidException;
 import jakarta.validation.Valid;
@@ -28,6 +29,7 @@ import org.springframework.http.HttpStatus;
 @RequiredArgsConstructor
 public class OrderController {
     private final OrderService orderService;
+    private final EmailService emailService;
 
     @GetMapping("all-orders")
     @ApiMessage("Get all Orders")

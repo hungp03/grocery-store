@@ -3,6 +3,7 @@ import { Form, Input, Button, Upload, Card, message } from "antd"
 import { UploadOutlined } from "@ant-design/icons"
 import { apiUploadImage, apiUpdateCategory } from "@/apis"
 import category_default from "@/assets/category_default.png"
+import { RESPONSE_STATUS } from "@/utils/responseStatus"
 
 function EditCategoryForm({ initialCategoryData }) {
   const [form] = Form.useForm()
@@ -30,7 +31,7 @@ function EditCategoryForm({ initialCategoryData }) {
       if (categoryImage) {
         try {
           const resUpLoad = await apiUploadImage(categoryImage, "category")
-          if (resUpLoad?.statusCode === 400) {
+          if (resUpLoad?.statusCode === RESPONSE_STATUS.BAD_REQUEST) {
             throw new Error(resUpLoad.message || "Lỗi khi tải lên hình ảnh")
           }
           categoryToUpdate.imageUrl = resUpLoad?.data?.fileName || initialCategoryData?.imageUrl
@@ -43,11 +44,12 @@ function EditCategoryForm({ initialCategoryData }) {
 
       // Cập nhật thông tin phân loại
       const res = await apiUpdateCategory(categoryToUpdate)
-      if (res.statusCode === 400) {
-        throw new Error(res.message || "Có lỗi xảy ra khi cập nhật phân loại.")
+      if (res.statusCode === RESPONSE_STATUS.SUCCESS) {
+        message.success("Sửa phân loại thành công!")
       }
-
-      message.success("Sửa phân loại thành công!")
+      else {
+        message.error(res.message || "Có lỗi xảy ra khi cập nhật phân loại.")
+      }
     } catch (err) {
       message.error("Có lỗi xảy ra: " + err.message)
     } finally {
@@ -142,7 +144,7 @@ function EditCategoryForm({ initialCategoryData }) {
                 Chọn ảnh
               </Button>
             </Upload>
-            <div className="text-xs text-gray-500 mt-1 sm:mt-0 sm:ml-4">Hỗ trợ: JPG, PNG, GIF (tối đa 5MB)</div>
+            <div className="text-xs text-gray-500 mt-1 sm:mt-0 sm:ml-4">Hỗ trợ: JPG, PNG, JPEG (tối đa 5MB)</div>
           </div>
         </Form.Item>
 

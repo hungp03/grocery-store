@@ -33,6 +33,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
 @Service
 @Slf4j
@@ -46,7 +47,6 @@ public class OrderServiceImpl implements OrderService {
     private final PaginationHelper paginationHelper;
     private final CartService cartService;
     private final EmailService emailService;
-
     private Order get(long id) {
         log.debug("Fetching order by ID: {}", id);
         return this.orderRepository.findById(id).orElse(null);
@@ -183,16 +183,14 @@ public class OrderServiceImpl implements OrderService {
         cartService.deleteSelectedItems(purchasedProductIds);
         orderDetailRepository.saveAll(orderDetails);
         log.info("Successfully created order details for order ID: {}", savedOrder.getId());
-
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
             @Override
             public void afterCommit() {
                 log.info("Transaction committed successfully, sending order email...");
-                emailService.sendOrderEmail(request);
+                CompletableFuture.runAsync(() -> emailService.sendOrderEmail(uid, request));
             }
         });
-
-        return savedOrder.getId(); // Trả về orderId
+        return savedOrder.getId();
     }
 
 

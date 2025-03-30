@@ -99,9 +99,8 @@ public class EmailServiceImpl implements EmailService {
 
     @Override
     @Async
-    public void sendOrderEmail(CheckoutRequestDTO checkoutRequestDTO) {
+    public void sendOrderEmail(long uid, CheckoutRequestDTO checkoutRequestDTO) {
         try {
-            long uid = SecurityUtil.getUserId();
             User u = this.userRepository.findById(uid)
                     .orElseThrow(() -> new UserNotFoundException("User không tồn tại"));
 
@@ -115,7 +114,7 @@ public class EmailServiceImpl implements EmailService {
                     checkoutRequestDTO.getItems()
             );
         } catch (Exception e) {
-
+            log.info("Cannot send email: {}", e.getMessage());
         }
     }
 

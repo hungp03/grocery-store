@@ -1,1 +1,4 @@
 /upload
+docker-compose.yml
+client/Dockerfile
+server/Dockerfile
