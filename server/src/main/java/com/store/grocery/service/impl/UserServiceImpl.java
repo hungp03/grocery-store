@@ -255,15 +255,18 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void storeUserToken(User user, String refreshToken, String deviceInfo, String deviceHash) {
+        log.info("Storing user token for user ID: {}", user.getId());
         Optional<UserToken> existingToken = userTokenRepository.findByUserAndDeviceInfo(user, deviceInfo);
 
         if (existingToken.isPresent()) {
+            log.debug("Updating existing token for user ID: {}", user.getId());
             // Cập nhật refreshToken mới
             UserToken userToken = existingToken.get();
             userToken.setRefreshToken(refreshToken);
             userToken.setDeviceInfo(deviceInfo);
             userTokenRepository.save(userToken);
         } else {
+            log.debug("Creating new token for user ID: {}", user.getId());
             // Tạo mới UserToken
             UserToken newUserToken = new UserToken();
             newUserToken.setUser(user);
@@ -277,6 +280,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public List<DeviceDTO> getLoggedInDevices(String deviceHash) {
+        log.info("Getting logged in devices for current user");
         long userId = SecurityUtil.getUserId();
         List<UserToken> userTokens = userTokenRepository.findByUserId(userId);
         return userTokens.stream()
@@ -288,6 +292,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public void requestDeactiveAccount() {
         String email = SecurityUtil.getCurrentUserLogin().orElse("");
+        log.info("Requesting account deactivation - Email: {}", email);
         if (!isExistedEmail(email)) {
             throw new UserNotFoundException("Email " + email + " không tồn tại");
         }
@@ -303,6 +308,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public void verifyOTPAndDisableAccount(String inputOtp) {
         String email = SecurityUtil.getCurrentUserLogin().orElse("");
+        log.info("Verifying OTP for account deactivation - Email: {}", email);
         OTPCode otp = otpCodeRepository.findByEmailAndType(email, OTPType.DEACTIVE_ACCOUNT)
                 .filter(o -> o.getOtpCode().equals(inputOtp) && o.getExpiresAt().isAfter(Instant.now()))
                 .orElseThrow(() -> new ResourceInvalidException("OTP không hợp lệ hoặc đã hết hạn"));

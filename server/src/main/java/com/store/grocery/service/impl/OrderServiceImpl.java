@@ -54,6 +54,7 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public Optional<OrderDTO> findOrder(long id) {
+        log.info("Fetching order by ID: {}", id);
         Optional<Order> orderOptional = this.orderRepository.findById(id);
         if (orderOptional.isPresent()) {
             Order order = orderOptional.get();
@@ -68,9 +69,7 @@ public class OrderServiceImpl implements OrderService {
         log.info("Fetching all orders with pagination");
         Page<Order> ordersPage = orderRepository.findAll(spec, pageable);
         log.debug("Found {} orders", ordersPage.getTotalElements());
-
         Page<OrderDTO> orderDTOPage = ordersPage.map(this::convertToOrderDTO);
-
         return paginationHelper.fetchAllEntities(orderDTOPage);
     }
 
@@ -92,16 +91,18 @@ public class OrderServiceImpl implements OrderService {
     }
 
     private void increaseProductSales(Long orderId) {
+        log.info("Increasing product sales for order ID: {}", orderId);
         List<OrderDetail> orderDetails = orderDetailRepository.findByOrderId(orderId);
-
         for (OrderDetail detail : orderDetails) {
             Product product = detail.getProduct();
             product.setSold(product.getSold() + detail.getQuantity());
             productRepository.save(product);
         }
+        log.info("Successfully increased product sales for order ID: {}", orderId);
     }
 
     private void restoreProductStock(long orderId) {
+        log.info("Restoring product stock for order ID: {}", orderId);
         List<OrderDetail> orderDetails = orderDetailRepository.findByOrderId(orderId);
 
         for (OrderDetail orderDetail : orderDetails) {
@@ -109,6 +110,7 @@ public class OrderServiceImpl implements OrderService {
             product.setQuantity(product.getQuantity() + orderDetail.getQuantity());
             productRepository.save(product);
         }
+        log.info("Successfully restored product stock for order ID: {}", orderId);
     }
 
     @Override
@@ -117,6 +119,7 @@ public class OrderServiceImpl implements OrderService {
         log.info("Updating status for order ID: {} to status: {}", orderId, status);
         Order order = this.get(orderId);
         if (order.getStatus() == 3) {
+            log.warn("Cannot change status for order ID: {}, order has been cancelled", orderId);
             throw new ResourceInvalidException("Không thể thay đổi trạng thái đơn hàng đã hủy");
         }
         order.setStatus(status);

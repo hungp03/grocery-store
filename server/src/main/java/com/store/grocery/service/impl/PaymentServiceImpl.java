@@ -27,6 +27,7 @@ public class PaymentServiceImpl implements PaymentService {
     private final OrderService orderService;
     @Override
     public PaymentDTO.VNPayResponse createVnPayPayment(HttpServletRequest request) {
+        log.info("Create VNPay payment");
         long amount = Integer.parseInt(request.getParameter("amount")) * 100L;
         String bankCode = request.getParameter("bankCode");
         String orderData = request.getParameter("orderData");
@@ -54,6 +55,7 @@ public class PaymentServiceImpl implements PaymentService {
     @Override
     public CheckoutRequestDTO getOrderData(String orderData) {
         try {
+            log.info("Parsing order data: {}", orderData);
             return objectMapper.readValue(orderData, CheckoutRequestDTO.class);
         } catch (Exception e) {
             log.error("Error parsing order data: {}", e.getMessage());

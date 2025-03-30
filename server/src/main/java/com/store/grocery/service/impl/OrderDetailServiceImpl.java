@@ -18,6 +18,7 @@ public class OrderDetailServiceImpl implements OrderDetailService {
 
     @Override
     public List<OrderDetailDTO> getOrderDetailById(long orderId) {
+        log.info("Get order detail by order id: {}", orderId);
         List<OrderDetail> orderDetails = this.orderDetailRepository.findByOrderId(orderId);
         return orderDetails.stream()
                 .map(this::convertToOrderDetailDTO)

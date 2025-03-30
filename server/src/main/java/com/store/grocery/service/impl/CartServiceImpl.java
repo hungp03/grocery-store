@@ -35,10 +35,11 @@ public class CartServiceImpl implements CartService{
     @Override
     public Cart addOrUpdateCart(Cart cart) {
         long uid = SecurityUtil.getUserId();
+        log.info("User {} is adding/updating cart item with productId={}", uid, cart.getId().getProductId());
         User u = this.userRepository.findById(uid).orElseThrow(() -> new UserNotFoundException("User không tồn tại"));
         Product p = this.productService.findById(cart.getId().getProductId());
-
         if (cart.getQuantity() > p.getQuantity()) {
+            log.warn("User {} tried to add {} items, but only {} available", uid, cart.getQuantity(), p.getQuantity());
             throw new ResourceInvalidException("Số lượng hàng không đủ");
         }
 
@@ -47,16 +48,20 @@ public class CartServiceImpl implements CartService{
             Cart cartItem = existingCart.get();
             int newQuantity = cartItem.getQuantity() + cart.getQuantity();
             if (newQuantity < 0) {
+                log.warn("User {} tried to set invalid quantity {}", uid, newQuantity);
                 throw new ResourceInvalidException("Số lượng sản phẩm không hợp lệ");
             }
             if (newQuantity > p.getQuantity()) {
+                log.warn("User {} tried to add {} items, but only {} available", uid, newQuantity, p.getQuantity());
                 throw new ResourceInvalidException("Số lượng hàng trong kho không đủ");
             }
             cartItem.setQuantity(newQuantity);
+            log.info("Updated cart item: userId={}, productId={}, newQuantity={}", uid, p.getId(), newQuantity);
             return this.cartRepository.save(cartItem);
         } else {
             cart.setUser(u);
             cart.setProduct(p);
+            log.info("Added new cart item: userId={}, productId={}, quantity={}", uid, p.getId(), cart.getQuantity());
             return this.cartRepository.save(cart);
         }
     }
@@ -64,42 +69,51 @@ public class CartServiceImpl implements CartService{
     @Override
     public void deleteFromCart(long productId) {
         long uid = SecurityUtil.getUserId();
+        log.info("User {} is deleting product {} from cart", uid, productId);
         User u = this.userRepository.findById(uid).orElseThrow(() -> new UserNotFoundException("User không tồn tại"));
         boolean exists = this.cartRepository.existsById(new CartId(uid, productId));
         if (!exists) {
+            log.warn("User {} tried to delete non-existent product {} from cart", uid, productId);
             throw new ResourceInvalidException("Sản phẩm không tồn tại trong giỏ hàng");
         }
         CartId cartId = new CartId(uid, productId);
         this.cartRepository.deleteById(cartId);
+        log.info("Deleted product {} from cart for user {}", productId, uid);
     }
     @Override
     public PaginationDTO getCartByCurrentUser(Pageable pageable) {
         long uid = SecurityUtil.getUserId();
-        User u = this.userRepository.findById(uid).orElseThrow(() -> new UserNotFoundException("User không tồn tại"));
+        log.info("Fetching cart items for user {}", uid);
 
+        User u = this.userRepository.findById(uid).orElseThrow(() -> new UserNotFoundException("User không tồn tại"));
         Page<CartItemDTO> cartItems = this.cartRepository.findCartItemsByUserId(uid, pageable);
+        log.info("Fetched cart items for user {}", uid);
         return this.paginationHelper.fetchAllEntities(cartItems);
     }
     @Override
     public List<CartItemDTO> getCartItemsByProductIds(List<Long> productIds, Pageable pageable) {
         long uid = SecurityUtil.getUserId();
+        log.info("Fetching selected cart items for user {}", uid);
         User u = this.userRepository.findById(uid).orElseThrow(() -> new UserNotFoundException("User không tồn tại"));
+        log.info("Fetched selected cart items for user {}", uid);
         return this.cartRepository.findCartItemsByUserIdAndProductId(uid, productIds, pageable);
     }
     @Override
     @Transactional
     public void deleteSelectedItems(List<Long> productIds) {
         long uid = SecurityUtil.getUserId();
+        log.info("User {} is deleting selected cart items", uid);
         List<CartId> cartIds = productIds.stream()
                 .map(productId -> new CartId(uid, productId))
                 .toList();
         cartRepository.deleteByIdIn(cartIds);
+        log.info("Deleted selected cart items for user {}", uid);
     }
     @Override
     public long countProductInCart(long userId) {
-        log.debug("Counting products in cart for user ID: {}", userId);
+        log.info("Counting products in cart for user ID: {}", userId);
         long count = this.cartRepository.countById_UserId(userId);
-        log.debug("Found {} products in cart for user ID: {}", count, userId);
+        log.info("Count products in cart for user ID: {} successfully", userId);
         return count;
     }
 }

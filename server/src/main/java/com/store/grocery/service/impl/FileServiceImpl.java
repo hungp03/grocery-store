@@ -27,18 +27,19 @@ public class FileServiceImpl implements FileService {
 
     @Override
     public void createDirectory(String folder) throws URISyntaxException {
+        log.info(">>> CREATE DIRECTORY: {}", folder);
         URI uri = new URI(folder);
         Path path = Paths.get(uri);
         File tmpDir = new File(path.toString());
         if (!tmpDir.isDirectory()) {
             try {
                 Files.createDirectory(tmpDir.toPath());
-                System.out.println(">>> CREATE NEW DIRECTORY SUCCESSFUL, PATH = " + tmpDir.toPath());
+                log.info(">>> CREATE NEW DIRECTORY SUCCESSFUL, PATH = {}",tmpDir.toPath());
             } catch (IOException e) {
-                e.printStackTrace();
+                log.error(">>> CREATE NEW DIRECTORY FAILED, PATH = {}",tmpDir.toPath());
             }
         } else {
-            System.out.println(">>> SKIP MAKING DIRECTORY, ALREADY EXISTS");
+            log.info(">>> SKIP MAKING DIRECTORY, ALREADY EXISTS");
         }
     }
 
@@ -46,8 +47,8 @@ public class FileServiceImpl implements FileService {
     public String store(MultipartFile file, String folder) throws IOException {
         // Tạo tên file duy nhất
         String originalFileName = file.getOriginalFilename();
+        log.info(">>> ORIGINAL FILE NAME: {}", originalFileName);
         String finalName = System.currentTimeMillis() + "-" + originalFileName;
-
         String encodedFileName = URLEncoder.encode(finalName, "UTF-8").replace("+", "%20");
         // Tạo URI từ baseURI, folder và tên file đã mã hóa
         URI uri = URI.create(baseURI + folder + "/" + encodedFileName);
@@ -56,6 +57,7 @@ public class FileServiceImpl implements FileService {
         try (InputStream inputStream = file.getInputStream()) {
             Files.copy(inputStream, path, StandardCopyOption.REPLACE_EXISTING);
         }
+        log.info(">>> STORE FILE SUCCESSFUL, PATH = {}", path);
         return finalName;
     }
     @Override
@@ -73,13 +75,14 @@ public class FileServiceImpl implements FileService {
             throws URISyntaxException, FileNotFoundException {
         URI uri = new URI(baseURI + folder + "/" + fileName);
         Path path = Paths.get(uri);
-
         File file = new File(path.toString());
         return new InputStreamResource(new FileInputStream(file));
     }
     @Override
     public void validateFile(MultipartFile file) {
+        log.info(">>> VALIDATE FILE");
         if (file == null || file.isEmpty()) {
+            log.warn(">>> FILE IS EMPTY");
             throw new StorageException("File is empty. Please choose a file");
         }
 
@@ -89,6 +92,7 @@ public class FileServiceImpl implements FileService {
                 fileName != null && fileName.toLowerCase().endsWith(item));
 
         if (!isValid) {
+            log.warn(">>> FILE NOT ALLOWED");
             throw new StorageException("File not allowed! Please use file " + allowedExtensions);
         }
     }

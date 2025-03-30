@@ -56,8 +56,9 @@ public class EmailServiceImpl implements EmailService {
             message.setSubject(subject);
             message.setText(content, isHtml);
             this.javaMailSender.send(mimeMessage);
+            log.info("Email sent successfully to {}", to);
         } catch (MailException | MessagingException e) {
-            System.out.println("ERROR SEND EMAIL: " + e);
+            log.error("Failed to send email to {}: {}", to, e.getMessage());
         }
     }
 
@@ -113,6 +114,7 @@ public class EmailServiceImpl implements EmailService {
                     checkoutRequestDTO.getPaymentMethod(), checkoutRequestDTO.getTotalPrice(),
                     checkoutRequestDTO.getItems()
             );
+            log.info("📧 Order email sent to uid {} for order total {}", uid, formatCurrency(checkoutRequestDTO.getTotalPrice()));
         } catch (Exception e) {
             log.info("Cannot send email: {}", e.getMessage());
         }
