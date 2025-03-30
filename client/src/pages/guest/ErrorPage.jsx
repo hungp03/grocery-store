@@ -3,7 +3,8 @@ import { Button } from '@/components'
 import { Link } from 'react-router-dom'
 import path from '@/utils/path'
 import error from '@/assets/error.svg'
-const ErrorPage = ({ statusCode = 404 }) => {
+import {RESPONSE_STATUS} from "@/utils/responseStatus";
+const ErrorPage = ({ statusCode = RESPONSE_STATUS.NOT_FOUND }) => {
   return (
     <div className="w-main min-h-screen bg-background text-foreground">
       <div className="container mx-auto px-4 py-8 flex flex-col lg:flex-row items-center justify-center min-h-screen">

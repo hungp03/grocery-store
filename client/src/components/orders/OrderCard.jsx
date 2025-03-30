@@ -3,7 +3,7 @@ import { Modal, Button, Typography, Image } from "antd";
 import { FaClock } from "react-icons/fa6";
 import { apiGetOrderDetail, apiUpdateOrderStatus } from "@/apis";
 import productDF from "@/assets/product_default.png";
-
+import { RESPONSE_STATUS } from "@/utils/responseStatus";
 const { Text, Title } = Typography;
 
 const OrderCard = ({ order, onClose, updateOrderStatus }) => {
@@ -15,7 +15,7 @@ const OrderCard = ({ order, onClose, updateOrderStatus }) => {
         const fetchOrderDetails = async () => {
             try {
                 const response = await apiGetOrderDetail(order.id);
-                if (response.statusCode === 200) {
+                if (response.statusCode === RESPONSE_STATUS.SUCCESS) {
                     setProducts(response.data);
                 }
             } catch (error) {
@@ -35,7 +35,7 @@ const OrderCard = ({ order, onClose, updateOrderStatus }) => {
             onOk: async () => {
                 try {
                     const response = await apiUpdateOrderStatus(oid, 3);
-                    if (response?.statusCode === 200) {
+                    if (response?.statusCode === RESPONSE_STATUS.SUCCESS) {
                         setIsCancel(true);
                         updateOrderStatus(oid, 3);
                         setResStatus(3);

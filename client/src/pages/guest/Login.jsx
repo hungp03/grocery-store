@@ -9,6 +9,7 @@ import { useDispatch } from "react-redux";
 import { useForm } from 'react-hook-form';
 import { ClipLoader } from "react-spinners";
 import { GoogleLogin } from '@react-oauth/google';
+import { RESPONSE_STATUS } from "@/utils/responseStatus";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -31,7 +32,7 @@ const Login = () => {
     if (isRegister) {
       const res = await apiRegister(payload);
       setLoading(false);
-      if (res.statusCode === 201) {
+      if (res.statusCode === RESPONSE_STATUS.CREATED) {
         Swal.fire('Congratulation', "Đăng ký thành công", 'success').then(() => {
           setisRegister(false);
         });
@@ -41,7 +42,7 @@ const Login = () => {
     } else {
       const result = await apiLogin(data);
       setLoading(false);
-      if (result.statusCode === 200) {
+      if (result.statusCode === RESPONSE_STATUS.SUCCESS) {
         dispatch(login({ isLoggedIn: true, token: result.data.access_token, userData: result.data.user }));
         setTimeout(() => {
           navigate(`/${path.HOME}`);
@@ -56,7 +57,7 @@ const Login = () => {
     const { credential } = response;
     if (credential) {
       const result = await apiLoginGoogle({ credential });
-      if (result.statusCode === 200) {
+      if (result.statusCode === RESPONSE_STATUS.SUCCESS) {
         dispatch(login({ isLoggedIn: true, token: result.data.access_token, userData: result.data.user }));
         navigate(`/${path.HOME}`);
       }

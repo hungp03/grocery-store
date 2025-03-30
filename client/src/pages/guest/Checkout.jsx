@@ -8,7 +8,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { FaRegCreditCard } from "react-icons/fa6";
 import vnpayLogo from "@/assets/vnpay_logo.png"
-
+import { RESPONSE_STATUS } from "@/utils/responseStatus";
 
 const Checkout = () => {
     const { current } = useSelector(state => state.user)
@@ -60,20 +60,16 @@ const Checkout = () => {
                 orderData: orderData
             });
 
-            // if (vnpayRes?.statusCode === 200 && vnpayRes?.data?.data?.code === "ok") {
-            //     const paymentUrl = vnpayRes?.data?.data?.paymentUrl;
-            //     window.location.href = paymentUrl;
-            // }
-            if (vnpayRes?.statusCode === 200 && vnpayRes?.data?.data?.code === "ok") {
+            if (vnpayRes?.statusCode === RESPONSE_STATUS.SUCCESS && vnpayRes?.data?.data?.code === "ok") {
                 const paymentUrl = vnpayRes?.data?.data?.paymentUrl;
-                console.log(paymentUrl)
-                window.open(paymentUrl, "_blank");
+                window.location.href = paymentUrl;
             }
+           
 
         } else {
             const response = await apiCreateOrder(requestBody);
             const delay = 2000;
-            if (response?.statusCode === 201) {
+            if (response?.statusCode === RESPONSE_STATUS.CREATED) {
                 toast.success("Đặt hàng thành công", {
                     hideProgressBar: false,
                     autoClose: delay,

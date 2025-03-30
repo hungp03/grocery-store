@@ -4,7 +4,7 @@ import { apiDeleteWishlist, apiGetWishlist } from '@/apis';
 import { message } from 'antd';
 import { useSelector } from 'react-redux';
 import {WishlistItem} from '@/components';
-
+import { RESPONSE_STATUS } from "@/utils/responseStatus";
 const PAGE_SIZE = 5;
 const DELETE_DELAY = 500;
 
@@ -22,7 +22,7 @@ const Wishlist = () => {
 
     const deleteProductInWishlist = async (pid) => {
         const res = await apiDeleteWishlist(pid);
-        if (res.statusCode === 200) {
+        if (res.statusCode === RESPONSE_STATUS.SUCCESS) {
             message.success("Đã xóa sản phẩm khỏi yêu thích");
         } else {
             message.error("Có lỗi trong quá trình xóa");

@@ -6,6 +6,8 @@ import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { Table, Button, Dropdown, message, Select } from "antd";
 import { createSearchParams } from "react-router-dom";
 import { statusOrder } from "@/utils/constants";
+import { RESPONSE_STATUS } from "@/utils/responseStatus";
+
 const Order = () => {
   const [params] = useSearchParams();
   const navigate = useNavigate();
@@ -91,7 +93,7 @@ const Order = () => {
   const updateOrderStatus = async (orderId, newStatus) => {
     try {
       const res = await apiUpdateOrderStatus(orderId, newStatus);
-      if (res.statusCode === 200) {
+      if (res.statusCode === RESPONSE_STATUS.SUCCESS) {
         message.success("Cập nhật trạng thái đơn hàng thành công!", 2);
   
         const queries = {

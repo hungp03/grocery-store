@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { apiGetProducts, apiDeleteProduct } from "@/apis";
 import { MdDelete, MdModeEdit } from "react-icons/md";
-import "react-toastify/dist/ReactToastify.css";
 import {
   useSearchParams,
   useNavigate,
@@ -12,6 +11,7 @@ import { Table, Modal, Button, message } from "antd";
 import product_default from "@/assets/product_default.png";
 import { SortItem } from "@/components";
 import { sortProductOption } from "@/utils/constants";
+import { RESPONSE_STATUS } from "@/utils/responseStatus";
 
 const PAGE_SIZE = 10;
 
@@ -95,7 +95,7 @@ const Product = () => {
   const handleConfirmDelete = async () => {
     try {
       const res = await apiDeleteProduct(deleteProduct.id);
-      if (res.statusCode === 200) {
+      if (res.statusCode === RESPONSE_STATUS.SUCCESS) {
         message.success("Xóa sản phẩm thành công!", 2);
       }
       else {

@@ -12,6 +12,7 @@ import { useSelector } from "react-redux";
 import Swal from "sweetalert2";
 import path from "@/utils/path";
 import { getCurrentUser } from "@/store/user/asyncActions";
+import { RESPONSE_STATUS } from "@/utils/responseStatus";
 
 const { FaCartShopping, FaHeart, FaEye } = icons;
 
@@ -49,7 +50,7 @@ const ProductCard = ({ productData, navigate, dispatch }) => {
       if (!isLoggedInCheck) return;
 
       const res = await apiAddOrUpdateCart(productData?.id, 1);
-      if (res.statusCode === 201) {
+      if (res.statusCode === RESPONSE_STATUS.CREATED) {
         toast.success('Đã thêm vào giỏ hàng');
         dispatch(getCurrentUser());
       } else {
@@ -62,7 +63,7 @@ const ProductCard = ({ productData, navigate, dispatch }) => {
       if (!isLoggedInCheck) return;
 
       const res = await apiAddWishList(productData?.id);
-      if (res.statusCode === 201) {
+      if (res.statusCode === RESPONSE_STATUS.CREATED) {
         toast.success('Đã thêm vào danh sách yêu thích');
       } else {
         toast.warn(res.message);

@@ -1,71 +1,78 @@
-import { useRef, useState } from "react"
+import { useRef, useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import { Button, Input, Modal, message } from "antd"
 import { apiRequestDeactivateAccount, apiDeactivateAccount } from "@/apis"
 import path from "@/utils/path"
+import { RESPONSE_STATUS } from "@/utils/responseStatus"
+
 export default function OtpVerificationModal({ open, onClose }) {
   const navigate = useNavigate()
   const [loading, setLoading] = useState(false)
-  const [otp, setOtp] = useState(['', '', '', '', '', ''])
-  const [step, setStep] = useState('confirmation') // 'confirmation' or 'otp'
+  const [otp, setOtp] = useState(["", "", "", "", "", ""])
+  const [step, setStep] = useState("confirmation")
+  const [countdown, setCountdown] = useState(0)
 
   // Create refs for each input
-  const inputRefs = [
-    useRef(null),
-    useRef(null),
-    useRef(null),
-    useRef(null),
-    useRef(null),
-    useRef(null),
-  ]
+  const inputRefs = [useRef(null), useRef(null), useRef(null), useRef(null), useRef(null), useRef(null)]
+
+  // Handle countdown timer
+  useEffect(() => {
+    let timer
+    if (countdown > 0) {
+      timer = setTimeout(() => setCountdown(countdown - 1), 1000)
+    }
+    return () => clearTimeout(timer)
+  }, [countdown])
 
   const handleProceedToOtp = async () => {
-    setStep('otp')
-    const response = await apiRequestDeactivateAccount();
-    if (response.statusCode === 200) {
-      message.success("OTP đã được gửi đến email của bạn");
-    } else {
-      message.error(response.message || "Có lỗi xảy ra khi gửi OTP");
-    }
-    // Focus the first input field after a short delay to ensure it's rendered
-    setTimeout(() => {
-      if (inputRefs[0].current) {
-        inputRefs[0].current.focus()
+    try {
+      setLoading(true)
+      const response = await apiRequestDeactivateAccount()
+      if (response.statusCode === RESPONSE_STATUS.SUCCESS) {
+        setStep("otp")
+        message.success("OTP đã được gửi đến email của bạn")
+        setCountdown(60) 
+      } else {
+        message.error(response.message || "Có lỗi xảy ra khi gửi OTP")
       }
-    }, 100)
+    } catch (error) {
+      message.error("Có lỗi xảy ra khi gửi OTP")
+    } finally {
+      setLoading(false)
+    }
   }
 
   const handleVerify = async () => {
     // Check if OTP is complete
-    if (otp.some(digit => digit === '')) {
+    if (otp.some((digit) => digit === "")) {
       message.error("Vui lòng nhập đầy đủ mã OTP 6 chữ số")
       return
     }
-  
+
     setLoading(true)
-    const otpValue = otp.join('')
-  
-    const response = await apiDeactivateAccount({otpCode: otpValue})
-  
-    if (response.statusCode === 200) {
+    const otpValue = otp.join("")
+
+    const response = await apiDeactivateAccount({ otpCode: otpValue })
+
+    if (response.statusCode === RESPONSE_STATUS.SUCCESS) {
       message.success("Xác thực OTP thành công")
-      setOtp(['', '', '', '', '', ''])
-      setStep('confirmation')
+      setOtp(["", "", "", "", "", ""])
+      setStep("confirmation")
       onClose()
       setTimeout(() => {
         navigate(path.HOME)
       }, 1000)
     } else {
       message.error(response.message || "Có lỗi xảy ra khi xác thực OTP")
-      setOtp(['', '', '', '', '', ''])
+      setOtp(["", "", "", "", "", ""])
     }
-  
+
     setLoading(false)
-  }  
+  }
 
   const handleCancel = () => {
-    setOtp(['', '', '', '', '', ''])
-    setStep('confirmation')
+    setOtp(["", "", "", "", "", ""])
+    setStep("confirmation")
     onClose()
   }
 
@@ -88,28 +95,28 @@ export default function OtpVerificationModal({ open, onClose }) {
 
   const handleKeyDown = (e, index) => {
     // Handle backspace
-    if (e.key === 'Backspace') {
-      if (otp[index] === '' && index > 0) {
+    if (e.key === "Backspace") {
+      if (otp[index] === "" && index > 0) {
         // If current field is empty and backspace is pressed, move to previous field
         const newOtp = [...otp]
-        newOtp[index - 1] = ''
+        newOtp[index - 1] = ""
         setOtp(newOtp)
         inputRefs[index - 1].current.focus()
-      } else if (otp[index] !== '') {
+      } else if (otp[index] !== "") {
         // If current field has a value, clear it
         const newOtp = [...otp]
-        newOtp[index] = ''
+        newOtp[index] = ""
         setOtp(newOtp)
       }
     }
 
     // Handle left arrow key
-    if (e.key === 'ArrowLeft' && index > 0) {
+    if (e.key === "ArrowLeft" && index > 0) {
       inputRefs[index - 1].current.focus()
     }
 
     // Handle right arrow key
-    if (e.key === 'ArrowRight' && index < 5) {
+    if (e.key === "ArrowRight" && index < 5) {
       inputRefs[index + 1].current.focus()
     }
   }
@@ -117,11 +124,11 @@ export default function OtpVerificationModal({ open, onClose }) {
   // Handle paste event
   const handlePaste = (e) => {
     e.preventDefault()
-    const pastedData = e.clipboardData.getData('text')
+    const pastedData = e.clipboardData.getData("text")
 
     // Check if pasted content is numeric and has appropriate length
     if (/^\d+$/.test(pastedData)) {
-      const digits = pastedData.slice(0, 6).split('')
+      const digits = pastedData.slice(0, 6).split("")
       const newOtp = [...otp]
 
       digits.forEach((digit, index) => {
@@ -131,7 +138,7 @@ export default function OtpVerificationModal({ open, onClose }) {
       setOtp(newOtp)
 
       // Focus the next empty field or the last field if all are filled
-      const nextEmptyIndex = newOtp.findIndex(digit => digit === '')
+      const nextEmptyIndex = newOtp.findIndex((digit) => digit === "")
       if (nextEmptyIndex !== -1) {
         inputRefs[nextEmptyIndex].current.focus()
       } else if (digits.length < 6) {
@@ -144,14 +151,12 @@ export default function OtpVerificationModal({ open, onClose }) {
 
   const renderConfirmationStep = () => (
     <div className="py-4">
-      <p className="mb-6">
-        Bạn chắc chắn muốn vô hiệu hóa tài khoản của mình?
-      </p>
-      <p className="text-gray-500 mb-6">
-        Chúng tôi sẽ gửi mã OTP xác thực đến email của bạn để hoàn tất quá trình.
-      </p>
+      <p className="mb-6">Bạn chắc chắn muốn vô hiệu hóa tài khoản của mình?</p>
+      <p className="text-gray-500 mb-6">Chúng tôi sẽ gửi mã OTP xác thực đến email của bạn để hoàn tất quá trình.</p>
       <div className="flex justify-end gap-2 mt-4">
-        <Button type="primary" onClick={handleCancel}>Hủy</Button>
+        <Button type="primary" onClick={handleCancel}>
+          Hủy
+        </Button>
         <Button danger onClick={handleProceedToOtp}>
           Tiếp tục
         </Button>
@@ -159,18 +164,32 @@ export default function OtpVerificationModal({ open, onClose }) {
     </div>
   )
 
+  const handleResendOtp = async () => {
+    if (countdown > 0) return // Prevent resending if countdown is active
+
+    try {
+      setLoading(true)
+      const response = await apiRequestDeactivateAccount()
+      if (response.statusCode === RESPONSE_STATUS.SUCCESS) {
+        message.success("OTP mới đã được gửi đến email của bạn")
+        setCountdown(60) // Reset countdown
+      } else {
+        message.error(response.message || "Có lỗi xảy ra khi gửi lại OTP")
+      }
+    } catch (error) {
+      message.error("Có lỗi xảy ra khi gửi lại OTP")
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const renderOtpStep = () => (
     <div className="py-2">
-      <p className="mb-4">
-        Vui lòng nhập mã OTP 6 chữ số đã được gửi đến email của bạn để xác thực.
-      </p>
+      <p className="mb-4">Vui lòng nhập mã OTP 6 chữ số đã được gửi đến email của bạn để xác thực.</p>
 
       <div className="my-6">
         <label className="block text-sm font-medium mb-2">Nhập mã OTP 6 chữ số</label>
-        <div
-          className="flex justify-center gap-2"
-          onPaste={handlePaste}
-        >
+        <div className="flex justify-center gap-2" onPaste={handlePaste}>
           {otp.map((digit, index) => (
             <Input
               key={index}
@@ -186,6 +205,18 @@ export default function OtpVerificationModal({ open, onClose }) {
         </div>
       </div>
 
+      <div className="mt-3 text-center">
+        {countdown > 0 ? (
+          <p className="text-gray-500">
+            Gửi lại OTP sau <span className="font-semibold">{countdown}</span> giây
+          </p>
+        ) : (
+          <Button type="link" onClick={handleResendOtp} loading={loading && countdown === 0} disabled={countdown > 0}>
+            Gửi lại OTP
+          </Button>
+        )}
+      </div>
+
       <div className="flex justify-end gap-2 mt-6">
         <Button onClick={handleCancel}>Hủy</Button>
         <Button type="primary" onClick={handleVerify} loading={loading}>
@@ -195,15 +226,29 @@ export default function OtpVerificationModal({ open, onClose }) {
     </div>
   )
 
+  // Reset OTP fields when step changes to "otp"
+  useEffect(() => {
+    if (step === "otp") {
+      setOtp(["", "", "", "", "", ""])
+      // Focus the first input field after a short delay
+      setTimeout(() => {
+        if (inputRefs[0].current) {
+          inputRefs[0].current.focus()
+        }
+      }, 100)
+    }
+  }, [step])
+
   return (
     <Modal
-      title={step === 'confirmation' ? "Xác nhận" : "Xác thực OTP"}
+      title={step === "confirmation" ? "Xác nhận" : "Xác thực OTP"}
       open={open}
       onCancel={handleCancel}
       footer={null}
       width={500}
     >
-      {step === 'confirmation' ? renderConfirmationStep() : renderOtpStep()}
+      {step === "confirmation" ? renderConfirmationStep() : renderOtpStep()}
     </Modal>
   )
 }
+

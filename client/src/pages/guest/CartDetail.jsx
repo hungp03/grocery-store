@@ -7,6 +7,7 @@ import { apiGetCart, apiAddOrUpdateCart, apiDeleteCart } from '@/apis';
 import { getCurrentUser } from '@/store/user/asyncActions';
 import withBaseComponent from '@/hocs/withBaseComponent';
 import path from '@/utils/path';
+import { RESPONSE_STATUS } from "@/utils/responseStatus";
 
 const DEBOUNCE_DELAY = 500;
 const DELETE_DELAY = 500;
@@ -36,23 +37,22 @@ const Cart = ({ dispatch }) => {
   const deleteProductInCart = async (pid) => {
     const res = await apiDeleteCart(pid);
     const messages = {
-      200: "Đã xóa sản phẩm",
-      [-5]: "Sản phẩm không tồn tại trong giỏ hàng",
-      [-6]: "Thông tin người dùng không hợp lệ"
+      [RESPONSE_STATUS.SUCCESS]: "Đã xóa sản phẩm",
+      [RESPONSE_STATUS.RESOURCE_INVALID]: "Sản phẩm không tồn tại trong giỏ hàng",
     };
-    toast[res.statusCode === 200 ? 'success' : 'error'](messages[res.statusCode] || "Có lỗi trong quá trình xóa");
-    res.statusCode === 200 && dispatch(getCurrentUser());
+    toast[res.statusCode === RESPONSE_STATUS.SUCCESS ? 'success' : 'error'](messages[res.statusCode] || "Có lỗi trong quá trình xóa");
+    res.statusCode === RESPONSE_STATUS.SUCCESS && dispatch(getCurrentUser());
   };
 
   const fetchCartItems = async (pageToFetch = 1, pageSize = ITEMS_PER_PAGE) => {
     setIsLoading(true);
     const response = await apiGetCart(pageToFetch, pageSize);
-    if (response.statusCode === -6) {
+    if (response.statusCode === RESPONSE_STATUS.USER_NOT_FOUND) {
       toast.error("Thông tin người dùng không hợp lệ");
       setIsLoading(false);
       return;
     }
-    if (response.statusCode === 200) {
+    if (response.statusCode === RESPONSE_STATUS.SUCCESS) {
       const products = response.data.result;
       setCartItems((prevItems) => {
         const updatedItems = pageToFetch === 1 ? products : [...prevItems, ...products];
@@ -147,9 +147,9 @@ const Cart = ({ dispatch }) => {
       const finalChange = pendingChanges.current[pid];
       if (finalChange !== undefined) {
         const rs = await apiAddOrUpdateCart(pid, finalChange);
-        if (rs.statusCode === 201) {
+        if (rs.statusCode === RESPONSE_STATUS.CREATED) {
           toast.success(`Đã cập nhật số lượng mới: ${rs.data.quantity}`);
-        } else if (rs.statusCode === -5) {
+        } else if (rs.statusCode === RESPONSE_STATUS.RESOURCE_INVALID) {
           toast.error(rs.message);
         } else {
           toast.error("Có lỗi xảy ra");

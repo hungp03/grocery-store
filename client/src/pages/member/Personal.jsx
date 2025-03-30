@@ -6,7 +6,7 @@ import { UploadOutlined, UserOutlined, PhoneOutlined, MailOutlined, HomeOutlined
 import avatar from "@/assets/avatarDefault.png";
 import { apiUpdateCurrentUser, getUserById } from "@/apis";
 import { getCurrentUser } from "@/store/user/asyncActions";
-
+import { RESPONSE_STATUS } from "@/utils/responseStatus";
 const { Title } = Typography;
 
 const Personal = () => {
@@ -98,7 +98,7 @@ const Personal = () => {
         const response = await apiUpdateCurrentUser(formData);
         const delay = 2000;
 
-        if (response.statusCode === 200) {
+        if (response.statusCode === RESPONSE_STATUS.SUCCESS) {
             message.success("Cập nhật thành công");
             setTimeout(() => {
                 dispatch(getCurrentUser());
@@ -163,7 +163,6 @@ const Personal = () => {
                     control={control}
                     rules={{
                         required: 'Vui lòng điền thông tin',
-                        minLength: { value: 5, message: 'Tên phải có ít nhất 5 ký tự' },
                         maxLength: { value: 100, message: 'Tên không được vượt quá 100 ký tự' },
                         pattern: {
                             value: /^[a-zA-ZÀÁÂÃÈÉÊÌÍÒÓÔÕÙÚĂĐĨŨƠàáâãèéêìíòóôõùúăđĩũơƯăẠ-ỹ\s,.-/]+$/,

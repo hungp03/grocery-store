@@ -6,7 +6,7 @@ import Masonry from 'react-masonry-css';
 import { v4 as uuidv4 } from 'uuid';
 import { sortProductOption } from '@/utils/constants';
 import { ClipLoader } from "react-spinners";
-
+import { RESPONSE_STATUS } from "@/utils/responseStatus";
 const breakpointColumnsObj = {
   default: 5,
   1100: 4,
@@ -46,7 +46,7 @@ const Product = () => {
       setIsProductLoading(true);
       setError(null);
       const response = await apiGetProducts(queries);
-      if (response.statusCode === 200) {
+      if (response.statusCode === RESPONSE_STATUS.SUCCESS) {
         setProducts(response.data);
       } else {
         throw new Error('Lỗi lấy thông tin sản phẩm');

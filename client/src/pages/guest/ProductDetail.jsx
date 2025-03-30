@@ -16,6 +16,7 @@ import clsx from 'clsx';
 import { toast } from 'react-toastify';
 import icons from '@/utils/icons';
 import { getCurrentUser } from '@/store/user/asyncActions';
+import { RESPONSE_STATUS } from "@/utils/responseStatus";
 
 const { FaHeart } = icons
 const ProductDetail = ({ isQuickView, data }) => {
@@ -44,21 +45,21 @@ const ProductDetail = ({ isQuickView, data }) => {
 
   const fetchProductData = async () => {
     const response = await apiGetProduct(pid);
-    if (response.statusCode === 200) {
+    if (response.statusCode === RESPONSE_STATUS.SUCCESS) {
       setProduct(response.data);
     }
   };
 
   const fetchRecommended = async () => {
     const res = await apiGetProducts({ page: 1, size: 12, filter: `category.name='${params?.category}' and id! ${pid}` })
-    if (res.statusCode === 200) {
+    if (res.statusCode === RESPONSE_STATUS.SUCCESS) {
       setRecommendedProducts(res.data.result);
     }
   };
 
   const fetchFeedbacksData = async (page = 1) => {
     const response = await apiGetRatingsPage(pid, { page, size: 5 });
-    if (response.statusCode === 200) {
+    if (response.statusCode === RESPONSE_STATUS.SUCCESS) {
       setFeedbacks(response.data?.result);
       setFeedbacksPage(response.data?.result);
       setCurrentPage(page);
@@ -143,7 +144,7 @@ const ProductDetail = ({ isQuickView, data }) => {
   const addWishList = async (pid) => {
     await checkLoginAndExecute(async () => {
       const rs = await apiAddWishList(pid);
-      if (rs.statusCode === 201) {
+      if (rs.statusCode === RESPONSE_STATUS.CREATED) {
         toast.success("Thêm thành công vào danh sách yêu thích");
       } else {
         toast.warn(rs.message);
@@ -154,7 +155,7 @@ const ProductDetail = ({ isQuickView, data }) => {
   const addToCart = async (pid, quantity) => {
     await checkLoginAndExecute(async () => {
       const rs = await apiAddOrUpdateCart(pid, quantity);
-      if (rs.statusCode === 201) {
+      if (rs.statusCode === RESPONSE_STATUS.CREATED) {
         toast.success(`Đã thêm vào giỏ hàng (${rs.data.quantity})`);
         dispatch(getCurrentUser());
       } else {

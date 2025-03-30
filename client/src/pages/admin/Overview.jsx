@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { apiGetSummary, apiGetMonthlyRevenue } from "@/apis";
 import { RevenueChart } from "@/components/admin";
-
+import { RESPONSE_STATUS } from "@/utils/responseStatus";
 const Overview = () => {
   const currentDate = new Date();
   const currentMonth = currentDate.getMonth() + 1; // Tháng hiện tại (1-12)
@@ -31,7 +31,7 @@ const Overview = () => {
 
   const fetchSummary = async () => {
     const res = await apiGetSummary();
-    if (res.statusCode === 200) {
+    if (res.statusCode === RESPONSE_STATUS.SUCCESS) {
       setTotalProfit(res?.data[0]);
       setTotalUser(res?.data[1]);
       setTotalProduct(res?.data[2]);
@@ -41,7 +41,7 @@ const Overview = () => {
 
   const fetchOverviewOrder = async (month) => {
     const res = await apiGetMonthlyRevenue(month, selectedYear);
-    if (res.statusCode === 200) {
+    if (res.statusCode === RESPONSE_STATUS.SUCCESS) {
       setChartData(res.data);
     }
   };
