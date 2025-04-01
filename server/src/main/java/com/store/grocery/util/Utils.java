@@ -3,10 +3,9 @@ package com.store.grocery.util;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.text.Normalizer;
 
-public class DeviceUtil {
+public class Utils {
     public static String generateDeviceHash(String deviceInfo) {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
@@ -20,5 +19,15 @@ public class DeviceUtil {
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException("Lỗi khi hash deviceInfo", e);
         }
+    }
+
+    public static String generateSlug(String name) {
+        String normalized = Normalizer.normalize(name, Normalizer.Form.NFD);
+        normalized = normalized.replaceAll("[^\\p{ASCII}]", "");
+
+        return normalized.toLowerCase()
+                .replaceAll("[^a-z0-9\\s-]", "")
+                .replaceAll("\\s+", "-")
+                .replaceAll("-+", "-");
     }
 }

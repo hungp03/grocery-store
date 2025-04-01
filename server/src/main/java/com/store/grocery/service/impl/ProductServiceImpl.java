@@ -63,7 +63,6 @@ public class ProductServiceImpl implements ProductService {
     public void delete(long id) {
         log.info("Attempting to delete product with ID: {}", id);
         if (!this.checkValidProductId(id)) {
-            log.error("Product not found with ID: {}", id);
             throw new ResourceInvalidException("Product id = " + id + " không tồn tại");
         }
         this.productRepository.deleteById(id);
@@ -92,7 +91,7 @@ public class ProductServiceImpl implements ProductService {
         ResProductDTO res = new ResProductDTO();
         res.setId(p.getId());
         res.setProduct_name(p.getProductName());
-        res.setCategory(p.getCategory().getName());
+        res.setCategory(p.getCategory().getSlug());
         res.setPrice(p.getPrice());
         res.setSold(p.getSold());
         res.setQuantity(p.getQuantity());
@@ -198,7 +197,7 @@ public class ProductServiceImpl implements ProductService {
                 Sheet sheet = workbook.createSheet("Products");
 
                 // Tiêu đề cột
-                List<String> headers = List.of("ID", "Category", "Name", "Quantity", "Price", "Sold", "Unit", "Rating", "Description");
+                List<String> headers = List.of("ID", "Name", "Quantity", "Price", "Sold", "Unit", "Rating", "Description");
                 Row headerRow = sheet.createRow(0);
                 for (int i = 0; i < headers.size(); i++) {
                     headerRow.createCell(i).setCellValue(headers.get(i));

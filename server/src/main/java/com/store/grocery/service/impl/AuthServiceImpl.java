@@ -16,7 +16,7 @@ import com.store.grocery.service.AuthService;
 import com.store.grocery.service.CartService;
 import com.store.grocery.service.EmailService;
 import com.store.grocery.service.UserService;
-import com.store.grocery.util.DeviceUtil;
+import com.store.grocery.util.Utils;
 import com.store.grocery.util.SecurityUtil;
 import com.store.grocery.util.enums.OTPType;
 import com.store.grocery.util.exception.DuplicateResourceException;
@@ -184,7 +184,7 @@ public class AuthServiceImpl implements AuthService {
         res.setAccessToken(accessToken);
         String refreshToken = this.securityUtil.createRefreshToken(loginDTO.getEmail(), res);
         log.info("Refresh token created for user: {}", loginDTO.getEmail());
-        String deviceHash = DeviceUtil.generateDeviceHash(userAgent);
+        String deviceHash = Utils.generateDeviceHash(userAgent);
         this.userService.storeUserToken(currentUserDB, refreshToken, userAgent, deviceHash);
         log.info("Stored refresh token for user: {}", loginDTO.getEmail());
         return Map.of(
@@ -275,7 +275,7 @@ public class AuthServiceImpl implements AuthService {
         // Tạo refresh token
         String refresh_token = securityUtil.createRefreshToken(currentUser.getEmail(), res);
         log.info("Refresh token created for Google user: {}", currentUser.getEmail());
-        String deviceHash = DeviceUtil.generateDeviceHash(userAgent);
+        String deviceHash = Utils.generateDeviceHash(userAgent);
         this.userService.storeUserToken(currentUser, refresh_token, userAgent, deviceHash);
         log.info("Stored Google refresh token for user: {}", currentUser.getEmail());
         return Map.of(
