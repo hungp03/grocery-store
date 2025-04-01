@@ -2,7 +2,6 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { ClipLoader } from 'react-spinners';
 import { QuantitySelector } from '@/components';
-import { convertToSlug } from '@/utils/helper';
 import product_default from '@/assets/product_default.png';
 import icons from '@/utils/icons';
 
@@ -39,7 +38,7 @@ const CartItem = ({
         />
       </div>
       <Link
-        to={`/products/${encodeURIComponent(item?.category)}/${item?.id}/${convertToSlug(item?.productName)}`}
+        to={`/products/${encodeURIComponent(item?.category)}/${item?.id}`}
         className={`col-span-6 flex items-center ${item?.stock <= 0 ? 'opacity-50' : ''}`}
       >
         <img

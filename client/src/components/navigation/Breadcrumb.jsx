@@ -4,7 +4,7 @@ import icons from '@/utils/icons';
 
 const { GrNext } = icons;
 
-const Breadcrumb = ({ title, category }) => {
+const Breadcrumb = ({ title, category, categoryName }) => {
     const location = useLocation();
 
     const isProductPage = location.pathname === '/products';
@@ -15,7 +15,7 @@ const Breadcrumb = ({ title, category }) => {
             <GrNext size={10} />
             <NavLink to="/products" className='hover:text-main'>Sản phẩm</NavLink>
             {!isProductPage && <GrNext size={10} />}
-            <NavLink to={`/products/${category}`} className='hover:text-main'>{category}</NavLink>
+            <NavLink to={`/products/${category}`} className='hover:text-main'>{categoryName}</NavLink>
             {title && <>
                 <GrNext size={10} />
                 <span className='text-gray-500'>{title}</span>

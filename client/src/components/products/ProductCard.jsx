@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { formatMoney, renderStarFromNumber, convertToSlug } from "@/utils/helper";
+import { formatMoney, renderStarFromNumber} from "@/utils/helper";
 import { SelectOption } from "..";
 import icons from "@/utils/icons";
 import withBaseComponent from "@/hocs/withBaseComponent";
@@ -7,7 +7,7 @@ import product_default from '@/assets/product_default.png';
 import { showModal } from "@/store/app/appSlice";
 import ProductDetail from "@/pages/guest/ProductDetail";
 import { apiAddOrUpdateCart, apiAddWishList } from "@/apis";
-import { toast } from "react-toastify";
+import { message } from "antd";
 import { useSelector } from "react-redux";
 import Swal from "sweetalert2";
 import path from "@/utils/path";
@@ -51,10 +51,10 @@ const ProductCard = ({ productData, navigate, dispatch }) => {
 
       const res = await apiAddOrUpdateCart(productData?.id, 1);
       if (res.statusCode === RESPONSE_STATUS.CREATED) {
-        toast.success('Đã thêm vào giỏ hàng');
+        message.success('Đã thêm vào giỏ hàng');
         dispatch(getCurrentUser());
       } else {
-        toast.error(res.message);
+        message.error(res.message);
       }
     }
 
@@ -64,9 +64,9 @@ const ProductCard = ({ productData, navigate, dispatch }) => {
 
       const res = await apiAddWishList(productData?.id);
       if (res.statusCode === RESPONSE_STATUS.CREATED) {
-        toast.success('Đã thêm vào danh sách yêu thích');
+        message.success('Đã thêm vào danh sách yêu thích');
       } else {
-        toast.warn(res.message);
+        message.warning(res.message);
       }
     }
   };
@@ -74,7 +74,7 @@ const ProductCard = ({ productData, navigate, dispatch }) => {
   return (
     <div className="w-full h-auto text-base px-[10px]">
       <div
-        onClick={e => navigate(`/products/${encodeURIComponent(productData?.category)}/${productData?.id}/${convertToSlug(productData?.product_name)}`)}
+        onClick={e => navigate(`/products/${encodeURIComponent(productData?.category)}/${productData?.id}`)}
         onMouseEnter={(e) => {
           e.stopPropagation();
           setShowOption(true);
@@ -102,7 +102,7 @@ const ProductCard = ({ productData, navigate, dispatch }) => {
                   }
                   else{
                     e.stopPropagation();
-                    toast.info("Sản phẩm đang tạm hết hàng")
+                    message.info("Sản phẩm đang tạm hết hàng")
                   }
                 }}
               >

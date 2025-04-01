@@ -2,7 +2,7 @@ import React from 'react';
 import { Button } from '@/components';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { apiResetPassword} from '@/apis';
-import { toast } from 'react-toastify';
+import { message } from 'antd';
 import { useForm } from 'react-hook-form';
 import path from '@/utils/path';
 import { RESPONSE_STATUS } from "@/utils/responseStatus";
@@ -24,13 +24,13 @@ const ResetPassword = () => {
     
         if (response.statusCode !== RESPONSE_STATUS.SUCCESS) {
             if (response.message.toLowerCase().includes('jwt expired')) {
-                toast.info("Đã hết thời gian đặt lại mật khẩu, vui lòng thực hiện lại");
+                message.info("Đã hết thời gian đặt lại mật khẩu, vui lòng thực hiện lại");
             } else {
-                toast.error("Có lỗi xảy ra, vui lòng thử lại sau");
+                message.error("Có lỗi xảy ra, vui lòng thử lại sau");
             }
             navigate(`/${path.LOGIN}`);
         } else {
-            toast.success("Đổi mật khẩu thành công");
+            message.success("Đổi mật khẩu thành công");
             navigate(`/${path.LOGIN}`);
         }
     };

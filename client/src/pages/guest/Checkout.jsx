@@ -5,7 +5,7 @@ import { apiCreateOrder, apiGetSelectedCart, apiPaymentVNPay, getUserById } from
 import { Button, InputForm } from "@/components";
 import { useForm } from "react-hook-form";
 import { useLocation, useNavigate } from "react-router-dom";
-import { toast } from "react-toastify";
+import { message } from "antd";
 import { FaRegCreditCard } from "react-icons/fa6";
 import vnpayLogo from "@/assets/vnpay_logo.png"
 import { RESPONSE_STATUS } from "@/utils/responseStatus";
@@ -70,11 +70,7 @@ const Checkout = () => {
             const response = await apiCreateOrder(requestBody);
             const delay = 2000;
             if (response?.statusCode === RESPONSE_STATUS.CREATED) {
-                toast.success("Đặt hàng thành công", {
-                    hideProgressBar: false,
-                    autoClose: delay,
-                });
-
+                message.success("Đặt hàng thành công")
                 // Reset location state and navigate home
                 location.state = {};
                 setTimeout(() => {
@@ -82,7 +78,7 @@ const Checkout = () => {
                     window.location.reload();
                 }, delay);
             } else {
-                toast.error(response?.data?.error, {
+                message.error(response?.data?.error, {
                     hideProgressBar: false,
                     autoClose: delay,
                 });

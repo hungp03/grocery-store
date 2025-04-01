@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom';
 import { ClipLoader } from 'react-spinners';
 import icons from '@/utils/icons';
 import product_default from '@/assets/product_default.png';
-import { convertToSlug } from '@/utils/helper';
 import PropTypes from 'prop-types';
 
 const { IoTrashBinOutline } = icons
@@ -11,7 +10,7 @@ const WishlistItem = ({ item, loadingDeletes, removeItem }) => {
     return (
         <div key={item.id} className='flex bg-white p-4 items-center justify-between border-b rounded-md'>
             <Link
-                to={`/products/${encodeURIComponent(item.category)}/${item.id}/${convertToSlug(item.productName)}`}
+                to={`/products/${encodeURIComponent(item.category)}/${item.id}`}
                 className={`flex items-center flex-1 ${item.stock <= 0 ? 'opacity-50' : ''}`}
             >
                 <img className='w-20 h-20 object-cover rounded-md mr-4'

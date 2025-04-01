@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import { useForm } from "react-hook-form"
-import { toast } from "react-toastify"
+import {message } from "antd"
 import { apiForgotPassword, apiVerifyOtp } from "@/apis"
 import { Button } from "@/components/index"
 import { RESPONSE_STATUS } from "@/utils/responseStatus"
@@ -36,7 +36,7 @@ const ForgotPassword = ({ onClose }) => {
       setLoading(true)
       const emailToUse = data?.email || email
       if (!emailToUse) {
-        toast.error("Vui lòng nhập email")
+        message.error("Vui lòng nhập email")
         setLoading(false)
         return
       }
@@ -45,16 +45,16 @@ const ForgotPassword = ({ onClose }) => {
       const response = await apiForgotPassword({ email: emailToUse })
 
       if (response.statusCode !== RESPONSE_STATUS.SUCCESS) {
-        toast.info(response?.message)
+        message.info(response?.message)
       } else {
-        toast.success("Mã OTP đã được gửi, vui lòng nhập OTP")
+        message.success("Mã OTP đã được gửi, vui lòng nhập OTP")
         setShowOtpInput(true)
         setCountdown(60) // Start 60s countdown
         // Reset OTP values when requesting a new OTP
         setOtpValues(["", "", "", "", "", ""])
       }
     } catch (error) {
-      toast.error("Có lỗi xảy ra khi gửi yêu cầu")
+      message.error("Có lỗi xảy ra khi gửi yêu cầu")
     } finally {
       setLoading(false)
     }
@@ -68,15 +68,15 @@ const ForgotPassword = ({ onClose }) => {
       const response = await apiForgotPassword({ email })
 
       if (response.statusCode !== RESPONSE_STATUS.SUCCESS) {
-        toast.info(response?.message)
+        message.info(response?.message)
       } else {
-        toast.success("Mã OTP mới đã được gửi")
+        message.success("Mã OTP mới đã được gửi")
         setCountdown(60) // Reset countdown
         // Reset OTP values when requesting a new OTP
         setOtpValues(["", "", "", "", "", ""])
       }
     } catch (error) {
-      toast.error("Có lỗi xảy ra khi gửi lại OTP")
+      message.error("Có lỗi xảy ra khi gửi lại OTP")
     } finally {
       setLoading(false)
     }
@@ -155,7 +155,7 @@ const ForgotPassword = ({ onClose }) => {
 
     // Validate OTP is complete
     if (otpString.length !== 6) {
-      toast.error("Vui lòng nhập đầy đủ mã OTP 6 số")
+      message.error("Vui lòng nhập đầy đủ mã OTP 6 số")
       return
     }
 
@@ -163,10 +163,10 @@ const ForgotPassword = ({ onClose }) => {
       setLoading(true)
       const response = await apiVerifyOtp(email, otpString)
       if (response.statusCode === RESPONSE_STATUS.SUCCESS) {
-        toast.success("Xác minh OTP thành công, vui lòng đặt lại mật khẩu")
+        message.success("Xác minh OTP thành công, vui lòng đặt lại mật khẩu")
         navigate(`/reset-password?token=${response.data?.tempToken}`)
       } else {
-        toast.error("Mã OTP không hợp lệ")
+        message.error("Mã OTP không hợp lệ")
         setOtpValues(["", "", "", "", "", ""])
         // Focus first input after reset
         if (otpRefs[0].current) {
@@ -174,7 +174,7 @@ const ForgotPassword = ({ onClose }) => {
         }
       }
     } catch (error) {
-      toast.error("Có lỗi xảy ra khi xác minh OTP")
+      message.error("Có lỗi xảy ra khi xác minh OTP")
     } finally {
       setLoading(false)
     }

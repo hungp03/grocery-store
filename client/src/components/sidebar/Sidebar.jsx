@@ -13,8 +13,8 @@ const Sidebar = () => {
         <div className="flex flex-col border h-[400px] overflow-y-auto">
             {categories?.map((e) => (
                 <NavLink
-                    key={convertToSlug(e.name)}
-                    to={`products/${e.name}`}
+                    key={e.slug}
+                    to={`products/${e.slug}`}
                     className={({ isActive }) =>
                         isActive
                             ? "bg-main text-sm px-5 pt-[15px] pb-[14px] hover:text-main"
