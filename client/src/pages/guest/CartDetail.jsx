@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { toast } from 'react-toastify';
+import { message } from 'antd';
 import { CartItem, CartFooter, EmptyCart } from '@/components';
 import { apiGetCart, apiAddOrUpdateCart, apiDeleteCart } from '@/apis';
 import { getCurrentUser } from '@/store/user/asyncActions';
@@ -40,7 +40,7 @@ const Cart = ({ dispatch }) => {
       [RESPONSE_STATUS.SUCCESS]: "Đã xóa sản phẩm",
       [RESPONSE_STATUS.RESOURCE_INVALID]: "Sản phẩm không tồn tại trong giỏ hàng",
     };
-    toast[res.statusCode === RESPONSE_STATUS.SUCCESS ? 'success' : 'error'](messages[res.statusCode] || "Có lỗi trong quá trình xóa");
+    message[res.statusCode === RESPONSE_STATUS.SUCCESS ? 'success' : 'error'](messages[res.statusCode] || "Có lỗi trong quá trình xóa");
     res.statusCode === RESPONSE_STATUS.SUCCESS && dispatch(getCurrentUser());
   };
 
@@ -48,7 +48,7 @@ const Cart = ({ dispatch }) => {
     setIsLoading(true);
     const response = await apiGetCart(pageToFetch, pageSize);
     if (response.statusCode === RESPONSE_STATUS.USER_NOT_FOUND) {
-      toast.error("Thông tin người dùng không hợp lệ");
+      message.error("Thông tin người dùng không hợp lệ");
       setIsLoading(false);
       return;
     }
@@ -61,7 +61,7 @@ const Cart = ({ dispatch }) => {
       setHasMore(products.length === pageSize);
       setPage(pageToFetch);
     } else {
-      toast.error("Có lỗi khi tải dữ liệu giỏ hàng");
+      message.error("Có lỗi khi tải dữ liệu giỏ hàng");
     }
     setIsLoading(false);
   };
@@ -148,11 +148,11 @@ const Cart = ({ dispatch }) => {
       if (finalChange !== undefined) {
         const rs = await apiAddOrUpdateCart(pid, finalChange);
         if (rs.statusCode === RESPONSE_STATUS.CREATED) {
-          toast.success(`Đã cập nhật số lượng mới: ${rs.data.quantity}`);
+          message.success(`Đã cập nhật số lượng mới: ${rs.data.quantity}`);
         } else if (rs.statusCode === RESPONSE_STATUS.RESOURCE_INVALID) {
-          toast.error(rs.message);
+          message.error(rs.message);
         } else {
-          toast.error("Có lỗi xảy ra");
+          message.error("Có lỗi xảy ra");
         }
         delete pendingChanges.current[pid];
 

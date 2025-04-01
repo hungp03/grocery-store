@@ -3,7 +3,6 @@ import { apiSearchProducts } from "@/apis";
 import { useNavigate } from "react-router-dom";
 import product_default from '@/assets/product_default.png';
 import { ProductMiniItem } from "@/components";
-import { convertToSlug } from "@/utils/helper";
 
 const SearchBar = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -79,7 +78,7 @@ const SearchBar = () => {
   };
 
   const handleProductClick = (product) => {
-    navigate(`/products/${encodeURIComponent(product.category)}/${product.id}/${convertToSlug(product.product_name)}`);
+    navigate(`/products/${encodeURIComponent(product.category)}/${product.id}`);
     setShowResults(false);
   };
 

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useSelector } from 'react-redux';
 import { useParams, useSearchParams, useNavigate, createSearchParams } from 'react-router-dom';
 import { Breadcrumb, ProductCard, FilterItem, Pagination, SortItem } from '@/components';
 import { apiGetProducts } from '@/apis';
@@ -30,13 +31,19 @@ const Product = () => {
   const [error, setError] = useState(null);
   const navigate = useNavigate();
 
+  const categories = useSelector((state) => state.app.categories);
+
+  const categoryName = category
+  ? categories?.find((c) => c.slug === category)?.name || "Không tìm thấy"
+  : "Danh mục sản phẩm";
+
   const getPageTitle = () => {
     const searchTerm = params.get('search');
     if (searchTerm) {
       return `Kết quả tìm kiếm cho "${searchTerm}"`;
     }
     if (category) {
-      return category;
+      return categoryName;
     }
     return 'Tất cả sản phẩm';
   };
@@ -87,7 +94,7 @@ const Product = () => {
     let ratings = [], priceRange = [];
 
     if (category) {
-      queries.filter.push(`category.name='${category}'`);
+      queries.filter.push(`category.slug='${category}'`);
     }
 
     const searchTerm = params.get('search');
@@ -150,24 +157,23 @@ const Product = () => {
       <div className='h-20 flex justify-center items-center bg-gray-100'>
         <div className='w-main'>
           <h3 className='font-semibold uppercase'>{getPageTitle()}</h3>
-          <Breadcrumb category={category} />
+          <Breadcrumb category={category} categoryName={categoryName} />
         </div>
       </div>
 
       <div className='w-main border p-4 flex justify-between mt-8 m-auto'>
         <div className='w-3/4 flex-auto flex items-center gap-4'>
           <span className='font-semibold text-sm'>Lọc</span>
-        
-            <FilterItem
-              name='price'
-              activeClick={activeClick}
-              changeActiveFilter={changeActiveFilter}
-              range
-              min={0}
-              max={500000}
-              step={1000}
-            />
-        
+          <FilterItem
+            name='price'
+            activeClick={activeClick}
+            changeActiveFilter={changeActiveFilter}
+            range
+            min={0}
+            max={500000}
+            step={1000}
+          />
+
           <FilterItem
             name='rating'
             activeClick={activeClick}

@@ -5,8 +5,6 @@ import { Login, Home, Public, ProductDetail, Product, ResetPassword, CartDetail,
 import { MemberLayout, Personal, Wishlist, History, Setting } from '@/pages/member';
 import { useDispatch, useSelector } from "react-redux";
 import { getCategories } from "@/store/app/asyncActions";
-import { Bounce, ToastContainer } from "react-toastify";
-import 'react-toastify/dist/ReactToastify.css';
 import { Modal } from '@/components';
 import { Admin, Feedback } from "./pages/admin/index";
 import ScrollToTop from '@/utils/ScrollToTop.jsx';
@@ -26,7 +24,6 @@ const App = () => {
       <Routes>
         <Route path={path.PUBLIC} element={<Public />}>
           <Route path={path.HOME} element={<Home />}></Route>
-          {/* <Route path={path.SEARCH_RECOMMENDATION} element={<SearchRecommendation />}></Route> */}
           <Route path={path.PRODUCTS_BASE} element={<Product />}></Route>
           <Route path={path.PRODUCTS} element={<Product />}></Route>
           <Route path={path.PRODUCT_DETAIL} element={<ProductDetail />}></Route>
@@ -49,19 +46,6 @@ const App = () => {
         </Route>
         <Route path={path.LOGIN} element={<Login />}></Route>
       </Routes>
-
-      <ToastContainer
-        position="bottom-right"
-        autoClose={5000}
-        hideProgressBar={false}
-        newestOnTop={false}
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-        theme="light"
-        transition={Bounce} />
     </div>
   );
 }

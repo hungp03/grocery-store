@@ -5,6 +5,7 @@ export const apiGetCategory = async (cid) =>
         method: "get",
     });
 
+
 export const apiDeleteCategory = async (cid) =>
     axiosInstance({
         url: `/categories/${cid}`,
