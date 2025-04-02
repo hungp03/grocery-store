@@ -81,11 +81,7 @@ function OrderDetail() {
         <Image
           width={50}
           src={
-            record.imageUrl && record.imageUrl.startsWith("https")
-              ? record.imageUrl
-              : record.imageUrl
-              ? `${import.meta.env.VITE_BACKEND_TARGET}/storage/product/${record.imageUrl}`
-              : product_default
+            record.imageUrl || product_default
           }
           alt={record.productName}
         />

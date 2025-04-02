@@ -1,7 +1,10 @@
 package com.store.grocery.service.impl;
 
+import com.cloudinary.Cloudinary;
+import com.cloudinary.utils.ObjectUtils;
 import com.store.grocery.service.FileService;
 import com.store.grocery.util.exception.StorageException;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.InputStreamResource;
@@ -18,66 +21,17 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class FileServiceImpl implements FileService {
-    @Value("${upload-file.base-uri}")
-    private String baseURI;
 
-    @Override
-    public void createDirectory(String folder) throws URISyntaxException {
-        log.info(">>> CREATE DIRECTORY: {}", folder);
-        URI uri = new URI(folder);
-        Path path = Paths.get(uri);
-        File tmpDir = new File(path.toString());
-        if (!tmpDir.isDirectory()) {
-            try {
-                Files.createDirectory(tmpDir.toPath());
-                log.info(">>> CREATE NEW DIRECTORY SUCCESSFUL, PATH = {}",tmpDir.toPath());
-            } catch (IOException e) {
-                log.error(">>> CREATE NEW DIRECTORY FAILED, PATH = {}",tmpDir.toPath());
-            }
-        } else {
-            log.info(">>> SKIP MAKING DIRECTORY, ALREADY EXISTS");
-        }
-    }
+    @Value("${cloudinary.default-folder}")
+    private String defaultFolder;
 
-    @Override
-    public String store(MultipartFile file, String folder) throws IOException {
-        // Tạo tên file duy nhất
-        String originalFileName = file.getOriginalFilename();
-        log.info(">>> ORIGINAL FILE NAME: {}", originalFileName);
-        String finalName = System.currentTimeMillis() + "-" + originalFileName;
-        String encodedFileName = URLEncoder.encode(finalName, "UTF-8").replace("+", "%20");
-        // Tạo URI từ baseURI, folder và tên file đã mã hóa
-        URI uri = URI.create(baseURI + folder + "/" + encodedFileName);
-
-        Path path = Paths.get(uri);
-        try (InputStream inputStream = file.getInputStream()) {
-            Files.copy(inputStream, path, StandardCopyOption.REPLACE_EXISTING);
-        }
-        log.info(">>> STORE FILE SUCCESSFUL, PATH = {}", path);
-        return finalName;
-    }
-    @Override
-    public long getFileLength (String fileName, String folder) throws URISyntaxException {
-        URI uri = new URI (baseURI + folder + "/" + fileName);
-        Path path = Paths.get(uri);
-        File tmpDir = new File(path.toString());
-        // file không tồn tại, hoặc file là 1 director => return 0
-        if (!tmpDir.exists() || tmpDir.isDirectory())
-            return 0;
-        return tmpDir.length();
-    }
-    @Override
-    public InputStreamResource getResource(String fileName, String folder)
-            throws URISyntaxException, FileNotFoundException {
-        URI uri = new URI(baseURI + folder + "/" + fileName);
-        Path path = Paths.get(uri);
-        File file = new File(path.toString());
-        return new InputStreamResource(new FileInputStream(file));
-    }
+    private final Cloudinary cloudinary;
     @Override
     public void validateFile(MultipartFile file) {
         log.info(">>> VALIDATE FILE");
@@ -96,4 +50,13 @@ public class FileServiceImpl implements FileService {
             throw new StorageException("File not allowed! Please use file " + allowedExtensions);
         }
     }
+
+    public String upload(MultipartFile file) throws IOException {
+        validateFile(file);
+        Map uploadResult = cloudinary.uploader().upload(file.getBytes(), ObjectUtils.asMap(
+                "folder", defaultFolder
+        ));
+        return uploadResult.get("url").toString();
+    }
+
 }

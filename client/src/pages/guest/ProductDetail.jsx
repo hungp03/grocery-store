@@ -243,13 +243,10 @@ const ProductDetail = ({ isQuickView, data }) => {
                   <img
                     src={
                       product?.imageUrl
-                        ? product?.imageUrl.startsWith("https")
-                          ? product?.imageUrl
-                          : `${import.meta.env.VITE_BACKEND_TARGET}/storage/product/${product?.imageUrl}`
-                        : product_default
+                       || product_default
                     }
                     alt="product"
-                    className="object-cover"
+                    className="object-cover w-full h-full"
                   />
                 </div>
               </div>

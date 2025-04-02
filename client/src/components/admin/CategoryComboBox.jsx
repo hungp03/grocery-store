@@ -1,37 +1,38 @@
 import React, { useState } from 'react';
 import { useSelector } from 'react-redux';
+import { Select } from 'antd';
+
+const { Option } = Select;
 
 const CategoryComboBox = ({ onSelectCategory, search }) => {
     const { categories } = useSelector((state) => state.app);
     const [selectedCategory, setSelectedCategory] = useState('');
 
-    const handleChange = (event) => {
-        const selectedId = event.target.value;
-        setSelectedCategory(selectedId);
+    const handleChange = (value) => {
+        setSelectedCategory(value);
 
-        const selectedCategory = categories.find(category => category.id === parseInt(selectedId));
+        const selectedCategory = categories.find(category => category.id === parseInt(value));
         if (onSelectCategory) {
             onSelectCategory(selectedCategory);
         }
     };
-    const selectClass = (typeof search !== 'undefined' && search !== null) 
-    ? "border p-1 w-full rounded-md text-xs" 
-    : "border p-2 w-full rounded-md";
-    
+
     return (
-        <div className='w-full'>
-            <select 
-                value={selectedCategory} 
+        <div className="w-full">
+            <Select
+                value={selectedCategory}
                 onChange={handleChange}
-                className={selectClass}
+                className={`w-full rounded-md ${search ? 'text-sm' : ''}`}
+                placeholder="Chọn phân loại"
+                size={search ? 'small' : 'middle'}
             >
-                <option value="" className={search ? 'text-xs' : ''}>Chọn phân loại</option>
+                <Option value="" disabled>Chọn phân loại</Option>
                 {categories?.map((category) => (
-                    <option key={category.id} value={category.id} className={search ? 'text-xs' : ''}>
+                    <Option key={category.id} value={category.id}>
                         {category.name}
-                    </option>
+                    </Option>
                 ))}
-            </select>
+            </Select>
         </div>
     );
 };

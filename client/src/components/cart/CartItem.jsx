@@ -22,7 +22,7 @@ const CartItem = ({
   const isItemDeleting = loadingDeletes.has(item.id);
   const hasAnyPendingUpdates = pendingUpdates.size > 0;
   const isDeleteDisabled = isItemDeleting || hasAnyPendingUpdates;
-  
+
   return (
     <div className='grid grid-cols-10 items-center border-b pb-4'>
       <div className={`ml-4 ${item?.stock <= 0 ? 'opacity-50' : ''}`}>
@@ -43,11 +43,7 @@ const CartItem = ({
       >
         <img
           src={
-            item?.imageUrl
-              ? item?.imageUrl.startsWith("https")
-                ? item?.imageUrl
-                : `${import.meta.env.VITE_BACKEND_TARGET}/storage/product/${item?.imageUrl}`
-              : product_default
+            item?.imageUrl|| product_default
           }
           alt={item.productName}
           className="w-20 h-20 object-cover rounded-md mr-4"
@@ -84,10 +80,10 @@ const CartItem = ({
               <ClipLoader size={20} color="#FF0000" loading={true} />
             </div>
           ) : (
-            <IoTrashBinOutline 
-              className={`transition-transform duration-200 hover:scale-110 ${item.stock <= 0 ? 'opacity-100' : ''}`} 
-              color="red" 
-              size={20} 
+            <IoTrashBinOutline
+              className={`transition-transform duration-200 hover:scale-110 ${item.stock <= 0 ? 'opacity-100' : ''}`}
+              color="red"
+              size={20}
             />
           )}
         </button>

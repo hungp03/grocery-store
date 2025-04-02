@@ -46,13 +46,7 @@ const FeedbackCard = ({ data, onClose }) => {
                     <img 
                     // src={data?.imageUrl ? data?.imageUrl : productDF} 
                     src={
-                        data?.imageUrl
-                          ? data.imageUrl.startsWith("https")
-                            ? data.imageUrl
-                            : `${import.meta.env.VITE_BACKEND_TARGET}/storage/product/${
-                              data.imageUrl
-                              }`
-                          : productDF
+                        data?.imageUrl || productDF
                       }
                         alt={data?.product_name}
                         className="w-48  h-48 object-cover rounded-lg shadow-md" />

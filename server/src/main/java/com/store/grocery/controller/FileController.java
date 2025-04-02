@@ -20,21 +20,12 @@ import java.time.Instant;
 @RequestMapping("api/v2")
 @RequiredArgsConstructor
 public class FileController {
-    @Value("${upload-file.base-uri}")
-    private String baseURI;
-
     private final FileService fileService;
-
     @PostMapping("files")
     @ApiMessage("Upload single file")
     public ResponseEntity<ResUploadFileDTO> upload(
-            @RequestParam(name = "file", required = false) MultipartFile file,
-            @RequestParam("folder") String folder) throws IOException, URISyntaxException {
-
-        fileService.validateFile(file);
-        fileService.createDirectory(baseURI + folder);
-        String uploadFile = fileService.store(file, folder);
-
+            @RequestParam(name = "file", required = false) MultipartFile file) throws IOException, URISyntaxException {
+        String uploadFile = fileService.upload(file);
         ResUploadFileDTO response = new ResUploadFileDTO(uploadFile, Instant.now());
         return ResponseEntity.ok(response);
     }

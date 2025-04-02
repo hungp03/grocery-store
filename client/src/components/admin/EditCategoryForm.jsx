@@ -9,11 +9,7 @@ function EditCategoryForm({ initialCategoryData }) {
   const [form] = Form.useForm()
   const [categoryImage, setCategoryImage] = useState(null)
   const [previewCategoryImage, setPreviewCategoryImage] = useState(
-    initialCategoryData?.imageUrl && initialCategoryData.imageUrl.startsWith("https")
-      ? initialCategoryData?.imageUrl
-      : initialCategoryData?.imageUrl
-        ? `${import.meta.env.VITE_BACKEND_TARGET}/storage/category/${initialCategoryData.imageUrl}`
-        : category_default,
+    initialCategoryData?.imageUrl || category_default,
   )
   const [uploading, setUploading] = useState(false)
 

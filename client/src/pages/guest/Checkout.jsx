@@ -56,7 +56,7 @@ const Checkout = () => {
             const orderData = btoa(encodeURIComponent(JSON.stringify(requestBody)));
             const vnpayRes = await apiPaymentVNPay({
                 amount: requestBody.totalPrice,
-                bankCode: "NCB",
+                bankCode: import.meta.env.VITE_VNPAY_BANK_CODE,
                 orderData: orderData
             });
 

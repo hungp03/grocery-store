@@ -67,11 +67,7 @@ const Category = () => {
       key: 'imageUrl',
       render: (imageUrl) => (
         <img
-          src={imageUrl && imageUrl !== '' && imageUrl.startsWith('https')
-            ? imageUrl
-            : imageUrl && imageUrl !== ''
-              ? `${import.meta.env.VITE_BACKEND_TARGET}/storage/category/${imageUrl}`
-              : category_default
+          src={imageUrl || category_default
           }
           alt="Category"
           style={{ width: '60px', height: '60px', objectFit: 'cover' }}
