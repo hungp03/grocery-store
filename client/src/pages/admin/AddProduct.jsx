@@ -71,7 +71,6 @@ const AddProduct = () => {
   const handleImageChange = (info) => {
     // Xử lý khi người dùng chọn file
     if (info.file) {
-      // Trong Ant Design Upload, file có thể nằm ở info.file hoặc info.file.originFileObj
       const file = info.file.originFileObj || info.file
 
       if (file instanceof File) {
@@ -126,7 +125,7 @@ const AddProduct = () => {
             name="productName"
             rules={[{ required: true, message: "Vui lòng nhập tên sản phẩm!" }]}
           >
-            <Input className="rounded-md" />
+            <Input className="rounded-md text-sm" />
           </Form.Item>
 
           <Form.Item label="Giá" name="price" rules={[{ required: true, message: "Vui lòng nhập giá!" }]}>

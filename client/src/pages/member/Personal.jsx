@@ -111,11 +111,7 @@ const Personal = () => {
     };
 
 
-    const currentAvatar = user?.avatarUrl
-        ? user.avatarUrl.startsWith("https")
-            ? user.avatarUrl
-            : `${import.meta.env.VITE_BACKEND_TARGET}/storage/avatar/${user?.avatarUrl}`
-        : avatar;
+    const currentAvatar = user?.avatarUrl || avatar;
 
     const showUpdateButton = isDirty || selectedFile;
 

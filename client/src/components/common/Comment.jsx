@@ -9,11 +9,7 @@ const Comment = ({ image, name = 'Anonymos', content, updatedAt, ratingStar }) =
             <img
                 className="rounded-full w-8 h-8"
                 src={
-                    image
-                        ? image.startsWith("https")
-                            ? image
-                            : `${import.meta.env.VITE_BACKEND_TARGET}/storage/avatar/${image}`
-                        : avatarDefault
+                    image || avatarDefault
                 }
             />
 

@@ -1,17 +1,15 @@
 import React, { useState, useEffect } from "react";
 import { apiGetProducts, apiDeleteProduct } from "@/apis";
 import { MdDelete, MdModeEdit } from "react-icons/md";
-import {
-  useSearchParams,
-  useNavigate,
-  createSearchParams,
-} from "react-router-dom";
+import { useSelector } from "react-redux";
+import {useSearchParams,useNavigate,createSearchParams} from "react-router-dom";
 import { AddButton, SearchProduct, CategoryComboBox } from "@/components/admin";
 import { Table, Modal, Button, message } from "antd";
 import product_default from "@/assets/product_default.png";
 import { SortItem } from "@/components";
 import { sortProductOption } from "@/utils/constants";
 import { RESPONSE_STATUS } from "@/utils/responseStatus";
+import { ca } from "date-fns/locale";
 
 const PAGE_SIZE = 10;
 
@@ -27,7 +25,7 @@ const Product = () => {
   const [showMessage, setShowMessage] = useState(false);
   const [messageContent, setMessageContent] = useState("");
   const [productName, setProductName] = useState("");
-
+  const categories = useSelector((state) => state.app.categories);
   const productSearch = params.get("search");
   const categorySearch = params.get("category");
   const sort = params.get("sort");
@@ -96,10 +94,10 @@ const Product = () => {
     try {
       const res = await apiDeleteProduct(deleteProduct.id);
       if (res.statusCode === RESPONSE_STATUS.SUCCESS) {
-        message.success("Xóa sản phẩm thành công!", 2);
+        message.success("Xóa sản phẩm thành công!");
       }
       else {
-        message.warning("Xóa sản phẩm thất bại! Có thể sản phẩm đã được mua bởi người dùng", 2);
+        message.warning("Xóa sản phẩm thất bại! Có thể sản phẩm đã được mua bởi người dùng");
       }
       setShowDeleteMessage(false);
 
@@ -130,7 +128,7 @@ const Product = () => {
       fetchProducts(queries);
 
     } catch (error) {
-      message.error("Xóa sản phẩm thất bại!", 2);
+      message.error("Xóa sản phẩm thất bại!");
     }
   };
 
@@ -169,11 +167,7 @@ const Product = () => {
         <img
           src={
             record.imageUrl
-              ? record.imageUrl.startsWith("https")
-                ? record.imageUrl
-                : `${import.meta.env.VITE_BACKEND_TARGET}/storage/product/${record.imageUrl
-                }`
-              : product_default
+              || product_default
           }
           alt={record.product_name || "Product Image"}
           style={{ width: "90px", height: "70px", objectFit: "cover" }}
@@ -200,6 +194,10 @@ const Product = () => {
       title: "Phân loại",
       dataIndex: "category",
       key: "category",
+      render: (categorySlug) => {
+        const category = categories?.find((cat) => cat.slug === categorySlug);
+        return category ? category.name : "Không có phân loại";
+      },
     },
     {
       title: "Đánh giá",

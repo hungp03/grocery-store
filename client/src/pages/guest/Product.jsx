@@ -34,8 +34,8 @@ const Product = () => {
   const categories = useSelector((state) => state.app.categories);
 
   const categoryName = category
-  ? categories?.find((c) => c.slug === category)?.name || "Không tìm thấy"
-  : "Danh mục sản phẩm";
+    ? categories?.find((c) => c.slug === category)?.name || "Không tìm thấy"
+    : "Danh mục sản phẩm";
 
   const getPageTitle = () => {
     const searchTerm = params.get('search');
@@ -157,7 +157,11 @@ const Product = () => {
       <div className='h-20 flex justify-center items-center bg-gray-100'>
         <div className='w-main'>
           <h3 className='font-semibold uppercase'>{getPageTitle()}</h3>
-          <Breadcrumb category={category} categoryName={categoryName} />
+          {category ? (
+            <Breadcrumb category={category} categoryName={categoryName} />
+          ) : (
+            <Breadcrumb />
+          )}
         </div>
       </div>
 

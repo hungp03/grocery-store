@@ -125,12 +125,7 @@ const ProductCard = ({ productData, navigate, dispatch }) => {
               // src={productData?.imageUrl || product_default}
               src={
                 productData?.imageUrl
-                  ? productData.imageUrl.startsWith("https")
-                    ? productData.imageUrl
-                    : `${import.meta.env.VITE_BACKEND_TARGET}/storage/product/${
-                      productData.imageUrl
-                      }`
-                  : product_default
+                  || product_default
               }
               alt=""
               className="object-cover w-full h-40"

@@ -1,22 +1,22 @@
 import React, { useEffect, useState } from "react";
-import { Form, Input, InputNumber, Button, Upload, Card, message } from "antd"
+import { Form, Input, InputNumber, Button, Upload, Card, message, Select } from "antd"
 import { UploadOutlined } from "@ant-design/icons"
+import { useSelector } from "react-redux";
 import { apiUploadImage, apiUpdateProduct2 } from "@/apis"
 import product_default from "@/assets/product_default.png"
 import { RESPONSE_STATUS } from "@/utils/responseStatus";
+import { ca } from "date-fns/locale";
 
 const { TextArea } = Input
 
 const EditProductForm = ({ initialProductData }) => {
+  const categories = useSelector((state) => state.app.categories);
+  console.log(categories)
   const [form] = Form.useForm()
   const [productData, setProductData] = useState(initialProductData)
   const [productImage, setProductImage] = useState(null)
   const [previewProductImage, setPreviewProductImage] = useState(
-    initialProductData?.imageUrl && initialProductData.imageUrl.startsWith("https")
-      ? initialProductData?.imageUrl
-      : initialProductData?.imageUrl
-        ? `${import.meta.env.VITE_BACKEND_TARGET}/storage/product/${initialProductData.imageUrl}`
-        : product_default,
+    initialProductData?.imageUrl || product_default,
   )
   const [uploading, setUploading] = useState(false)
 
@@ -24,11 +24,7 @@ const EditProductForm = ({ initialProductData }) => {
     if (initialProductData) {
       setProductData(initialProductData)
       setPreviewProductImage(
-        initialProductData?.imageUrl && initialProductData.imageUrl.startsWith("https")
-          ? initialProductData.imageUrl
-          : initialProductData?.imageUrl
-            ? `${import.meta.env.VITE_BACKEND_TARGET}/storage/product/${initialProductData.imageUrl}`
-            : product_default,
+        initialProductData?.imageUrl || product_default,
       )
       form.setFieldsValue({
         id: initialProductData?.id,
@@ -37,6 +33,7 @@ const EditProductForm = ({ initialProductData }) => {
         quantity: initialProductData?.quantity,
         description: initialProductData?.description,
         rating: initialProductData?.rating,
+        unit: initialProductData?.unit,
         sold: initialProductData?.sold,
       })
     }
@@ -52,44 +49,42 @@ const EditProductForm = ({ initialProductData }) => {
       imageUrl: initialProductData?.imageUrl,
       quantity: values.quantity,
       description: values.description,
-      category: { id: productData?.category?.id },
+      unit: values.unit,
+      category: { id: values.categoryId },
     }
+    
+    console.log("productToUpdate", productToUpdate)
 
-    try {
-      // Xử lý upload hình ảnh nếu có
-      if (productImage) {
-        try {
-          const resUpLoad = await apiUploadImage(productImage, "product")
-          if (resUpLoad?.statusCode === RESPONSE_STATUS.BAD_REQUEST) {
-            throw new Error(resUpLoad.message || "Lỗi khi tải lên hình ảnh")
-          }
-          productToUpdate.imageUrl = resUpLoad?.data?.fileName || initialProductData?.imageUrl
-        } catch (uploadError) {
-          message.error("Lỗi khi tải lên hình ảnh: " + uploadError.message)
-          setUploading(false)
-          return // Dừng quá trình cập nhật nếu upload thất bại
+    // Xử lý upload hình ảnh nếu có
+    if (productImage) {
+      try {
+        const resUpLoad = await apiUploadImage(productImage, "product")
+        if (resUpLoad?.statusCode === RESPONSE_STATUS.BAD_REQUEST) {
+          throw new Error(resUpLoad.message || "Lỗi khi tải lên hình ảnh")
         }
+        productToUpdate.imageUrl = resUpLoad?.data?.fileName || initialProductData?.imageUrl
+      } catch (uploadError) {
+        message.error("Lỗi khi tải lên hình ảnh: " + uploadError.message)
+        setUploading(false)
+        return // Dừng quá trình cập nhật nếu upload thất bại
       }
-
-      // Cập nhật thông tin sản phẩm
-      const resUpdate = await apiUpdateProduct2(productToUpdate)
-
-      if (resUpdate.statusCode !== RESPONSE_STATUS.SUCCESS) {
-        // Cập nhật state local với dữ liệu mới
-        setProductData({
-          ...productData,
-          ...productToUpdate,
-        })
-
-        message.success("Sửa sản phẩm thành công!")
-      }
-      else
-        throw new Error(resUpdate.message || "Có lỗi xảy ra khi cập nhật sản phẩm.")
-    } catch (err) {
-      message.error("Có lỗi xảy ra: " + err.message)
-    } finally {
-      setUploading(false)
     }
+
+    // Cập nhật thông tin sản phẩm
+    const resUpdate = await apiUpdateProduct2(productToUpdate)
+
+    if (resUpdate.statusCode == RESPONSE_STATUS.SUCCESS) {
+      // Cập nhật state local với dữ liệu mới
+      setProductData({
+        ...productData,
+        ...productToUpdate,
+      })
+
+      message.success("Sửa sản phẩm thành công!")
+    }
+    else
+      message.error(resUpdate.message || "Có lỗi xảy ra khi cập nhật sản phẩm.")
+    setUploading(false)
   }
 
   const handleImageChange = (info) => {
@@ -156,7 +151,7 @@ const EditProductForm = ({ initialProductData }) => {
           name="productName"
           rules={[{ required: true, message: "Vui lòng nhập tên sản phẩm!" }]}
         >
-          <Input className="rounded-md" />
+          <Input className="rounded-md text-sm" />
         </Form.Item>
 
         <Form.Item label="Giá" name="price" rules={[{ required: true, message: "Vui lòng nhập giá!" }]}>
@@ -172,10 +167,23 @@ const EditProductForm = ({ initialProductData }) => {
           <InputNumber className="w-full" min={0} precision={0} />
         </Form.Item>
 
+        <Form.Item label="Đơn vị tính" name="unit">
+          <Input className="w-full rounded-md text-sm"/>
+        </Form.Item>
+
         <Form.Item label="Mô tả" name="description" rules={[{ required: true, message: "Vui lòng nhập mô tả!" }]}>
           <TextArea rows={4} />
         </Form.Item>
-
+        <Form.Item label="Phân loại (không chọn nếu không cần cập nhật)" name="categoryId" >
+          <Select
+            className="w-full"
+            options={categories.map((cat) => ({ value: cat.id, label: cat.name }))}
+            onChange={(value) => {
+              form.setFieldsValue({ categoryId: value })
+            }}
+            placeholder="Chọn phân loại"
+          />
+        </Form.Item>
         <Form.Item label="Đánh giá" name="rating">
           <InputNumber disabled className="w-full" min={0} max={5} precision={1} />
         </Form.Item>

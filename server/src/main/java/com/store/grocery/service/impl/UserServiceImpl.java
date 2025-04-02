@@ -211,7 +211,7 @@ public class UserServiceImpl implements UserService {
         if (avatar != null && !avatar.isEmpty()) {
             try {
                 log.debug("Updating avatar for user ID: {}", currentUserDB.getId());
-                String avatarUrl = fileService.store(avatar, "avatar");
+                String avatarUrl = fileService.upload(avatar);
                 currentUserDB.setAvatarUrl(avatarUrl);
             } catch (IOException e) {
                 log.error("Failed to store avatar file for user ID: {}", currentUserDB.getId(), e);

@@ -24,12 +24,7 @@ const Sidebar = () => {
                         <img
                             src={
                                 e?.imageUrl
-                                  ? e?.imageUrl.startsWith("https")
-                                    ? e.imageUrl
-                                    : `${import.meta.env.VITE_BACKEND_TARGET}/storage/category/${
-                                      e?.imageUrl
-                                      }`
-                                  : category_default
+                                  || category_default
                               }
                             alt={e.name}
                             className="w-5 h-5 object-cover"

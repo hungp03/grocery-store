@@ -16,11 +16,7 @@ const WishlistItem = ({ item, loadingDeletes, removeItem }) => {
                 <img className='w-20 h-20 object-cover rounded-md mr-4'
                     src={
                         item?.imageUrl
-                            ? item?.imageUrl.startsWith("https")
-                                ? item?.imageUrl
-                                : `${import.meta.env.VITE_BACKEND_TARGET}/storage/product/${item?.imageUrl
-                                }`
-                            : product_default
+                            || product_default
                     } />
                 <div className="flex flex-col">
                     <h3 className="truncate hover:underline">{item.productName}</h3>

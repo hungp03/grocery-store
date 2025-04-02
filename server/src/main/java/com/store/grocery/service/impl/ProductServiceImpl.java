@@ -125,6 +125,11 @@ public class ProductServiceImpl implements ProductService {
         curr.setDescription(p.getDescription());
         curr.setQuantity(p.getQuantity());
         curr.setUnit(p.getUnit());
+        if (p.getCategory() != null) {
+            Category category = this.categoryRepository.findById(p.getCategory().getId())
+                    .orElseThrow(() -> new ResourceInvalidException("Category id = " + p.getCategory().getId() + " không tồn tại"));
+            curr.setCategory(category);
+        }
         Product updatedProduct = this.productRepository.save(curr);
         log.info("Successfully updated product with ID: {}", updatedProduct.getId());
         return updatedProduct;
@@ -166,7 +171,7 @@ public class ProductServiceImpl implements ProductService {
                 productRoot.get("productName"),
                 productRoot.get("price"),
                 productRoot.get("imageUrl"),
-                categoryJoin.get("name")
+                categoryJoin.get("slug")
         ));
 
         List<SearchProductDTO> resultList = entityManager.createQuery(query)
@@ -197,7 +202,7 @@ public class ProductServiceImpl implements ProductService {
                 Sheet sheet = workbook.createSheet("Products");
 
                 // Tiêu đề cột
-                List<String> headers = List.of("ID", "Name", "Quantity", "Price", "Sold", "Unit", "Rating", "Description");
+                List<String> headers = List.of("ID", "Name", "Image", "Quantity", "Price", "Sold", "Unit", "Rating", "Description");
                 Row headerRow = sheet.createRow(0);
                 for (int i = 0; i < headers.size(); i++) {
                     headerRow.createCell(i).setCellValue(headers.get(i));
@@ -209,7 +214,8 @@ public class ProductServiceImpl implements ProductService {
                 for (Product p : products) {
                     Row row = sheet.createRow(rowIndex++);
                     row.createCell(0).setCellValue(p.getId());
-                    row.createCell(2).setCellValue(p.getProductName());
+                    row.createCell(1).setCellValue(p.getProductName());
+                    row.createCell(2).setCellValue(p.getImageUrl());
                     row.createCell(3).setCellValue(p.getQuantity());
                     row.createCell(4).setCellValue(p.getPrice());
                     row.createCell(5).setCellValue(p.getSold());
