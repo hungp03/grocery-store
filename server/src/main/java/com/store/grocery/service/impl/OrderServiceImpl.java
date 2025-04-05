@@ -190,7 +190,7 @@ public class OrderServiceImpl implements OrderService {
             @Override
             public void afterCommit() {
                 log.info("Transaction committed successfully, sending order email...");
-                CompletableFuture.runAsync(() -> emailService.sendOrderEmail(uid, request));
+                emailService.sendOrderEmail(uid, request);
             }
         });
         return savedOrder.getId();

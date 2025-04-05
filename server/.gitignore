@@ -36,3 +36,5 @@ build/
 **/application.yaml
 /logs/app.log
 
+src/main/resources/application-dev.yaml
+src/main/resources/application-prod.yaml
