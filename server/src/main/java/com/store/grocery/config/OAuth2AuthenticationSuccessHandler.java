@@ -16,19 +16,12 @@ import java.io.IOException;
 public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
     @Value("${cors.client1}")
     private String client1;
-    @Value("${cors.client2}")
-    private String client2;
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
                                         Authentication authentication) throws IOException {
         String referer = request.getHeader("Referer");
-        String targetUrl;
-        if (referer != null && referer.startsWith(client2)) {
-            targetUrl = client2;
-        } else {
-            targetUrl = client1;
-        }
+        String targetUrl = client1;
         targetUrl = UriComponentsBuilder.fromUriString(targetUrl)
                 .queryParam("token", "google-auth-success")
                 .build().toUriString();

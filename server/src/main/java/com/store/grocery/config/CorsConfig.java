@@ -14,13 +14,11 @@ import java.util.List;
 public class CorsConfig {
     @Value("${cors.client1}")
     private String client1;
-    @Value("${cors.client2}")
-    private String client2;
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList(client1, client2));
+        configuration.setAllowedOrigins(Arrays.asList(client1));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE",
                 "OPTIONS")); // Allowed methods
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type",

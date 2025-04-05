@@ -73,9 +73,7 @@ public class EmailServiceImpl implements EmailService {
         this.sendEmailSync(to, subject, content, false, true);
     }
 
-    @Override
-    @Async
-    public void sendEmailFromTemplateSyncCheckout(String to, String subject, String templateName,
+    private void sendEmailFromTemplateSyncCheckout(String to, String subject, String templateName,
                                                   String username,String address, String phone, String paymentMethod, Double totalPrice, List<OrderDetailDTO> items) {
 
         String formattedTotalPrice = formatCurrency(totalPrice);
@@ -114,7 +112,7 @@ public class EmailServiceImpl implements EmailService {
                     checkoutRequestDTO.getPaymentMethod(), checkoutRequestDTO.getTotalPrice(),
                     checkoutRequestDTO.getItems()
             );
-            log.info("📧 Order email sent to uid {} for order total {}", uid, formatCurrency(checkoutRequestDTO.getTotalPrice()));
+            log.info("Order email sent to uid {} for order total {}", uid, formatCurrency(checkoutRequestDTO.getTotalPrice()));
         } catch (Exception e) {
             log.info("Cannot send email: {}", e.getMessage());
         }

@@ -4,3 +4,6 @@ client/Dockerfile
 server/Dockerfile
 **/.git/
 
+docker-compose.yml
+mysql/init.sql
+nginx/nginx.conf
