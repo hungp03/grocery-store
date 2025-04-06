@@ -1,16 +1,15 @@
 package com.store.grocery.service;
 
-import com.store.grocery.domain.Feedback;
-import com.store.grocery.domain.request.feedback.CreateFeedbackDTO;
-import com.store.grocery.domain.response.PaginationDTO;
-import com.store.grocery.domain.response.feedback.FeedbackDTO;
+import com.store.grocery.dto.request.feedback.CreateFeedbackRequest;
+import com.store.grocery.dto.response.PaginationResponse;
+import com.store.grocery.dto.response.feedback.FeedbackResponse;
 import org.springframework.data.domain.Pageable;
 
 
 public interface FeedbackService {
-    FeedbackDTO addFeedback(CreateFeedbackDTO feedbackDTO);
-    PaginationDTO getBySortAndFilter(Pageable pageable, Boolean status, String sort);
+    FeedbackResponse addFeedback(CreateFeedbackRequest feedbackDTO);
+    PaginationResponse getBySortAndFilter(Pageable pageable, Boolean status, String sort);
     void changeFeedbackStatus(Long id);
-    PaginationDTO getFeedbacksWithAdjustedSize(Long productId, Integer size, Pageable pageable);
-    PaginationDTO getByProductId(Long productId, Pageable pageable);
+    PaginationResponse getFeedbacksWithAdjustedSize(Long productId, Integer size, Pageable pageable);
+    PaginationResponse getByProductId(Long productId, Pageable pageable);
 }

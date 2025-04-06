@@ -1,8 +1,8 @@
 package com.store.grocery.controller;
 
-import com.store.grocery.domain.request.feedback.CreateFeedbackDTO;
-import com.store.grocery.domain.response.PaginationDTO;
-import com.store.grocery.domain.response.feedback.FeedbackDTO;
+import com.store.grocery.dto.request.feedback.CreateFeedbackRequest;
+import com.store.grocery.dto.response.PaginationResponse;
+import com.store.grocery.dto.response.feedback.FeedbackResponse;
 import com.store.grocery.service.FeedbackService;
 import com.store.grocery.util.annotation.ApiMessage;
 import jakarta.validation.Valid;
@@ -21,23 +21,23 @@ public class FeedbackController {
 
     @PostMapping("product/ratings")
     @ApiMessage("Create a feedback")
-    public ResponseEntity<FeedbackDTO> add(@Valid @RequestBody CreateFeedbackDTO feedbackDTO) {
+    public ResponseEntity<FeedbackResponse> add(@Valid @RequestBody CreateFeedbackRequest feedbackDTO) {
         return ResponseEntity.status(HttpStatus.CREATED).body(this.feedbackService.addFeedback(feedbackDTO));
     }
 
     @GetMapping("product/ratings/{id}")
     @ApiMessage("Get feedbacks by product")
-    public ResponseEntity<PaginationDTO> getByProductId(
+    public ResponseEntity<PaginationResponse> getByProductId(
             @PathVariable Long id,
             @RequestParam(value = "size", required = false) Integer size,
             Pageable pageable) {
-        PaginationDTO result = feedbackService.getFeedbacksWithAdjustedSize(id, size, pageable);
+        PaginationResponse result = feedbackService.getFeedbacksWithAdjustedSize(id, size, pageable);
         return ResponseEntity.ok(result);
     }
 
     @GetMapping("ratings")
     @ApiMessage("Get all feedbacks")
-    public ResponseEntity<PaginationDTO> getAllByStatus(
+    public ResponseEntity<PaginationResponse> getAllByStatus(
             Pageable pageable,
             @RequestParam(value = "status", required = false) Boolean status,
             @RequestParam(value = "sort", required = false) String sort) {

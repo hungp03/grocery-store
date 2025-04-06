@@ -1,10 +1,10 @@
 package com.store.grocery.service.impl;
 
 import com.store.grocery.domain.*;
-import com.store.grocery.domain.request.order.CheckoutRequestDTO;
-import com.store.grocery.domain.response.PaginationDTO;
-import com.store.grocery.domain.response.order.OrderDTO;
-import com.store.grocery.domain.response.order.WeeklyRevenue;
+import com.store.grocery.dto.request.order.CheckoutRequest;
+import com.store.grocery.dto.response.PaginationResponse;
+import com.store.grocery.dto.response.order.OrderResponse;
+import com.store.grocery.dto.response.order.WeeklyRevenueResponse;
 import com.store.grocery.repository.OrderDetailRepository;
 import com.store.grocery.repository.OrderRepository;
 import com.store.grocery.repository.ProductRepository;
@@ -33,7 +33,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
 
 @Service
 @Slf4j
@@ -53,7 +52,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public Optional<OrderDTO> findOrder(long id) {
+    public Optional<OrderResponse> findOrder(long id) {
         log.info("Fetching order by ID: {}", id);
         Optional<Order> orderOptional = this.orderRepository.findById(id);
         if (orderOptional.isPresent()) {
@@ -65,17 +64,17 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public PaginationDTO getAll(Specification<Order> spec, Pageable pageable) {
+    public PaginationResponse getAll(Specification<Order> spec, Pageable pageable) {
         log.info("Fetching all orders with pagination");
         Page<Order> ordersPage = orderRepository.findAll(spec, pageable);
         log.debug("Found {} orders", ordersPage.getTotalElements());
-        Page<OrderDTO> orderDTOPage = ordersPage.map(this::convertToOrderDTO);
+        Page<OrderResponse> orderDTOPage = ordersPage.map(this::convertToOrderDTO);
         return paginationHelper.fetchAllEntities(orderDTOPage);
     }
 
-    private OrderDTO convertToOrderDTO(Order order) {
+    private OrderResponse convertToOrderDTO(Order order) {
         log.debug("Converting Order to OrderDTO for order ID: {}", order.getId());
-        OrderDTO res = new OrderDTO();
+        OrderResponse res = new OrderResponse();
         res.setId(order.getId());
         res.setOrderTime(order.getOrderTime());
         res.setDeliveryTime(order.getDeliveryTime());
@@ -143,7 +142,7 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     @Transactional
-    public Long create(CheckoutRequestDTO request) {
+    public Long create(CheckoutRequest request) {
         log.info("Creating new order for user ID: {}", SecurityUtil.getUserId());
         long uid = SecurityUtil.getUserId();
         User currentUser = userService.getUserById(uid);
@@ -198,7 +197,7 @@ public class OrderServiceImpl implements OrderService {
 
 
     @Override
-    public PaginationDTO getOrdersByCurrentUser(Integer status, Pageable pageable) {
+    public PaginationResponse getOrdersByCurrentUser(Integer status, Pageable pageable) {
         log.info("Fetching orders for user ID: {}", SecurityUtil.getUserId());
         long uid = SecurityUtil.getUserId();
 
@@ -214,22 +213,22 @@ public class OrderServiceImpl implements OrderService {
                 : orderRepository.findByUserId(uid, sortedPageable);
 
         log.debug("Found {} orders for user ID: {}", ordersPage.getTotalElements(), uid);
-        Page<OrderDTO> orderDTOPage = ordersPage.map(this::convertToOrderDTO);
+        Page<OrderResponse> orderDTOPage = ordersPage.map(this::convertToOrderDTO);
 
         return paginationHelper.fetchAllEntities(orderDTOPage);
     }
 
     @Override
     @Transactional
-    public List<WeeklyRevenue> getMonthlyRevenue(int month, int year) {
+    public List<WeeklyRevenueResponse> getMonthlyRevenue(int month, int year) {
         log.info("Fetching monthly revenue for month: {} and year: {}", month, year);
         List<Object[]> res = orderRepository.GetMonthlyWeeklyRevenue(month, year);
-        List<WeeklyRevenue> weeklyRevenues = new ArrayList<>();
+        List<WeeklyRevenueResponse> weeklyRevenues = new ArrayList<>();
 
         for (Object[] result : res) {
             String days = String.valueOf(result[0]);
             double totalRevenue = ((Number) result[1]).doubleValue();
-            weeklyRevenues.add(new WeeklyRevenue(days, totalRevenue));
+            weeklyRevenues.add(new WeeklyRevenueResponse(days, totalRevenue));
         }
         return weeklyRevenues;
     }

@@ -1,10 +1,10 @@
 package com.store.grocery.controller;
 
 import com.store.grocery.domain.Wishlist;
-import com.store.grocery.domain.response.PaginationDTO;
+import com.store.grocery.dto.request.wishlist.AddWishlistRequest;
+import com.store.grocery.dto.response.PaginationResponse;
 import com.store.grocery.service.WishlistService;
 import com.store.grocery.util.annotation.ApiMessage;
-import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -19,8 +19,8 @@ public class WishlistController {
 
     @PostMapping("wishlist")
     @ApiMessage("Add wishlist")
-    public ResponseEntity<Wishlist> add(@RequestBody Wishlist w){
-        return ResponseEntity.status(HttpStatus.CREATED).body(this.wishlistService.addWishlist(w));
+    public ResponseEntity<Wishlist> add(@RequestBody AddWishlistRequest request){
+        return ResponseEntity.status(HttpStatus.CREATED).body(this.wishlistService.addWishlist(request));
     }
 
     @DeleteMapping("wishlist/{pid}")
@@ -32,7 +32,7 @@ public class WishlistController {
 
     @GetMapping("wishlist")
     @ApiMessage("Get list wishlist")
-    public ResponseEntity<PaginationDTO> getAll(Pageable pageable){
+    public ResponseEntity<PaginationResponse> getAll(Pageable pageable){
         return ResponseEntity.ok(this.wishlistService.getWishlistsByCurrentUser(pageable));
     }
 }

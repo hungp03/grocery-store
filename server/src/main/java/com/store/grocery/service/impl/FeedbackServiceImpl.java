@@ -3,9 +3,9 @@ package com.store.grocery.service.impl;
 import com.store.grocery.domain.Feedback;
 import com.store.grocery.domain.Product;
 import com.store.grocery.domain.User;
-import com.store.grocery.domain.request.feedback.CreateFeedbackDTO;
-import com.store.grocery.domain.response.PaginationDTO;
-import com.store.grocery.domain.response.feedback.FeedbackDTO;
+import com.store.grocery.dto.request.feedback.CreateFeedbackRequest;
+import com.store.grocery.dto.response.PaginationResponse;
+import com.store.grocery.dto.response.feedback.FeedbackResponse;
 import com.store.grocery.repository.FeedbackRepository;
 import com.store.grocery.repository.ProductRepository;
 import com.store.grocery.service.FeedbackService;
@@ -20,9 +20,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.Optional;
-
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -31,7 +28,7 @@ public class FeedbackServiceImpl implements FeedbackService {
     private final ProductRepository productRepository;
     private final UserService userService;
 
-    public FeedbackDTO addFeedback(CreateFeedbackDTO feedbackDTO) {
+    public FeedbackResponse addFeedback(CreateFeedbackRequest feedbackDTO) {
         User user = userService.getUserById(SecurityUtil.getUserId());
         Product product = productRepository.findById(feedbackDTO.getProductId())
                 .orElseThrow(() -> new ResourceInvalidException("Sản phẩm không tồn tại"));
@@ -57,14 +54,14 @@ public class FeedbackServiceImpl implements FeedbackService {
     }
 
     @Override
-    public PaginationDTO getBySortAndFilter(Pageable pageable, Boolean status, String sort) {
+    public PaginationResponse getBySortAndFilter(Pageable pageable, Boolean status, String sort) {
         log.info("Getting feedbacks with status and sort");
         if (sort != null) {
             pageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(sort).descending());
         }
-        Page<FeedbackDTO> feedbackPage = this.feedbackRepository.findByStatus(status, pageable);
-        PaginationDTO p = new PaginationDTO();
-        PaginationDTO.Meta meta = new PaginationDTO.Meta();
+        Page<FeedbackResponse> feedbackPage = this.feedbackRepository.findByStatus(status, pageable);
+        PaginationResponse p = new PaginationResponse();
+        PaginationResponse.Meta meta = new PaginationResponse.Meta();
         meta.setPage(pageable.getPageNumber() + 1);
         meta.setPageSize(pageable.getPageSize());
         meta.setPages(feedbackPage.getTotalPages());
@@ -84,7 +81,7 @@ public class FeedbackServiceImpl implements FeedbackService {
     }
 
     @Override
-    public PaginationDTO getFeedbacksWithAdjustedSize(Long productId, Integer size, Pageable pageable) {
+    public PaginationResponse getFeedbacksWithAdjustedSize(Long productId, Integer size, Pageable pageable) {
         if (size == null || size < 1) {
             long totalEls = this.feedbackRepository.countByProductId(productId);
             size = totalEls > 0 ? (int) totalEls : 1;
@@ -94,11 +91,11 @@ public class FeedbackServiceImpl implements FeedbackService {
         return getByProductId(productId, updatedPageable);
     }
     @Override
-    public PaginationDTO getByProductId(Long productId, Pageable pageable) {
+    public PaginationResponse getByProductId(Long productId, Pageable pageable) {
         log.info("Getting feedbacks by product ID: {}", productId);
-        Page<FeedbackDTO> feedbackPage = this.feedbackRepository.findByProductId(productId, pageable);
-        PaginationDTO p = new PaginationDTO();
-        PaginationDTO.Meta meta = new PaginationDTO.Meta();
+        Page<FeedbackResponse> feedbackPage = this.feedbackRepository.findByProductId(productId, pageable);
+        PaginationResponse p = new PaginationResponse();
+        PaginationResponse.Meta meta = new PaginationResponse.Meta();
         meta.setPage(pageable.getPageNumber() + 1);
         meta.setPageSize(pageable.getPageSize());
         meta.setPages(feedbackPage.getTotalPages());
@@ -109,9 +106,9 @@ public class FeedbackServiceImpl implements FeedbackService {
         return p;
     }
 
-    private FeedbackDTO convertToFeedbackDTO(Feedback feedback) {
+    private FeedbackResponse convertToFeedbackDTO(Feedback feedback) {
         log.info("Converting feedback to feedback DTO");
-        return new FeedbackDTO(
+        return new FeedbackResponse(
                 feedback.getId(),
                 feedback.getUser().getName(),
                 feedback.getUser().getAvatarUrl(),

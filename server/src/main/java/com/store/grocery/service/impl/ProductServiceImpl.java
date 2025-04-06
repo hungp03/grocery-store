@@ -2,9 +2,9 @@ package com.store.grocery.service.impl;
 
 import com.store.grocery.domain.Category;
 import com.store.grocery.domain.Product;
-import com.store.grocery.domain.response.PaginationDTO;
-import com.store.grocery.domain.response.product.ResProductDTO;
-import com.store.grocery.domain.response.product.SearchProductDTO;
+import com.store.grocery.dto.response.PaginationResponse;
+import com.store.grocery.dto.response.product.ProductResponse;
+import com.store.grocery.dto.response.product.SearchProductResponse;
 import com.store.grocery.repository.CategoryRepository;
 import com.store.grocery.repository.ProductRepository;
 import com.store.grocery.service.ProductService;
@@ -70,25 +70,25 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public PaginationDTO getAll(Specification<Product> spec, Pageable pageable) {
+    public PaginationResponse getAll(Specification<Product> spec, Pageable pageable) {
         log.info("Fetching all products");
         Page<Product> productPage = this.productRepository.findAll(spec, pageable);
-        PaginationDTO p = new PaginationDTO();
-        PaginationDTO.Meta meta = new PaginationDTO.Meta();
+        PaginationResponse p = new PaginationResponse();
+        PaginationResponse.Meta meta = new PaginationResponse.Meta();
         meta.setPage(pageable.getPageNumber() + 1);
         meta.setPageSize(pageable.getPageSize());
         meta.setPages(productPage.getTotalPages());
         meta.setTotal(productPage.getTotalElements());
         p.setMeta(meta);
-        List<ResProductDTO> listProducts = productPage.getContent().stream().map(this::convertToProductDTO).toList();
+        List<ProductResponse> listProducts = productPage.getContent().stream().map(this::convertToProductDTO).toList();
         p.setResult(listProducts);
         log.info("Successfully fetched all products");
         return p;
     }
 
-    private ResProductDTO convertToProductDTO(Product p) {
+    private ProductResponse convertToProductDTO(Product p) {
         log.debug("Converting Product to ResProductDTO for product ID: {}", p.getId());
-        ResProductDTO res = new ResProductDTO();
+        ProductResponse res = new ProductResponse();
         res.setId(p.getId());
         res.setProduct_name(p.getProductName());
         res.setCategory(p.getCategory().getSlug());
@@ -150,15 +150,15 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public PaginationDTO search(Specification<Product> spec, Pageable pageable) {
+    public PaginationResponse search(Specification<Product> spec, Pageable pageable) {
         log.info("Searching for products");
-        Page<SearchProductDTO> productPage = this.searchProduct(spec, pageable);
+        Page<SearchProductResponse> productPage = this.searchProduct(spec, pageable);
         return this.paginationHelper.buildPaginationDTO(productPage);
     }
 
-    private Page<SearchProductDTO> searchProduct(Specification<Product> specification, Pageable pageable) {
+    private Page<SearchProductResponse> searchProduct(Specification<Product> specification, Pageable pageable) {
         CriteriaBuilder cb = entityManager.getCriteriaBuilder();
-        CriteriaQuery<SearchProductDTO> query = cb.createQuery(SearchProductDTO.class);
+        CriteriaQuery<SearchProductResponse> query = cb.createQuery(SearchProductResponse.class);
         Root<Product> productRoot = query.from(Product.class);
         Join<Product, Category> categoryJoin = productRoot.join("category");
         Predicate predicate = specification.toPredicate(productRoot, query, cb);
@@ -166,7 +166,7 @@ public class ProductServiceImpl implements ProductService {
             query.where(predicate);
         }
 
-        query.select(cb.construct(SearchProductDTO.class,
+        query.select(cb.construct(SearchProductResponse.class,
                 productRoot.get("id"),
                 productRoot.get("productName"),
                 productRoot.get("price"),
@@ -174,7 +174,7 @@ public class ProductServiceImpl implements ProductService {
                 categoryJoin.get("slug")
         ));
 
-        List<SearchProductDTO> resultList = entityManager.createQuery(query)
+        List<SearchProductResponse> resultList = entityManager.createQuery(query)
                 .setFirstResult((int) pageable.getOffset())
                 .setMaxResults(pageable.getPageSize())
                 .getResultList();

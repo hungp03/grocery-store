@@ -1,6 +1,6 @@
 package com.store.grocery.util;
 
-import com.store.grocery.domain.response.user.ResLoginDTO;
+import com.store.grocery.dto.response.user.LoginResponse;
 import com.store.grocery.util.exception.AuthException;
 import com.nimbusds.jose.util.Base64;
 import org.springframework.beans.factory.annotation.Value;
@@ -67,11 +67,11 @@ public class SecurityUtil {
         return this.jwtEncoder.encode(JwtEncoderParameters.from(jwsHeader, claims)).getTokenValue();
     }
 
-    public String createAccessToken(String email, ResLoginDTO resLoginDTO) {
+    public String createAccessToken(String email, LoginResponse resLoginDTO) {
         Instant now = Instant.now();
         Instant validity = now.plus(this.accessTokenExpiration, ChronoUnit.SECONDS);
 
-        ResLoginDTO.UserLogin userLogin = new ResLoginDTO.UserLogin();
+        LoginResponse.UserLogin userLogin = new LoginResponse.UserLogin();
         userLogin.setId(resLoginDTO.getUser().getId());
         userLogin.setEmail(resLoginDTO.getUser().getEmail());
         userLogin.setName(resLoginDTO.getUser().getName());
@@ -88,11 +88,11 @@ public class SecurityUtil {
         return createToken(email, now, validity, additionalClaims);
     }
 
-    public String createRefreshToken(String email, ResLoginDTO res) {
+    public String createRefreshToken(String email, LoginResponse res) {
         Instant now = Instant.now();
         Instant validity = now.plus(this.refreshTokenExpiration, ChronoUnit.SECONDS);
 
-        ResLoginDTO.UserInsideToken userToken = new ResLoginDTO.UserInsideToken();
+        LoginResponse.UserInsideToken userToken = new LoginResponse.UserInsideToken();
         userToken.setId(res.getUser().getId());
         userToken.setEmail(res.getUser().getEmail());
         userToken.setName(res.getUser().getName());

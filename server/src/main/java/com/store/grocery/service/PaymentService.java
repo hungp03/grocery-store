@@ -1,11 +1,11 @@
 package com.store.grocery.service;
 
-import com.store.grocery.domain.request.order.CheckoutRequestDTO;
-import com.store.grocery.domain.response.payment.PaymentDTO;
+import com.store.grocery.dto.request.order.CheckoutRequest;
+import com.store.grocery.dto.response.payment.PaymentResponse;
 import jakarta.servlet.http.HttpServletRequest;
 
 public interface PaymentService {
-    PaymentDTO.VNPayResponse createVnPayPayment(HttpServletRequest request);
-    CheckoutRequestDTO getOrderData(String orderData);
+    PaymentResponse.VNPayResponse createVnPayPayment(HttpServletRequest request);
+    CheckoutRequest getOrderData(String orderData);
 }
 

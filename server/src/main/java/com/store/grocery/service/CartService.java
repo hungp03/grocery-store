@@ -1,18 +1,18 @@
 package com.store.grocery.service;
 
 import com.store.grocery.domain.Cart;
-import com.store.grocery.domain.response.PaginationDTO;
-import com.store.grocery.domain.response.cart.CartItemDTO;
-import com.store.grocery.domain.response.cart.SelectedProductDTO;
+import com.store.grocery.dto.request.cart.AddToCartRequest;
+import com.store.grocery.dto.response.PaginationResponse;
+import com.store.grocery.dto.response.cart.SelectedProductInCart;
 import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 
 
 public interface CartService {
-    Cart addOrUpdateCart(Cart cart);
+    Cart addOrUpdateCart(AddToCartRequest cartRequest);
     void deleteFromCart(long productId);
-    PaginationDTO getCartByCurrentUser(Pageable pageable);
-    List<SelectedProductDTO> getCartItemsByProductIds(List<Long> productIds, Pageable pageable);
+    PaginationResponse getCartByCurrentUser(Pageable pageable);
+    List<SelectedProductInCart> getCartItemsByProductIds(List<Long> productIds, Pageable pageable);
     void deleteSelectedItems(List<Long> productIds);
 }

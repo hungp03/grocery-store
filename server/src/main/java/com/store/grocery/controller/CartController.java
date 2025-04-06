@@ -1,9 +1,9 @@
 package com.store.grocery.controller;
 
 import com.store.grocery.domain.Cart;
-import com.store.grocery.domain.response.PaginationDTO;
-import com.store.grocery.domain.response.cart.CartItemDTO;
-import com.store.grocery.domain.response.cart.SelectedProductDTO;
+import com.store.grocery.dto.request.cart.AddToCartRequest;
+import com.store.grocery.dto.response.PaginationResponse;
+import com.store.grocery.dto.response.cart.SelectedProductInCart;
 import com.store.grocery.service.CartService;
 import com.store.grocery.util.annotation.ApiMessage;
 import lombok.RequiredArgsConstructor;
@@ -22,8 +22,8 @@ public class CartController {
 
     @PostMapping("cart")
     @ApiMessage("Add to cart")
-    public ResponseEntity<Cart> add(@RequestBody Cart cart){
-        return ResponseEntity.status(HttpStatus.CREATED).body(this.cartService.addOrUpdateCart(cart));
+    public ResponseEntity<Cart> add(@RequestBody AddToCartRequest cartRequest){
+        return ResponseEntity.status(HttpStatus.CREATED).body(this.cartService.addOrUpdateCart(cartRequest));
     }
 
     @DeleteMapping("cart/{productId}")
@@ -35,12 +35,12 @@ public class CartController {
 
     @GetMapping("cart")
     @ApiMessage("Get cart by user")
-    public ResponseEntity<PaginationDTO> getCartByUser(Pageable pageable) {
+    public ResponseEntity<PaginationResponse> getCartByUser(Pageable pageable) {
         return ResponseEntity.ok(this.cartService.getCartByCurrentUser(pageable));
     }
     @GetMapping("cart/product-selected")
     @ApiMessage("Get products from cart")
-    public ResponseEntity<List<SelectedProductDTO>> getSelectedItemsCart(@RequestParam("productIds") List<Long> productIds, Pageable pageable){
+    public ResponseEntity<List<SelectedProductInCart>> getSelectedItemsCart(@RequestParam("productIds") List<Long> productIds, Pageable pageable){
         return ResponseEntity.ok(this.cartService.getCartItemsByProductIds(productIds, pageable));
     }
 }

@@ -1,16 +1,17 @@
 package com.store.grocery.service.impl;
 
 import com.store.grocery.domain.OTPCode;
+import com.store.grocery.domain.Role;
 import com.store.grocery.domain.User;
 import com.store.grocery.domain.UserToken;
-import com.store.grocery.domain.request.user.UpdatePasswordDTO;
-import com.store.grocery.domain.request.user.UpdateUserRequest;
-import com.store.grocery.domain.request.user.UserStatusDTO;
-import com.store.grocery.domain.response.PaginationDTO;
-import com.store.grocery.domain.response.user.CreateUserDTO;
-import com.store.grocery.domain.response.user.DeviceDTO;
-import com.store.grocery.domain.response.user.ResLoginDTO;
-import com.store.grocery.domain.response.user.UserDTO;
+import com.store.grocery.dto.request.user.UpdatePasswordRequest;
+import com.store.grocery.dto.request.user.UpdateUserRequest;
+import com.store.grocery.dto.request.user.UserRegisterRequest;
+import com.store.grocery.dto.request.user.UpdateUserStatusRequest;
+import com.store.grocery.dto.response.PaginationResponse;
+import com.store.grocery.dto.response.user.CreateUserResponse;
+import com.store.grocery.dto.response.user.DeviceResponse;
+import com.store.grocery.dto.response.user.UserResponse;
 import com.store.grocery.repository.OTPCodeRepository;
 import com.store.grocery.repository.UserRepository;
 import com.store.grocery.repository.UserTokenRepository;
@@ -49,18 +50,22 @@ public class UserServiceImpl implements UserService {
     private final OTPCodeRepository otpCodeRepository;
 
     @Override
-    public User create(User user) {
+    public CreateUserResponse create(UserRegisterRequest user) {
         log.info("Creating new user with email: {}", user.getEmail());
         if (this.isExistedEmail(user.getEmail())) {
             log.error("Email already exists: {}", user.getEmail());
             throw new DuplicateResourceException("Email " + user.getEmail() + " đã tồn tại");
         }
-        //hash password
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
-        user.setStatus(true);
-        User savedUser = this.userRepository.save(user);
+        Role r = new Role(2);
+        User u = new User();
+        u.setEmail(user.getEmail());
+        u.setName(user.getName());
+        u.setPassword(passwordEncoder.encode(user.getPassword()));
+        u.setStatus(true);
+        u.setRole(r);
+        User savedUser = this.userRepository.save(u);
         log.info("Successfully created user with ID: {}", savedUser.getId());
-        return savedUser;
+        return convertToCreateDTO(savedUser);
     }
 
     @Override
@@ -87,9 +92,9 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public CreateUserDTO convertToCreateDTO(User user) {
+    public CreateUserResponse convertToCreateDTO(User user) {
         log.debug("Converting User to CreateUserDTO for user ID: {}", user.getId());
-        CreateUserDTO res = new CreateUserDTO();
+        CreateUserResponse res = new CreateUserResponse();
         res.setId(user.getId());
         res.setEmail(user.getEmail());
         res.setName(user.getName());
@@ -98,9 +103,9 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public UserDTO convertToUserDTO(User user) {
+    public UserResponse convertToUserDTO(User user) {
         log.debug("Converting User to UserDTO for user ID: {}", user.getId());
-        UserDTO res = new UserDTO();
+        UserResponse res = new UserResponse();
         res.setId(user.getId());
         res.setEmail(user.getEmail());
         res.setName(user.getName());
@@ -118,12 +123,12 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public PaginationDTO fetchAllUser(Specification<User> specification, Pageable pageable) {
+    public PaginationResponse fetchAllUser(Specification<User> specification, Pageable pageable) {
         log.info("Fetching all users with pagination");
         Page<User> userPage = this.userRepository.findAll(pageable);
 
-        PaginationDTO p = new PaginationDTO();
-        PaginationDTO.Meta meta = new PaginationDTO.Meta();
+        PaginationResponse p = new PaginationResponse();
+        PaginationResponse.Meta meta = new PaginationResponse.Meta();
 
         meta.setPage(pageable.getPageNumber() + 1);
         meta.setPageSize(pageable.getPageSize());
@@ -133,7 +138,7 @@ public class UserServiceImpl implements UserService {
         p.setMeta(meta);
 
         // remove sensitive data like password
-        List<UserDTO> listUser = userPage.getContent()
+        List<UserResponse> listUser = userPage.getContent()
                 .stream().map(this::convertToUserDTO)
                 .collect(Collectors.toList());
 
@@ -143,7 +148,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public void updateStatus(UserStatusDTO reqUser) {
+    public void updateStatus(UpdateUserStatusRequest reqUser) {
         log.info("Updating status for user ID: {}", reqUser.getId());
         User currentUser = this.getUserById(reqUser.getId());
         if (currentUser != null) {
@@ -221,7 +226,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
-    public void changePassword(UpdatePasswordDTO dto) {
+    public void changePassword(UpdatePasswordRequest dto) {
         log.info("Attempting to change password for user");
         if (!dto.getNewPassword().equals(dto.getConfirmPassword())) {
             log.error("Password confirmation does not match");
@@ -265,12 +270,12 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public List<DeviceDTO> getLoggedInDevices(String deviceHash) {
+    public List<DeviceResponse> getLoggedInDevices(String deviceHash) {
         log.info("Getting logged in devices for current user");
         long userId = SecurityUtil.getUserId();
         List<UserToken> userTokens = userTokenRepository.findByUserId(userId);
         return userTokens.stream()
-                .map(token -> new DeviceDTO(token.getDeviceInfo(), token.getCreatedAt(), token.getDeviceHash(), token.getDeviceHash().equals(deviceHash)))
+                .map(token -> new DeviceResponse(token.getDeviceInfo(), token.getCreatedAt(), token.getDeviceHash(), token.getDeviceHash().equals(deviceHash)))
                 .toList();
     }
 

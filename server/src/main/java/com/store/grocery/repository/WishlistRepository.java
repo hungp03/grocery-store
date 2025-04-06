@@ -3,7 +3,7 @@ package com.store.grocery.repository;
 import com.store.grocery.domain.Product;
 import com.store.grocery.domain.Wishlist;
 import com.store.grocery.domain.WishlistId;
-import com.store.grocery.domain.response.wishlist.WishlistItemDTO;
+import com.store.grocery.dto.response.wishlist.WishlistItemResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -23,7 +23,7 @@ public interface WishlistRepository extends JpaRepository<Wishlist, WishlistId>,
     @EntityGraph(attributePaths = {"product", "product.category"})
     Page<Wishlist> findAll(Specification<Wishlist> spec, Pageable pageable);
     
-    default Page<WishlistItemDTO> findWishlistItemsByUserId(Long userId, Pageable pageable) {
+    default Page<WishlistItemResponse> findWishlistItemsByUserId(Long userId, Pageable pageable) {
         Specification<Wishlist> spec = (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
             predicates.add(cb.equal(root.get("id").get("userId"), userId));
@@ -32,7 +32,7 @@ public interface WishlistRepository extends JpaRepository<Wishlist, WishlistId>,
         
         return findAll(spec, pageable).map(wishlist -> {
             Product product = wishlist.getProduct();
-            return new WishlistItemDTO(
+            return new WishlistItemResponse(
                     product.getId(),
                     product.getProductName(),
                     product.getPrice(),

@@ -1,9 +1,9 @@
 package com.store.grocery.controller;
 
-import com.store.grocery.domain.User;
-import com.store.grocery.domain.request.auth.*;
-import com.store.grocery.domain.response.user.CreateUserDTO;
-import com.store.grocery.domain.response.user.ResLoginDTO;
+import com.store.grocery.dto.request.user.UserRegisterRequest;
+import com.store.grocery.dto.response.user.CreateUserResponse;
+import com.store.grocery.dto.response.user.LoginResponse;
+import com.store.grocery.dto.request.auth.*;
 import com.store.grocery.service.AuthService;
 import com.store.grocery.util.annotation.ApiMessage;
 import jakarta.validation.Valid;
@@ -30,7 +30,7 @@ public class AuthController {
 
     @PostMapping("auth/login")
     @ApiMessage("Login")
-    public ResponseEntity<ResLoginDTO> login(@Valid @RequestBody LoginDTO loginDTO, @RequestHeader("User-Agent") String userAgent) {
+    public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest loginDTO, @RequestHeader("User-Agent") String userAgent) {
         Map<String, Object> response = this.authService.login(loginDTO, userAgent);
         ResponseCookie responseCookie = ResponseCookie.from("refresh_token", (String) response.get("refreshToken"))
                 .httpOnly(true)
@@ -49,20 +49,20 @@ public class AuthController {
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, responseCookie.toString())
                 .header(HttpHeaders.SET_COOKIE, deviceCookie.toString())
-                .body((ResLoginDTO) response.get("userInfo"));
+                .body((LoginResponse) response.get("userInfo"));
     }
 
 
     @GetMapping("auth/account")
     @ApiMessage("Get user")
-    public ResponseEntity<ResLoginDTO.UserGetAccount> getAccount() {
+    public ResponseEntity<LoginResponse.UserGetAccount> getAccount() {
         return ResponseEntity.ok(this.authService.getAccount());
     }
 
     @GetMapping("auth/refresh")
     @ApiMessage("Get new token")
-    public ResponseEntity<ResLoginDTO> getNewRefreshToken(@CookieValue(name = "refresh_token", defaultValue = "none") String refreshToken,
-                                                          @CookieValue(name = "device", defaultValue = "none") String deviceHash
+    public ResponseEntity<LoginResponse> getNewRefreshToken(@CookieValue(name = "refresh_token", defaultValue = "none") String refreshToken,
+                                                            @CookieValue(name = "device", defaultValue = "none") String deviceHash
                                                           ) {
         Map<String, Object> response = this.authService.getNewRefreshToken(refreshToken, deviceHash);
         // set cookies
@@ -86,7 +86,7 @@ public class AuthController {
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, refreshCookie.toString())
                 .header(HttpHeaders.SET_COOKIE, deviceCookie.toString())
-                .body((ResLoginDTO) response.get("userInfo"));
+                .body((LoginResponse) response.get("userInfo"));
     }
 
     @PostMapping("auth/logout")
@@ -117,20 +117,20 @@ public class AuthController {
 
     @PostMapping("auth/register")
     @ApiMessage("Register a user")
-    public ResponseEntity<CreateUserDTO> register(@Valid @RequestBody User user) {
+    public ResponseEntity<CreateUserResponse> register(@Valid @RequestBody UserRegisterRequest user) {
         return ResponseEntity.status(HttpStatus.CREATED).body(this.authService.register(user));
     }
 
     @PostMapping("auth/forgot")
     @ApiMessage("Forgot password - OTP")
-    public ResponseEntity<Void> forgotPassword(@Valid @RequestBody EmailRequestDTO emailRequest) {
-        this.authService.forgotPassword(emailRequest.getEmail());
+    public ResponseEntity<Void> forgotPassword(@Valid @RequestBody ForgotPasswordRequest forgotPasswordRequest) {
+        this.authService.forgotPassword(forgotPasswordRequest.getEmail());
         return ResponseEntity.ok().build();
     }
 
     @PostMapping("auth/validate-otp")
     @ApiMessage("Validate OTP")
-    public ResponseEntity<Map<String, String>> verifyOtp(@Valid @RequestBody OTPDto request) {
+    public ResponseEntity<Map<String, String>> verifyOtp(@Valid @RequestBody OTPResetRequest request) {
         return ResponseEntity.ok(this.authService.verifyOtp(request.getEmail(), request.getOtp()));
     }
 
@@ -138,15 +138,15 @@ public class AuthController {
     @ApiMessage("Reset password")
     public ResponseEntity<Void> resetPassword(
             @RequestParam("token") String token,
-            @Valid @RequestBody ResetPasswordDTO request) {
+            @Valid @RequestBody ResetPasswordRequest request) {
         this.authService.resetPassword(token, request);
         return ResponseEntity.ok().build();
     }
 
     @PostMapping("auth/signin/google")
     @ApiMessage("Login with Google")
-    public ResponseEntity<ResLoginDTO> loginWithGoogle(@Valid @RequestBody GoogleTokenRequest request,
-                                                       @RequestHeader("User-Agent") String userAgent) throws GeneralSecurityException, IOException {
+    public ResponseEntity<LoginResponse> loginWithGoogle(@Valid @RequestBody GoogleTokenRequest request,
+                                                         @RequestHeader("User-Agent") String userAgent) throws GeneralSecurityException, IOException {
         Map<String, Object> response = this.authService.loginGoogle(request, userAgent);
         // Tạo cookie cho refresh token
         ResponseCookie responseCookie = ResponseCookie.from("refresh_token", (String) response.get("refreshToken"))
@@ -168,6 +168,6 @@ public class AuthController {
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, responseCookie.toString())
                 .header(HttpHeaders.SET_COOKIE, deviceCookie.toString())
-                .body((ResLoginDTO) response.get("userInfo"));
+                .body((LoginResponse) response.get("userInfo"));
     }
 }

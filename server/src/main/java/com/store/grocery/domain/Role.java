@@ -21,4 +21,11 @@ public class Role implements Serializable {
 
     @Column(nullable = false)
     private String roleName;
+
+    public Role(){
+    }
+
+    public Role(long id){
+        this.id = id;
+    }
 }

@@ -1,6 +1,6 @@
 package com.store.grocery.util.exception;
 
-import com.store.grocery.domain.response.RestResponse;
+import com.store.grocery.dto.response.RestResponse;
 import com.store.grocery.util.constants.StatusCodeConstant;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

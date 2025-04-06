@@ -18,10 +18,10 @@ public class OTPCode {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id; // Khóa chính tự động tăng
+    private Long id;
 
     @Column(nullable = false)
-    private String email; // Không làm khóa chính nữa
+    private String email;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 16)

@@ -15,7 +15,6 @@ import java.util.Objects;
 @Embeddable
 @Getter
 @Setter
-
 @AllArgsConstructor
 @NoArgsConstructor
 public class OrderDetailId implements Serializable {
