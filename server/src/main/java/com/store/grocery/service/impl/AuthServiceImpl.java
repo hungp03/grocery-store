@@ -71,15 +71,16 @@ public class AuthServiceImpl implements AuthService {
         User currentUserDB = this.userService.getUserById(uid);
         log.debug("Fetched user details from DB - ID: {}, Email: {}", currentUserDB.getId(), currentUserDB.getEmail());
         this.userService.checkAccountBanned(currentUserDB);
-        ResLoginDTO.UserLogin userLogin = new ResLoginDTO.UserLogin();
-        ResLoginDTO.UserGetAccount userGetAccount = new ResLoginDTO.UserGetAccount();
-        userLogin.setId(currentUserDB.getId());
-        userLogin.setEmail(currentUserDB.getEmail());
-        userLogin.setName(currentUserDB.getName());
-        userLogin.setRole(currentUserDB.getRole());
-        userGetAccount.setUser(userLogin);
-        userGetAccount.setCartLength(cartService.countProductInCart(currentUserDB.getId()));
-        log.info("Successfully retrieved account details for user ID: {}", uid);
+        ResLoginDTO.UserGetAccount userGetAccount = new ResLoginDTO.UserGetAccount(
+                currentUserDB.getId(),
+                currentUserDB.getEmail(),
+                currentUserDB.getName(),
+                currentUserDB.isStatus(),
+                currentUserDB.getPhone(),
+                currentUserDB.getAddress(),
+                currentUserDB.getAvatarUrl(),
+                currentUserDB.getRole());
+        log.info("Successfully retrieved account info for user ID: {}", uid);
         return userGetAccount;
     }
 

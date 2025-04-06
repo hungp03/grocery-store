@@ -25,15 +25,19 @@ public class ResLoginDTO {
         private Role role;
     }
 
-
-
     @Getter
     @Setter
     @AllArgsConstructor
     @NoArgsConstructor
     public static class UserGetAccount{
-        private UserLogin user;
-        private long cartLength;
+        private long id;
+        private String email;
+        private String name;
+        private boolean status;
+        private String phone;
+        private String address;
+        private String avatarUrl;
+        private Role role;
     }
 
     @Getter

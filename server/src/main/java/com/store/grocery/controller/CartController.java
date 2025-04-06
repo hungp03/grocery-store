@@ -3,6 +3,7 @@ package com.store.grocery.controller;
 import com.store.grocery.domain.Cart;
 import com.store.grocery.domain.response.PaginationDTO;
 import com.store.grocery.domain.response.cart.CartItemDTO;
+import com.store.grocery.domain.response.cart.SelectedProductDTO;
 import com.store.grocery.service.CartService;
 import com.store.grocery.util.annotation.ApiMessage;
 import lombok.RequiredArgsConstructor;
@@ -39,7 +40,7 @@ public class CartController {
     }
     @GetMapping("cart/product-selected")
     @ApiMessage("Get products from cart")
-    public ResponseEntity<List<CartItemDTO>> getSelectedItemsCart(@RequestParam("productIds") List<Long> productIds, Pageable pageable){
+    public ResponseEntity<List<SelectedProductDTO>> getSelectedItemsCart(@RequestParam("productIds") List<Long> productIds, Pageable pageable){
         return ResponseEntity.ok(this.cartService.getCartItemsByProductIds(productIds, pageable));
     }
 }
