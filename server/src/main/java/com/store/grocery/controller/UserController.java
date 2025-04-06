@@ -84,11 +84,11 @@ public class UserController {
 
     @PutMapping(value = "users/account", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @ApiMessage("Update user information")
-    public ResponseEntity<ResLoginDTO.UserGetAccount> updateUser(
+    public ResponseEntity<Void> updateUser(
             @RequestPart("user") UpdateUserRequest request,
             @RequestPart(value = "avatarUrl", required = false) MultipartFile avatar) throws IOException {
-
-        return ResponseEntity.ok(this.userService.updateUser(request, avatar));
+        this.userService.updateUser(request, avatar);
+        return ResponseEntity.ok().build();
     }
 
     @PostMapping("deactivate/account")

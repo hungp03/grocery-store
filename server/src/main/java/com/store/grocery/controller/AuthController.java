@@ -34,17 +34,16 @@ public class AuthController {
         Map<String, Object> response = this.authService.login(loginDTO, userAgent);
         ResponseCookie responseCookie = ResponseCookie.from("refresh_token", (String) response.get("refreshToken"))
                 .httpOnly(true)
-                .secure(false)
+                .secure(true)
                 .path("/")
                 .maxAge(refreshTokenExpiration)
-                .sameSite("Lax")
+                .sameSite("None")
                 .build();
         ResponseCookie deviceCookie = ResponseCookie.from("device", (String) response.get("device"))
                 .httpOnly(true)
-                .secure(false)
-                .path("/")
+                .secure(true)
                 .maxAge(refreshTokenExpiration)
-                .sameSite("Lax")
+                .sameSite("None")
                 .build();
 
         return ResponseEntity.ok()
@@ -71,6 +70,7 @@ public class AuthController {
                 .from("refresh_token", (String) response.get("refreshToken"))
                 .httpOnly(true)
                 .secure(true)
+                .sameSite("None")
                 .path("/")
                 .maxAge(refreshTokenExpiration)
                 .build();
@@ -78,6 +78,7 @@ public class AuthController {
                 .from("device", deviceHash)
                 .httpOnly(true)
                 .secure(true)
+                .sameSite("None")
                 .path("/")
                 .maxAge(refreshTokenExpiration) // Đồng bộ với refresh token
                 .build();
@@ -96,12 +97,14 @@ public class AuthController {
                 .from("refresh_token", "")
                 .httpOnly(true)
                 .secure(true)
+                .sameSite("None")
                 .path("/")
                 .maxAge(0)
                 .build();
         ResponseCookie deviceCookie = ResponseCookie.from("device", "")
                 .httpOnly(true)
                 .secure(true)
+                .sameSite("None")
                 .path("/")
                 .maxAge(0)
                 .build();
@@ -148,18 +151,18 @@ public class AuthController {
         // Tạo cookie cho refresh token
         ResponseCookie responseCookie = ResponseCookie.from("refresh_token", (String) response.get("refreshToken"))
                 .httpOnly(true)
-                .secure(false)
+                .secure(true)
+                .sameSite("None")
                 .path("/")
                 .maxAge(refreshTokenExpiration)
-                .sameSite("Lax")
                 .build();
 
         ResponseCookie deviceCookie = ResponseCookie.from("device", (String) response.get("device"))
                 .httpOnly(true)
-                .secure(false)
+                .secure(true)
+                .sameSite("None")
                 .path("/")
                 .maxAge(refreshTokenExpiration)
-                .sameSite("Lax")
                 .build();
 
         return ResponseEntity.ok()

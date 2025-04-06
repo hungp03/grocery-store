@@ -6,6 +6,7 @@ import com.store.grocery.domain.Product;
 import com.store.grocery.domain.User;
 import com.store.grocery.domain.response.PaginationDTO;
 import com.store.grocery.domain.response.cart.CartItemDTO;
+import com.store.grocery.domain.response.cart.SelectedProductDTO;
 import com.store.grocery.repository.CartRepository;
 import com.store.grocery.repository.UserRepository;
 import com.store.grocery.service.CartService;
@@ -91,7 +92,7 @@ public class CartServiceImpl implements CartService{
         return this.paginationHelper.fetchAllEntities(cartItems);
     }
     @Override
-    public List<CartItemDTO> getCartItemsByProductIds(List<Long> productIds, Pageable pageable) {
+    public List<SelectedProductDTO> getCartItemsByProductIds(List<Long> productIds, Pageable pageable) {
         long uid = SecurityUtil.getUserId();
         log.info("Fetching selected cart items for user {}", uid);
         User u = this.userRepository.findById(uid).orElseThrow(() -> new UserNotFoundException("User không tồn tại"));
@@ -108,12 +109,5 @@ public class CartServiceImpl implements CartService{
                 .toList();
         cartRepository.deleteByIdIn(cartIds);
         log.info("Deleted selected cart items for user {}", uid);
-    }
-    @Override
-    public long countProductInCart(long userId) {
-        log.info("Counting products in cart for user ID: {}", userId);
-        long count = this.cartRepository.countById_UserId(userId);
-        log.info("Count products in cart for user ID: {} successfully", userId);
-        return count;
     }
 }

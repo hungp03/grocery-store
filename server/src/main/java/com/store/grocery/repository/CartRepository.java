@@ -3,6 +3,7 @@ package com.store.grocery.repository;
 import com.store.grocery.domain.Cart;
 import com.store.grocery.domain.CartId;
 import com.store.grocery.domain.response.cart.CartItemDTO;
+import com.store.grocery.domain.response.cart.SelectedProductDTO;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -24,46 +25,39 @@ public interface CartRepository extends JpaRepository<Cart, CartId>, JpaSpecific
         Specification<Cart> spec = (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
             predicates.add(cb.equal(root.get("id").get("userId"), userId));
+            assert query != null;
             query.orderBy(cb.desc(root.get("timestamp")));
             return cb.and(predicates.toArray(new Predicate[0]));
         };
 
-        return findAll(spec, pageable).map(cart -> {
-            return new CartItemDTO(
-                    cart.getProduct().getId(),
-                    cart.getProduct().getProductName(),
-                    cart.getProduct().getPrice(),
-                    cart.getQuantity(),
-                    cart.getProduct().getImageUrl(),
-                    cart.getProduct().getCategory().getName(),
-                    cart.getProduct().getQuantity()
-            );
-        });
+        return findAll(spec, pageable).map(cart -> new CartItemDTO(
+                cart.getProduct().getId(),
+                cart.getProduct().getProductName(),
+                cart.getProduct().getPrice(),
+                cart.getQuantity(),
+                cart.getProduct().getImageUrl(),
+                cart.getProduct().getCategory().getSlug(),
+                cart.getProduct().getQuantity()
+        ));
     }
 
-    default List<CartItemDTO> findCartItemsByUserIdAndProductId(Long userId, List<Long> productIds, Pageable pageable) {
+    default List<SelectedProductDTO> findCartItemsByUserIdAndProductId(Long userId, List<Long> productIds, Pageable pageable) {
         Specification<Cart> spec = (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
             predicates.add(cb.equal(root.get("id").get("userId"), userId));
             predicates.add(root.get("product").get("id").in(productIds));
-            query.orderBy(cb.desc(root.get("timestamp")));
             return cb.and(predicates.toArray(new Predicate[0]));
         };
 
         return findAll(spec, pageable).getContent().stream()
-                .map(cart -> new CartItemDTO(
+                .map(cart -> new SelectedProductDTO(
                         cart.getProduct().getId(),
                         cart.getProduct().getProductName(),
-                        cart.getProduct().getPrice(),
                         cart.getQuantity(),
-                        cart.getProduct().getImageUrl(),
-                        cart.getProduct().getCategory().getName(),
-                        cart.getProduct().getQuantity()
+                        cart.getProduct().getPrice()
                 ))
                 .toList();
     }
-
-    long countById_UserId(Long userId);
 
     void deleteByIdIn(List<CartId> cartIds);
 

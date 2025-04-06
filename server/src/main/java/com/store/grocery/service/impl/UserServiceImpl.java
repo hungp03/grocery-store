@@ -196,17 +196,14 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public ResLoginDTO.UserGetAccount updateUser(
-            UpdateUserRequest request, MultipartFile avatar) {
+    public void updateUser(UpdateUserRequest request, MultipartFile avatar) {
         log.info("Updating user profile");
         long uid = SecurityUtil.getUserId();
         User currentUserDB = this.getUserById(uid);
-
         // Cập nhật thông tin người dùng
         currentUserDB.setName(request.getName());
         currentUserDB.setPhone(request.getPhone());
         currentUserDB.setAddress(request.getAddress());
-
         // Nếu có avatar mới, lưu ảnh vào server
         if (avatar != null && !avatar.isEmpty()) {
             try {
@@ -220,17 +217,6 @@ public class UserServiceImpl implements UserService {
         }
         userRepository.save(currentUserDB);
         log.info("Successfully updated user profile for user ID: {}", currentUserDB.getId());
-
-        ResLoginDTO.UserLogin userLogin = new ResLoginDTO.UserLogin(
-                currentUserDB.getId(),
-                currentUserDB.getEmail(),
-                currentUserDB.getName(),
-                currentUserDB.getRole());
-
-        ResLoginDTO.UserGetAccount userGetAccount = new ResLoginDTO.UserGetAccount();
-        userGetAccount.setUser(userLogin);
-        userGetAccount.setCartLength(cartService.countProductInCart(currentUserDB.getId()));
-        return userGetAccount;
     }
 
     @Override

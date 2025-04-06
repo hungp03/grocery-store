@@ -39,7 +39,7 @@ public interface UserService {
 
     void checkAccountBanned(User user);
 
-    ResLoginDTO.UserGetAccount updateUser(UpdateUserRequest request, MultipartFile avatar);
+    void updateUser(UpdateUserRequest request, MultipartFile avatar);
 
     void changePassword(UpdatePasswordDTO dto);
 
