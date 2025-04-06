@@ -2,9 +2,8 @@ package com.store.grocery.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.store.grocery.domain.User;
-import com.store.grocery.domain.response.RestResponse;
+import com.store.grocery.dto.response.RestResponse;
 import com.store.grocery.repository.UserRepository;
-import com.store.grocery.service.UserService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -13,8 +12,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 

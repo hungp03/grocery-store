@@ -1,7 +1,9 @@
 package com.store.grocery.service.impl;
 
 import com.store.grocery.domain.Category;
-import com.store.grocery.domain.response.PaginationDTO;
+import com.store.grocery.dto.request.category.CreateCategoryRequest;
+import com.store.grocery.dto.request.category.UpdateCategoryRequest;
+import com.store.grocery.dto.response.PaginationResponse;
 import com.store.grocery.repository.CategoryRepository;
 import com.store.grocery.repository.ProductRepository;
 import com.store.grocery.service.CategoryService;
@@ -28,13 +30,16 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
-    public Category create(Category category) {
-        log.info("Creating new category: {}", category.getName());
-        if (this.isCategoryExisted(category.getName())) {
-            log.warn("Category '{}' already exists", category.getName());
+    public Category create(CreateCategoryRequest categoryDTO) {
+        log.info("Creating new category: {}", categoryDTO.getName());
+        if (this.isCategoryExisted(categoryDTO.getName())) {
+            log.warn("Category '{}' already exists", categoryDTO.getName());
             throw new DuplicateResourceException("Category đã tồn tại");
         }
-        log.info("Category '{}' created successfully", category.getName());
+        log.info("Category '{}' created successfully", categoryDTO.getName());
+        Category category = new Category();
+        category.setName(categoryDTO.getName());
+        category.setImageUrl(categoryDTO.getImageUrl());
         return this.categoryRepository.save(category);
     }
 
@@ -52,16 +57,16 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
-    public Category update(Category category) {
-        log.info("Updating category ID {} with new name '{}'", category.getId(), category.getName());
-        if (!this.isCategoryNameUnique(category.getId(), category.getName())) {
-            log.warn("Category name '{}' is not unique for ID {}", category.getName(), category.getId());
+    public Category update(UpdateCategoryRequest categoryDTO) {
+        Category curr = this.findById(categoryDTO.getId());
+        log.info("Updating category ID {} with new name '{}'", categoryDTO.getId(), categoryDTO.getName());
+        if (!this.isCategoryNameUnique(categoryDTO.getId(), categoryDTO.getName())) {
+            log.warn("Category name '{}' is not unique for ID {}", categoryDTO.getName(), categoryDTO.getId());
             throw new DuplicateResourceException("Category bị trùng");
         }
-        Category curr = this.findById(category.getId());
-        curr.setName(category.getName());
-        curr.setImageUrl(category.getImageUrl());
-        log.info("Category ID {} updated successfully", category.getId());
+        curr.setName(categoryDTO.getName());
+        curr.setImageUrl(categoryDTO.getImageUrl());
+        log.info("Category ID {} updated successfully", categoryDTO.getId());
         return categoryRepository.save(curr);
     }
 
@@ -77,7 +82,7 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
-    public PaginationDTO fetchAllCategories(Pageable pageable) {
+    public PaginationResponse fetchAllCategories(Pageable pageable) {
         log.info("Fetching all categories with pagination");
         return paginationHelper.fetchAllEntities(pageable, categoryRepository);
     }

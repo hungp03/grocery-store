@@ -1,7 +1,9 @@
 package com.store.grocery.controller;
 
 import com.store.grocery.domain.Category;
-import com.store.grocery.domain.response.PaginationDTO;
+import com.store.grocery.dto.request.category.CreateCategoryRequest;
+import com.store.grocery.dto.request.category.UpdateCategoryRequest;
+import com.store.grocery.dto.response.PaginationResponse;
 import com.store.grocery.service.CategoryService;
 import com.store.grocery.util.annotation.ApiMessage;
 import jakarta.validation.Valid;
@@ -19,14 +21,14 @@ public class CategoryController {
 
     @PostMapping("categories")
     @ApiMessage("Create category")
-    public ResponseEntity<Category> create(@Valid @RequestBody Category category) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(this.categoryService.create(category));
+    public ResponseEntity<Category> create(@Valid @RequestBody CreateCategoryRequest categoryDTO) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(this.categoryService.create(categoryDTO));
     }
 
     @PutMapping("categories")
     @ApiMessage("Update category")
-    public ResponseEntity<Category> update(@Valid @RequestBody Category category) {
-        return ResponseEntity.ok(this.categoryService.update(category));
+    public ResponseEntity<Category> update(@Valid @RequestBody UpdateCategoryRequest categoryDTO) {
+        return ResponseEntity.ok(this.categoryService.update(categoryDTO));
     }
 
     @GetMapping("categories/{id}")
@@ -45,7 +47,7 @@ public class CategoryController {
 
     @GetMapping("categories")
     @ApiMessage("Get all categories")
-    public ResponseEntity<PaginationDTO> getAll(Pageable pageable) {
+    public ResponseEntity<PaginationResponse> getAll(Pageable pageable) {
         return ResponseEntity.ok(this.categoryService.fetchAllCategories(pageable));
     }
 }

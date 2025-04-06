@@ -1,6 +1,6 @@
 package com.store.grocery.util;
 
-import com.store.grocery.domain.response.RestResponse;
+import com.store.grocery.dto.response.RestResponse;
 import com.store.grocery.util.annotation.ApiMessage;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.core.MethodParameter;

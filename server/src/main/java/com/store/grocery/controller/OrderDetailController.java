@@ -1,6 +1,6 @@
 package com.store.grocery.controller;
 
-import com.store.grocery.domain.response.order.OrderDetailDTO;
+import com.store.grocery.dto.response.order.OrderDetailResponse;
 import com.store.grocery.service.OrderDetailService;
 import com.store.grocery.util.annotation.ApiMessage;
 import lombok.RequiredArgsConstructor;
@@ -20,7 +20,7 @@ public class OrderDetailController {
 
     @GetMapping("order-detail/{orderId}")
     @ApiMessage("Get order detail")
-    public ResponseEntity<List<OrderDetailDTO>> getAllOrderDetailsByOrderId(@PathVariable("orderId") long orderId) {
+    public ResponseEntity<List<OrderDetailResponse>> getAllOrderDetailsByOrderId(@PathVariable("orderId") long orderId) {
         return ResponseEntity.ok(this.orderDetailService.getOrderDetailById(orderId));
     }
 }

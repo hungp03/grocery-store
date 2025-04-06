@@ -1,6 +1,6 @@
 package com.store.grocery.util;
 
-import com.store.grocery.domain.response.PaginationDTO;
+import com.store.grocery.dto.response.PaginationResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -11,26 +11,26 @@ import org.springframework.stereotype.Service;
 @Service
 public class PaginationHelper {
     // Helper sử dụng Specification
-    public <T> PaginationDTO fetchAllEntities(Specification<T> spec, Pageable pageable, JpaSpecificationExecutor<T> repository) {
+    public <T> PaginationResponse fetchAllEntities(Specification<T> spec, Pageable pageable, JpaSpecificationExecutor<T> repository) {
         Page<T> page = repository.findAll(spec, pageable);
         return buildPaginationDTO(page);
     }
 
     // Helper không sử dụng Specification
-    public <T> PaginationDTO fetchAllEntities(Pageable pageable, JpaRepository<T, ?> repository) {
+    public <T> PaginationResponse fetchAllEntities(Pageable pageable, JpaRepository<T, ?> repository) {
         Page<T> page = repository.findAll(pageable);
         return buildPaginationDTO(page);
     }
 
     // Helper sử dụng Page tùy chỉnh
-    public <T> PaginationDTO fetchAllEntities(Page<T> page) {
+    public <T> PaginationResponse fetchAllEntities(Page<T> page) {
         return buildPaginationDTO(page);
     }
 
     //build PaginationDTO từ Page
-    public <T> PaginationDTO buildPaginationDTO(Page<T> page) {
-        PaginationDTO rs = new PaginationDTO();
-        PaginationDTO.Meta meta = new PaginationDTO.Meta();
+    public <T> PaginationResponse buildPaginationDTO(Page<T> page) {
+        PaginationResponse rs = new PaginationResponse();
+        PaginationResponse.Meta meta = new PaginationResponse.Meta();
 
         meta.setPage(page.getNumber() + 1);
         meta.setPageSize(page.getSize());

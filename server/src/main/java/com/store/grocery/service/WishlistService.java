@@ -1,12 +1,13 @@
 package com.store.grocery.service;
 
 import com.store.grocery.domain.Wishlist;
-import com.store.grocery.domain.response.PaginationDTO;
+import com.store.grocery.dto.request.wishlist.AddWishlistRequest;
+import com.store.grocery.dto.response.PaginationResponse;
 import org.springframework.data.domain.Pageable;
 
 
 public interface WishlistService {
-    Wishlist addWishlist(Wishlist w);
+    Wishlist addWishlist(AddWishlistRequest request);
     void deleteWishlist(Long productId);
-    PaginationDTO getWishlistsByCurrentUser(Pageable pageable);
+    PaginationResponse getWishlistsByCurrentUser(Pageable pageable);
 }

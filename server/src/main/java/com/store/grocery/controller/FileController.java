@@ -1,10 +1,9 @@
 package com.store.grocery.controller;
 
-import com.store.grocery.domain.response.file.ResUploadFileDTO;
+import com.store.grocery.dto.response.file.UploadFileResponse;
 import com.store.grocery.service.FileService;
 import com.store.grocery.util.annotation.ApiMessage;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -23,10 +22,10 @@ public class FileController {
     private final FileService fileService;
     @PostMapping("files")
     @ApiMessage("Upload single file")
-    public ResponseEntity<ResUploadFileDTO> upload(
+    public ResponseEntity<UploadFileResponse> upload(
             @RequestParam(name = "file", required = false) MultipartFile file) throws IOException, URISyntaxException {
         String uploadFile = fileService.upload(file);
-        ResUploadFileDTO response = new ResUploadFileDTO(uploadFile, Instant.now());
+        UploadFileResponse response = new UploadFileResponse(uploadFile, Instant.now());
         return ResponseEntity.ok(response);
     }
 }

@@ -1,14 +1,14 @@
 package com.store.grocery.service;
 
 import com.store.grocery.domain.User;
-import com.store.grocery.domain.request.user.UpdatePasswordDTO;
-import com.store.grocery.domain.request.user.UpdateUserRequest;
-import com.store.grocery.domain.request.user.UserStatusDTO;
-import com.store.grocery.domain.response.PaginationDTO;
-import com.store.grocery.domain.response.user.CreateUserDTO;
-import com.store.grocery.domain.response.user.DeviceDTO;
-import com.store.grocery.domain.response.user.ResLoginDTO;
-import com.store.grocery.domain.response.user.UserDTO;
+import com.store.grocery.dto.request.user.UpdatePasswordRequest;
+import com.store.grocery.dto.request.user.UpdateUserRequest;
+import com.store.grocery.dto.request.user.UserRegisterRequest;
+import com.store.grocery.dto.request.user.UpdateUserStatusRequest;
+import com.store.grocery.dto.response.PaginationResponse;
+import com.store.grocery.dto.response.user.CreateUserResponse;
+import com.store.grocery.dto.response.user.DeviceResponse;
+import com.store.grocery.dto.response.user.UserResponse;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.web.multipart.MultipartFile;
@@ -16,21 +16,21 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 
 public interface UserService {
-    User create(User user);
+    CreateUserResponse create(UserRegisterRequest user);
 
     boolean isExistedEmail(String email);
 
     void delete(long id);
 
-    CreateUserDTO convertToCreateDTO(User user);
+    CreateUserResponse convertToCreateDTO(User user);
 
-    UserDTO convertToUserDTO(User user);
+    UserResponse convertToUserDTO(User user);
 
     User getUserById(long id);
 
-    PaginationDTO fetchAllUser(Specification<User> specification, Pageable pageable);
+    PaginationResponse fetchAllUser(Specification<User> specification, Pageable pageable);
 
-    void updateStatus(UserStatusDTO reqUser);
+    void updateStatus(UpdateUserStatusRequest reqUser);
 
     //    UpdateUserDTO convertToUpdateUserDTO(User user);
     User getUserByUsername(String username);
@@ -41,11 +41,11 @@ public interface UserService {
 
     void updateUser(UpdateUserRequest request, MultipartFile avatar);
 
-    void changePassword(UpdatePasswordDTO dto);
+    void changePassword(UpdatePasswordRequest dto);
 
     void storeUserToken(User user, String refreshToken, String deviceInfo, String deviceHash);
 
-    List<DeviceDTO> getLoggedInDevices(String deviceHash);
+    List<DeviceResponse> getLoggedInDevices(String deviceHash);
 
     void requestDeactiveAccount();
     void verifyOTPAndDisableAccount(String inputOtp);

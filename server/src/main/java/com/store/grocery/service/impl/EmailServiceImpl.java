@@ -1,11 +1,10 @@
 package com.store.grocery.service.impl;
 
 import com.store.grocery.domain.User;
-import com.store.grocery.domain.request.order.CheckoutRequestDTO;
-import com.store.grocery.domain.response.order.OrderDetailDTO;
+import com.store.grocery.dto.request.order.CheckoutRequest;
+import com.store.grocery.dto.response.order.OrderDetailResponse;
 import com.store.grocery.repository.UserRepository;
 import com.store.grocery.service.EmailService;
-import com.store.grocery.util.SecurityUtil;
 import com.store.grocery.util.exception.UserNotFoundException;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
@@ -74,7 +73,7 @@ public class EmailServiceImpl implements EmailService {
     }
 
     private void sendEmailFromTemplateSyncCheckout(String to, String subject, String templateName,
-                                                  String username,String address, String phone, String paymentMethod, Double totalPrice, List<OrderDetailDTO> items) {
+                                                  String username,String address, String phone, String paymentMethod, Double totalPrice, List<OrderDetailResponse> items) {
 
         String formattedTotalPrice = formatCurrency(totalPrice);
         // Lấy thời gian hiện tại và định dạng
@@ -98,7 +97,7 @@ public class EmailServiceImpl implements EmailService {
 
     @Override
     @Async
-    public void sendOrderEmail(long uid, CheckoutRequestDTO checkoutRequestDTO) {
+    public void sendOrderEmail(long uid, CheckoutRequest checkoutRequestDTO) {
         try {
             User u = this.userRepository.findById(uid)
                     .orElseThrow(() -> new UserNotFoundException("User không tồn tại"));

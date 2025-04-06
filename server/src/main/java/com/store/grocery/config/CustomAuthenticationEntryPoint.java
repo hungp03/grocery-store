@@ -1,6 +1,6 @@
 package com.store.grocery.config;
 
-import com.store.grocery.domain.response.RestResponse;
+import com.store.grocery.dto.response.RestResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;

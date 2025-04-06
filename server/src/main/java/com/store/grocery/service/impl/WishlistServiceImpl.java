@@ -4,8 +4,9 @@ import com.store.grocery.domain.Product;
 import com.store.grocery.domain.User;
 import com.store.grocery.domain.Wishlist;
 import com.store.grocery.domain.WishlistId;
-import com.store.grocery.domain.response.PaginationDTO;
-import com.store.grocery.domain.response.wishlist.WishlistItemDTO;
+import com.store.grocery.dto.request.wishlist.AddWishlistRequest;
+import com.store.grocery.dto.response.PaginationResponse;
+import com.store.grocery.dto.response.wishlist.WishlistItemResponse;
 import com.store.grocery.repository.ProductRepository;
 import com.store.grocery.repository.WishlistRepository;
 import com.store.grocery.service.UserService;
@@ -30,19 +31,21 @@ public class WishlistServiceImpl implements WishlistService {
     private final UserService userService;
 
     @Override
-    public Wishlist addWishlist(Wishlist w) {
+    public Wishlist addWishlist(AddWishlistRequest request) {
         long uid = SecurityUtil.getUserId();
         User u = this.userService.getUserById(uid);
-        Product p = this.productRepository.findById(w.getId().getProductId()).orElseThrow(() -> new ResourceInvalidException("Product không tồn tại"));
+        Product p = this.productRepository.findById(request.getProductId()).orElseThrow(() -> new ResourceInvalidException("Product không tồn tại"));
         log.info("Adding product to wishlist: {} by uid {}", p.getId(), uid);
         boolean exists = wishlistRepository.existsById_UserIdAndId_ProductId(u.getId(), p.getId());
         if (exists) {
             log.error("Product already exists in wishlist");
             throw new DuplicateResourceException("Sản phẩm đã có trong danh sách yêu thích");
         }
-        w.setUser(u);
-        w.setProduct(p);
-        return this.wishlistRepository.save(w);
+        Wishlist wishlist = new Wishlist();
+        wishlist.setId(new WishlistId(u.getId(), p.getId()));
+        wishlist.setUser(u);
+        wishlist.setProduct(p);
+        return this.wishlistRepository.save(wishlist);
     }
 
     @Override
@@ -61,11 +64,11 @@ public class WishlistServiceImpl implements WishlistService {
     }
 
     @Override
-    public PaginationDTO getWishlistsByCurrentUser(Pageable pageable) throws ResourceInvalidException {
+    public PaginationResponse getWishlistsByCurrentUser(Pageable pageable) throws ResourceInvalidException {
         log.info("Get wishlist by current user");
         long uid = SecurityUtil.getUserId();
         User user = this.userService.getUserById(uid);
-        Page<WishlistItemDTO> wishlistItems = this.wishlistRepository.findWishlistItemsByUserId(user.getId(), pageable);
+        Page<WishlistItemResponse> wishlistItems = this.wishlistRepository.findWishlistItemsByUserId(user.getId(), pageable);
         return this.paginationHelper.fetchAllEntities(wishlistItems);
     }
 }

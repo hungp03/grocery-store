@@ -1,7 +1,7 @@
 package com.store.grocery.controller;
 
 import com.store.grocery.domain.Product;
-import com.store.grocery.domain.response.PaginationDTO;
+import com.store.grocery.dto.response.PaginationResponse;
 import com.store.grocery.service.ProductService;
 import com.store.grocery.util.annotation.ApiMessage;
 import com.store.grocery.util.exception.ResourceInvalidException;
@@ -14,8 +14,6 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.context.SecurityContext;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
@@ -48,7 +46,7 @@ public class ProductController {
 
     @GetMapping("products")
     @ApiMessage("Get all products")
-    public ResponseEntity<PaginationDTO> getAll(@Filter Specification<Product> spec, Pageable pageable){
+    public ResponseEntity<PaginationResponse> getAll(@Filter Specification<Product> spec, Pageable pageable){
         return ResponseEntity.ok(this.productService.getAll(spec, pageable));
     }
 
@@ -60,7 +58,7 @@ public class ProductController {
 
     @GetMapping("products/search")
     @ApiMessage("Search products")
-    public ResponseEntity<PaginationDTO> search(@Filter Specification<Product> spec, Pageable pageable) {
+    public ResponseEntity<PaginationResponse> search(@Filter Specification<Product> spec, Pageable pageable) {
         return ResponseEntity.ok(this.productService.search(spec, pageable));
     }
 

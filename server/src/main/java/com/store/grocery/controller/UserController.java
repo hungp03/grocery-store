@@ -1,15 +1,13 @@
 package com.store.grocery.controller;
 
 import com.store.grocery.domain.User;
-import com.store.grocery.domain.request.user.UpdatePasswordDTO;
-import com.store.grocery.domain.request.user.UpdateUserRequest;
-import com.store.grocery.domain.request.user.UserDisableOTP;
-import com.store.grocery.domain.request.user.UserStatusDTO;
-import com.store.grocery.domain.response.PaginationDTO;
-import com.store.grocery.domain.response.user.CreateUserDTO;
-import com.store.grocery.domain.response.user.DeviceDTO;
-import com.store.grocery.domain.response.user.ResLoginDTO;
-import com.store.grocery.domain.response.user.UserDTO;
+import com.store.grocery.dto.request.user.UpdatePasswordRequest;
+import com.store.grocery.dto.request.user.UpdateUserRequest;
+import com.store.grocery.dto.request.user.UserDisableOTPRequest;
+import com.store.grocery.dto.request.user.UpdateUserStatusRequest;
+import com.store.grocery.dto.response.PaginationResponse;
+import com.store.grocery.dto.response.user.DeviceResponse;
+import com.store.grocery.dto.response.user.UserResponse;
 import com.store.grocery.service.UserService;
 import com.store.grocery.util.annotation.ApiMessage;
 import com.store.grocery.util.exception.ResourceInvalidException;
@@ -33,17 +31,9 @@ import java.util.List;
 public class UserController {
     private final UserService userService;
 
-    @PostMapping("users")
-    @ApiMessage("Create new user")
-    // Not use
-    public ResponseEntity<CreateUserDTO> createNewUser(@Valid @RequestBody User user){
-        User newUser = this.userService.create(user);
-        return ResponseEntity.status(HttpStatus.CREATED).body(this.userService.convertToCreateDTO(newUser));
-    }
-
     @GetMapping("users/devices")
     @ApiMessage("Get logged in devices")
-    public ResponseEntity<List<DeviceDTO>> getLoggedInDevices(@CookieValue(name = "device", defaultValue = "none") String deviceHash){
+    public ResponseEntity<List<DeviceResponse>> getLoggedInDevices(@CookieValue(name = "device", defaultValue = "none") String deviceHash){
         return ResponseEntity.ok(this.userService.getLoggedInDevices(deviceHash));
     }
 
@@ -57,27 +47,27 @@ public class UserController {
 
     @GetMapping("users/{id}")
     @ApiMessage("Get user by id")
-    public ResponseEntity<UserDTO> getUser(@PathVariable("id") long id) throws ResourceInvalidException {
+    public ResponseEntity<UserResponse> getUser(@PathVariable("id") long id) throws ResourceInvalidException {
         User currentUser = this.userService.getUserById(id);
         return ResponseEntity.status(HttpStatus.OK).body(this.userService.convertToUserDTO(currentUser));
     }
 
     @GetMapping("users")
     @ApiMessage("Fetch users")
-    public ResponseEntity<PaginationDTO> fetchAllUser(@Filter Specification<User> spec, Pageable pageable) {
+    public ResponseEntity<PaginationResponse> fetchAllUser(@Filter Specification<User> spec, Pageable pageable) {
         return ResponseEntity.ok(this.userService.fetchAllUser(spec, pageable));
     }
 
     @PutMapping("users/update-password")
     @ApiMessage("Change password")
-    public ResponseEntity<Void> changePassword(@Valid @RequestBody UpdatePasswordDTO dto){
+    public ResponseEntity<Void> changePassword(@Valid @RequestBody UpdatePasswordRequest dto){
         this.userService.changePassword(dto);
         return ResponseEntity.ok().build();
     }
 
     @PutMapping("users/status")
     @ApiMessage("Update user status")
-    public ResponseEntity<Void> updateUser(@RequestBody UserStatusDTO user) throws ResourceInvalidException {
+    public ResponseEntity<Void> updateUser(@RequestBody UpdateUserStatusRequest user) throws ResourceInvalidException {
         this.userService.updateStatus(user);
         return ResponseEntity.ok().build();
     }
@@ -101,7 +91,7 @@ public class UserController {
     @PostMapping("/deactivate/confirm")
     @ApiMessage("Confirm deactivate account")
     public ResponseEntity<Void> confirmDisableAccount(
-            @RequestBody UserDisableOTP otpCode) {
+            @RequestBody UserDisableOTPRequest otpCode) {
         userService.verifyOTPAndDisableAccount(otpCode.getOtpCode());
         return ResponseEntity.ok().build();
     }

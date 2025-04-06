@@ -2,18 +2,17 @@ package com.store.grocery.service.impl;
 
 import com.store.grocery.config.CustomGoogleUserDetails;
 import com.store.grocery.domain.OTPCode;
-import com.store.grocery.domain.Role;
 import com.store.grocery.domain.User;
 import com.store.grocery.domain.UserToken;
-import com.store.grocery.domain.request.auth.GoogleTokenRequest;
-import com.store.grocery.domain.request.auth.LoginDTO;
-import com.store.grocery.domain.request.auth.ResetPasswordDTO;
-import com.store.grocery.domain.response.user.CreateUserDTO;
-import com.store.grocery.domain.response.user.ResLoginDTO;
+import com.store.grocery.dto.request.auth.GoogleTokenRequest;
+import com.store.grocery.dto.request.auth.LoginRequest;
+import com.store.grocery.dto.request.auth.ResetPasswordRequest;
+import com.store.grocery.dto.request.user.UserRegisterRequest;
+import com.store.grocery.dto.response.user.CreateUserResponse;
+import com.store.grocery.dto.response.user.LoginResponse;
 import com.store.grocery.repository.OTPCodeRepository;
 import com.store.grocery.repository.UserTokenRepository;
 import com.store.grocery.service.AuthService;
-import com.store.grocery.service.CartService;
 import com.store.grocery.service.EmailService;
 import com.store.grocery.service.UserService;
 import com.store.grocery.util.Utils;
@@ -47,7 +46,6 @@ public class AuthServiceImpl implements AuthService {
     private final AuthenticationManagerBuilder authenticationManagerBuilder;
     private final OTPCodeRepository otpCodeRepository;
     private final UserService userService;
-    private final CartService cartService;
     private final EmailService emailService;
     private final SecurityUtil securityUtil;
     private final UserTokenRepository userTokenRepository;
@@ -65,13 +63,13 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public ResLoginDTO.UserGetAccount getAccount() {
+    public LoginResponse.UserGetAccount getAccount() {
         long uid = SecurityUtil.getUserId();
         log.info("Fetching basic data for user ID: {}", uid);
         User currentUserDB = this.userService.getUserById(uid);
         log.debug("Fetched user details from DB - ID: {}, Email: {}", currentUserDB.getId(), currentUserDB.getEmail());
         this.userService.checkAccountBanned(currentUserDB);
-        ResLoginDTO.UserGetAccount userGetAccount = new ResLoginDTO.UserGetAccount(
+        LoginResponse.UserGetAccount userGetAccount = new LoginResponse.UserGetAccount(
                 currentUserDB.getId(),
                 currentUserDB.getEmail(),
                 currentUserDB.getName(),
@@ -98,18 +96,15 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public CreateUserDTO register(User user) {
+    public CreateUserResponse register(UserRegisterRequest user) {
         log.info("Attempting to register new user with email: {}", user.getEmail());
         if (this.userService.isExistedEmail(user.getEmail())) {
             log.warn("Registration failed: Email {} already exists", user.getEmail());
             throw new DuplicateResourceException("Email " + user.getEmail() + " đã tồn tại");
         }
-        Role r = new Role();
-        r.setId(2);
-        user.setRole(r);
-        User newUser = this.userService.create(user);
+        CreateUserResponse newUser = this.userService.create(user);
         log.info("User registered successfully with ID: {}", newUser.getId());
-        return this.userService.convertToCreateDTO(newUser);
+        return newUser;
     }
 
     @Override
@@ -144,7 +139,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public void resetPassword(String token, ResetPasswordDTO request) {
+    public void resetPassword(String token, ResetPasswordRequest request) {
         log.info("Reset password requested using token.");
         Jwt decodedToken = this.securityUtil.checkValidToken(token);
         if (!request.getNewPassword().equals(request.getConfirmPassword())) {
@@ -162,7 +157,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public Map<String, Object> login(LoginDTO loginDTO, String userAgent) {
+    public Map<String, Object> login(LoginRequest loginDTO, String userAgent) {
         log.info("Login attempt for email: {}", loginDTO.getEmail());
         User currentUserDB = this.userService.getUserByUsername(loginDTO.getEmail());
         log.info("User found: id={}, email={}", currentUserDB.getId(), currentUserDB.getEmail());
@@ -172,9 +167,9 @@ public class AuthServiceImpl implements AuthService {
         Authentication authentication = authenticationManagerBuilder.getObject().authenticate(authenticationToken);
         SecurityContextHolder.getContext().setAuthentication(authentication);
         log.info("Authentication successful for user: {}", loginDTO.getEmail());
-        ResLoginDTO res = new ResLoginDTO();
+        LoginResponse res = new LoginResponse();
 
-        ResLoginDTO.UserLogin userLogin = new ResLoginDTO.UserLogin(
+        LoginResponse.UserLogin userLogin = new LoginResponse.UserLogin(
                 currentUserDB.getId(),
                 currentUserDB.getEmail(),
                 currentUserDB.getName(),
@@ -218,8 +213,8 @@ public class AuthServiceImpl implements AuthService {
         log.info("User found for refresh token: id={}, email={}", currentUser.getId(), currentUser.getEmail());
         this.userService.checkAccountBanned(currentUser);
 
-        ResLoginDTO res = new ResLoginDTO();
-        res.setUser(new ResLoginDTO.UserLogin(
+        LoginResponse res = new LoginResponse();
+        res.setUser(new LoginResponse.UserLogin(
                 currentUser.getId(),
                 currentUser.getEmail(),
                 currentUser.getName(),
@@ -261,8 +256,8 @@ public class AuthServiceImpl implements AuthService {
                 userDetails.getAuthorities()
         );
         SecurityContextHolder.getContext().setAuthentication(authentication);
-        ResLoginDTO res = new ResLoginDTO();
-        ResLoginDTO.UserLogin userLogin = new ResLoginDTO.UserLogin(
+        LoginResponse res = new LoginResponse();
+        LoginResponse.UserLogin userLogin = new LoginResponse.UserLogin(
                 currentUser.getId(),
                 currentUser.getEmail(),
                 currentUser.getName(),

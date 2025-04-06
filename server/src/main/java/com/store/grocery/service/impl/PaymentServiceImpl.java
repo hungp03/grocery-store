@@ -2,8 +2,8 @@ package com.store.grocery.service.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.store.grocery.config.VNPAYConfig;
-import com.store.grocery.domain.request.order.CheckoutRequestDTO;
-import com.store.grocery.domain.response.payment.PaymentDTO;
+import com.store.grocery.dto.request.order.CheckoutRequest;
+import com.store.grocery.dto.response.payment.PaymentResponse;
 import com.store.grocery.service.OrderService;
 import com.store.grocery.service.PaymentService;
 import com.store.grocery.util.VNPayUtil;
@@ -13,7 +13,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.net.URLDecoder;
-import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Map;
@@ -26,7 +25,7 @@ public class PaymentServiceImpl implements PaymentService {
     private final ObjectMapper objectMapper;
     private final OrderService orderService;
     @Override
-    public PaymentDTO.VNPayResponse createVnPayPayment(HttpServletRequest request) {
+    public PaymentResponse.VNPayResponse createVnPayPayment(HttpServletRequest request) {
         log.info("Create VNPay payment");
         long amount = Integer.parseInt(request.getParameter("amount")) * 100L;
         String bankCode = request.getParameter("bankCode");
@@ -46,17 +45,17 @@ public class PaymentServiceImpl implements PaymentService {
         String vnpSecureHash = VNPayUtil.hmacSHA512(vnPayConfig.getSecretKey(), hashData);
         queryUrl += "&vnp_SecureHash=" + vnpSecureHash;
         String paymentUrl = vnPayConfig.getVnp_PayUrl() + "?" + queryUrl;
-        return PaymentDTO.VNPayResponse.builder()
+        return PaymentResponse.VNPayResponse.builder()
                 .code("ok")
                 .message("success")
                 .paymentUrl(paymentUrl).build();
     }
 
     @Override
-    public CheckoutRequestDTO getOrderData(String orderData) {
+    public CheckoutRequest getOrderData(String orderData) {
         try {
             log.info("Parsing order data: {}", orderData);
-            return objectMapper.readValue(orderData, CheckoutRequestDTO.class);
+            return objectMapper.readValue(orderData, CheckoutRequest.class);
         } catch (Exception e) {
             log.error("Error parsing order data: {}", e.getMessage());
             throw new RuntimeException("Invalid order data");

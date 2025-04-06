@@ -4,9 +4,10 @@ import com.store.grocery.domain.Cart;
 import com.store.grocery.domain.CartId;
 import com.store.grocery.domain.Product;
 import com.store.grocery.domain.User;
-import com.store.grocery.domain.response.PaginationDTO;
-import com.store.grocery.domain.response.cart.CartItemDTO;
-import com.store.grocery.domain.response.cart.SelectedProductDTO;
+import com.store.grocery.dto.request.cart.AddToCartRequest;
+import com.store.grocery.dto.response.PaginationResponse;
+import com.store.grocery.dto.response.cart.CartItemResponse;
+import com.store.grocery.dto.response.cart.SelectedProductInCart;
 import com.store.grocery.repository.CartRepository;
 import com.store.grocery.repository.UserRepository;
 import com.store.grocery.service.CartService;
@@ -34,20 +35,21 @@ public class CartServiceImpl implements CartService{
     private final PaginationHelper paginationHelper;
 
     @Override
-    public Cart addOrUpdateCart(Cart cart) {
+    public Cart addOrUpdateCart(AddToCartRequest cartRequest) {
         long uid = SecurityUtil.getUserId();
-        log.info("User {} is adding/updating cart item with productId={}", uid, cart.getId().getProductId());
+        log.info("User {} is adding/updating cart item with productId={}", uid, cartRequest.getProductId());
         User u = this.userRepository.findById(uid).orElseThrow(() -> new UserNotFoundException("User không tồn tại"));
-        Product p = this.productService.findById(cart.getId().getProductId());
-        if (cart.getQuantity() > p.getQuantity()) {
-            log.warn("User {} tried to add {} items, but only {} available", uid, cart.getQuantity(), p.getQuantity());
+        Product p = this.productService.findById(cartRequest.getProductId());
+        if (cartRequest.getQuantity() > p.getQuantity()) {
+            log.warn("User {} tried to add {} items, but only {} available", uid, cartRequest.getQuantity(), p.getQuantity());
             throw new ResourceInvalidException("Số lượng hàng không đủ");
         }
 
         Optional<Cart> existingCart = cartRepository.findById(new CartId(u.getId(), p.getId()));
+        Cart cartItem;
         if (existingCart.isPresent()) {
-            Cart cartItem = existingCart.get();
-            int newQuantity = cartItem.getQuantity() + cart.getQuantity();
+            cartItem = existingCart.get();
+            int newQuantity = cartItem.getQuantity() + cartRequest.getQuantity();
             if (newQuantity < 0) {
                 log.warn("User {} tried to set invalid quantity {}", uid, newQuantity);
                 throw new ResourceInvalidException("Số lượng sản phẩm không hợp lệ");
@@ -58,13 +60,16 @@ public class CartServiceImpl implements CartService{
             }
             cartItem.setQuantity(newQuantity);
             log.info("Updated cart item: userId={}, productId={}, newQuantity={}", uid, p.getId(), newQuantity);
-            return this.cartRepository.save(cartItem);
         } else {
-            cart.setUser(u);
-            cart.setProduct(p);
-            log.info("Added new cart item: userId={}, productId={}, quantity={}", uid, p.getId(), cart.getQuantity());
-            return this.cartRepository.save(cart);
+            cartItem = new Cart();
+            CartId cartId = new CartId(u.getId(), p.getId());
+            cartItem.setId(cartId);
+            cartItem.setUser(u);
+            cartItem.setProduct(p);
+            cartItem.setQuantity(cartRequest.getQuantity());
+            log.info("Added new cart item: userId={}, productId={}, quantity={}", uid, p.getId(), cartRequest.getQuantity());
         }
+        return this.cartRepository.save(cartItem);
     }
 
     @Override
@@ -82,17 +87,17 @@ public class CartServiceImpl implements CartService{
         log.info("Deleted product {} from cart for user {}", productId, uid);
     }
     @Override
-    public PaginationDTO getCartByCurrentUser(Pageable pageable) {
+    public PaginationResponse getCartByCurrentUser(Pageable pageable) {
         long uid = SecurityUtil.getUserId();
         log.info("Fetching cart items for user {}", uid);
 
         User u = this.userRepository.findById(uid).orElseThrow(() -> new UserNotFoundException("User không tồn tại"));
-        Page<CartItemDTO> cartItems = this.cartRepository.findCartItemsByUserId(uid, pageable);
+        Page<CartItemResponse> cartItems = this.cartRepository.findCartItemsByUserId(uid, pageable);
         log.info("Fetched cart items for user {}", uid);
         return this.paginationHelper.fetchAllEntities(cartItems);
     }
     @Override
-    public List<SelectedProductDTO> getCartItemsByProductIds(List<Long> productIds, Pageable pageable) {
+    public List<SelectedProductInCart> getCartItemsByProductIds(List<Long> productIds, Pageable pageable) {
         long uid = SecurityUtil.getUserId();
         log.info("Fetching selected cart items for user {}", uid);
         User u = this.userRepository.findById(uid).orElseThrow(() -> new UserNotFoundException("User không tồn tại"));
