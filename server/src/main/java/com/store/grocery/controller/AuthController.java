@@ -42,13 +42,18 @@ public class AuthController {
         ResponseCookie deviceCookie = ResponseCookie.from("device", (String) response.get("device"))
                 .httpOnly(true)
                 .secure(true)
+                .path("/")
                 .maxAge(refreshTokenExpiration)
                 .sameSite("None")
                 .build();
 
+        // Use HttpHeaders to set multiple cookies
+        HttpHeaders headers = new HttpHeaders();
+        headers.add(HttpHeaders.SET_COOKIE, responseCookie.toString());
+        headers.add(HttpHeaders.SET_COOKIE, deviceCookie.toString());
+
         return ResponseEntity.ok()
-                .header(HttpHeaders.SET_COOKIE, responseCookie.toString())
-                .header(HttpHeaders.SET_COOKIE, deviceCookie.toString())
+                .headers(headers)
                 .body((LoginResponse) response.get("userInfo"));
     }
 
@@ -62,8 +67,7 @@ public class AuthController {
     @GetMapping("auth/refresh")
     @ApiMessage("Get new token")
     public ResponseEntity<LoginResponse> getNewRefreshToken(@CookieValue(name = "refresh_token", defaultValue = "none") String refreshToken,
-                                                            @CookieValue(name = "device", defaultValue = "none") String deviceHash
-                                                          ) {
+                                                            @CookieValue(name = "device", defaultValue = "none") String deviceHash) {
         Map<String, Object> response = this.authService.getNewRefreshToken(refreshToken, deviceHash);
         // set cookies
         ResponseCookie refreshCookie = ResponseCookie
@@ -83,9 +87,12 @@ public class AuthController {
                 .maxAge(refreshTokenExpiration) // Đồng bộ với refresh token
                 .build();
 
+        HttpHeaders headers = new HttpHeaders();
+        headers.add(HttpHeaders.SET_COOKIE, refreshCookie.toString());
+        headers.add(HttpHeaders.SET_COOKIE, deviceCookie.toString());
+
         return ResponseEntity.ok()
-                .header(HttpHeaders.SET_COOKIE, refreshCookie.toString())
-                .header(HttpHeaders.SET_COOKIE, deviceCookie.toString())
+                .headers(headers)
                 .body((LoginResponse) response.get("userInfo"));
     }
 
@@ -108,10 +115,14 @@ public class AuthController {
                 .path("/")
                 .maxAge(0)
                 .build();
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.add(HttpHeaders.SET_COOKIE, deviceCookie.toString());
+        headers.add(HttpHeaders.SET_COOKIE, deviceCookie.toString());
+
         return ResponseEntity
                 .ok()
-                .header(HttpHeaders.SET_COOKIE, deleteCookie.toString())
-                .header(HttpHeaders.SET_COOKIE, deviceCookie.toString())
+                .headers(headers)
                 .build();
     }
 
@@ -165,9 +176,12 @@ public class AuthController {
                 .maxAge(refreshTokenExpiration)
                 .build();
 
+        HttpHeaders headers = new HttpHeaders();
+        headers.add(HttpHeaders.SET_COOKIE, responseCookie.toString());
+        headers.add(HttpHeaders.SET_COOKIE, deviceCookie.toString());
+
         return ResponseEntity.ok()
-                .header(HttpHeaders.SET_COOKIE, responseCookie.toString())
-                .header(HttpHeaders.SET_COOKIE, deviceCookie.toString())
+                .headers(headers)
                 .body((LoginResponse) response.get("userInfo"));
     }
 }
