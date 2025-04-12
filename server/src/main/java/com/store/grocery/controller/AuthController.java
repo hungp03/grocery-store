@@ -1,8 +1,10 @@
 package com.store.grocery.controller;
 
 import com.store.grocery.dto.request.user.UserRegisterRequest;
+import com.store.grocery.dto.response.auth.AuthResponse;
+import com.store.grocery.dto.response.auth.OtpVerificationResponse;
 import com.store.grocery.dto.response.user.CreateUserResponse;
-import com.store.grocery.dto.response.user.LoginResponse;
+import com.store.grocery.dto.response.user.UserLoginResponse;
 import com.store.grocery.dto.request.auth.*;
 import com.store.grocery.service.AuthService;
 import com.store.grocery.util.annotation.ApiMessage;
@@ -30,16 +32,16 @@ public class AuthController {
 
     @PostMapping("auth/login")
     @ApiMessage("Login")
-    public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest loginDTO, @RequestHeader("User-Agent") String userAgent) {
-        Map<String, Object> response = this.authService.login(loginDTO, userAgent);
-        ResponseCookie responseCookie = ResponseCookie.from("refresh_token", (String) response.get("refreshToken"))
+    public ResponseEntity<UserLoginResponse> login(@Valid @RequestBody LoginRequest loginDTO, @RequestHeader("User-Agent") String userAgent) {
+        AuthResponse response = this.authService.login(loginDTO, userAgent);
+        ResponseCookie responseCookie = ResponseCookie.from("refresh_token", response.getRefreshToken())
                 .httpOnly(true)
                 .secure(true)
                 .path("/")
                 .maxAge(refreshTokenExpiration)
                 .sameSite("None")
                 .build();
-        ResponseCookie deviceCookie = ResponseCookie.from("device", (String) response.get("device"))
+        ResponseCookie deviceCookie = ResponseCookie.from("device", (String) response.getDevice())
                 .httpOnly(true)
                 .secure(true)
                 .path("/")
@@ -54,24 +56,24 @@ public class AuthController {
 
         return ResponseEntity.ok()
                 .headers(headers)
-                .body((LoginResponse) response.get("userInfo"));
+                .body(response.getUserLoginResponse());
     }
 
 
     @GetMapping("auth/account")
     @ApiMessage("Get user")
-    public ResponseEntity<LoginResponse.UserGetAccount> getAccount() {
+    public ResponseEntity<UserLoginResponse.UserGetAccount> getAccount() {
         return ResponseEntity.ok(this.authService.getAccount());
     }
 
     @GetMapping("auth/refresh")
     @ApiMessage("Get new token")
-    public ResponseEntity<LoginResponse> getNewRefreshToken(@CookieValue(name = "refresh_token", defaultValue = "none") String refreshToken,
-                                                            @CookieValue(name = "device", defaultValue = "none") String deviceHash) {
-        Map<String, Object> response = this.authService.getNewRefreshToken(refreshToken, deviceHash);
+    public ResponseEntity<UserLoginResponse> getNewRefreshToken(@CookieValue(name = "refresh_token", defaultValue = "none") String refreshToken,
+                                                                @CookieValue(name = "device", defaultValue = "none") String deviceHash) {
+        AuthResponse response = this.authService.getNewRefreshToken(refreshToken, deviceHash);
         // set cookies
         ResponseCookie refreshCookie = ResponseCookie
-                .from("refresh_token", (String) response.get("refreshToken"))
+                .from("refresh_token", response.getRefreshToken())
                 .httpOnly(true)
                 .secure(true)
                 .sameSite("None")
@@ -93,7 +95,7 @@ public class AuthController {
 
         return ResponseEntity.ok()
                 .headers(headers)
-                .body((LoginResponse) response.get("userInfo"));
+                .body(response.getUserLoginResponse());
     }
 
     @PostMapping("auth/logout")
@@ -141,7 +143,7 @@ public class AuthController {
 
     @PostMapping("auth/validate-otp")
     @ApiMessage("Validate OTP")
-    public ResponseEntity<Map<String, String>> verifyOtp(@Valid @RequestBody OTPResetRequest request) {
+    public ResponseEntity<OtpVerificationResponse> verifyOtp(@Valid @RequestBody OTPResetRequest request) {
         return ResponseEntity.ok(this.authService.verifyOtp(request.getEmail(), request.getOtp()));
     }
 
@@ -156,11 +158,11 @@ public class AuthController {
 
     @PostMapping("auth/signin/google")
     @ApiMessage("Login with Google")
-    public ResponseEntity<LoginResponse> loginWithGoogle(@Valid @RequestBody GoogleTokenRequest request,
-                                                         @RequestHeader("User-Agent") String userAgent) throws GeneralSecurityException, IOException {
-        Map<String, Object> response = this.authService.loginGoogle(request, userAgent);
+    public ResponseEntity<UserLoginResponse> loginWithGoogle(@Valid @RequestBody GoogleTokenRequest request,
+                                                             @RequestHeader("User-Agent") String userAgent) throws GeneralSecurityException, IOException {
+        AuthResponse response = this.authService.loginGoogle(request, userAgent);
         // Tạo cookie cho refresh token
-        ResponseCookie responseCookie = ResponseCookie.from("refresh_token", (String) response.get("refreshToken"))
+        ResponseCookie responseCookie = ResponseCookie.from("refresh_token", response.getRefreshToken())
                 .httpOnly(true)
                 .secure(true)
                 .sameSite("None")
@@ -168,7 +170,7 @@ public class AuthController {
                 .maxAge(refreshTokenExpiration)
                 .build();
 
-        ResponseCookie deviceCookie = ResponseCookie.from("device", (String) response.get("device"))
+        ResponseCookie deviceCookie = ResponseCookie.from("device", response.getDevice())
                 .httpOnly(true)
                 .secure(true)
                 .sameSite("None")
@@ -182,6 +184,6 @@ public class AuthController {
 
         return ResponseEntity.ok()
                 .headers(headers)
-                .body((LoginResponse) response.get("userInfo"));
+                .body(response.getUserLoginResponse());
     }
 }

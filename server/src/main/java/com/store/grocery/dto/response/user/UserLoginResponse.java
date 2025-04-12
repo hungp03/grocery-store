@@ -9,7 +9,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class LoginResponse {
+public class UserLoginResponse {
     @JsonProperty("access_token")
     private String accessToken;
     private UserLogin user;

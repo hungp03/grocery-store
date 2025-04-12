@@ -44,7 +44,6 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final FileService fileService;
-    private final CartService cartService;
     private final UserTokenRepository userTokenRepository;
     private final EmailService emailService;
     private final OTPCodeRepository otpCodeRepository;
@@ -245,40 +244,14 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public void storeUserToken(User user, String refreshToken, String deviceInfo, String deviceHash) {
-        log.info("Storing user token for user ID: {}", user.getId());
-        Optional<UserToken> existingToken = userTokenRepository.findByUserAndDeviceInfo(user, deviceInfo);
-
-        if (existingToken.isPresent()) {
-            log.debug("Updating existing token for user ID: {}", user.getId());
-            // Cập nhật refreshToken mới
-            UserToken userToken = existingToken.get();
-            userToken.setRefreshToken(refreshToken);
-            userToken.setDeviceInfo(deviceInfo);
-            userTokenRepository.save(userToken);
-        } else {
-            log.debug("Creating new token for user ID: {}", user.getId());
-            // Tạo mới UserToken
-            UserToken newUserToken = new UserToken();
-            newUserToken.setUser(user);
-            newUserToken.setRefreshToken(refreshToken);
-            newUserToken.setDeviceInfo(deviceInfo);
-            newUserToken.setDeviceHash(deviceHash);
-            newUserToken.setCreatedAt(Instant.now());
-            userTokenRepository.save(newUserToken);
-        }
-    }
-
-    @Override
     public List<DeviceResponse> getLoggedInDevices(String deviceHash) {
         log.info("Getting logged in devices for current user");
         long userId = SecurityUtil.getUserId();
-        List<UserToken> userTokens = userTokenRepository.findByUserId(userId);
+        List<UserToken> userTokens = this.userTokenRepository.findByUserId(userId);
         return userTokens.stream()
                 .map(token -> new DeviceResponse(token.getDeviceInfo(), token.getCreatedAt(), token.getDeviceHash(), token.getDeviceHash().equals(deviceHash)))
                 .toList();
     }
-
 
     @Override
     public void requestDeactiveAccount() {

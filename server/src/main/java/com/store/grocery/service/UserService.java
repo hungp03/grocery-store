@@ -42,11 +42,7 @@ public interface UserService {
     void updateUser(UpdateUserRequest request, MultipartFile avatar);
 
     void changePassword(UpdatePasswordRequest dto);
-
-    void storeUserToken(User user, String refreshToken, String deviceInfo, String deviceHash);
-
     List<DeviceResponse> getLoggedInDevices(String deviceHash);
-
     void requestDeactiveAccount();
     void verifyOTPAndDisableAccount(String inputOtp);
 }
