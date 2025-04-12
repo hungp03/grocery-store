@@ -8,13 +8,16 @@ import com.store.grocery.dto.request.auth.GoogleTokenRequest;
 import com.store.grocery.dto.request.auth.LoginRequest;
 import com.store.grocery.dto.request.auth.ResetPasswordRequest;
 import com.store.grocery.dto.request.user.UserRegisterRequest;
+import com.store.grocery.dto.response.auth.AuthResponse;
+import com.store.grocery.dto.response.auth.OtpVerificationResponse;
 import com.store.grocery.dto.response.user.CreateUserResponse;
-import com.store.grocery.dto.response.user.LoginResponse;
+import com.store.grocery.dto.response.user.UserLoginResponse;
 import com.store.grocery.repository.OTPCodeRepository;
 import com.store.grocery.repository.UserTokenRepository;
 import com.store.grocery.service.AuthService;
 import com.store.grocery.service.EmailService;
 import com.store.grocery.service.UserService;
+import com.store.grocery.service.UserTokenService;
 import com.store.grocery.util.Utils;
 import com.store.grocery.util.SecurityUtil;
 import com.store.grocery.util.enums.OTPType;
@@ -48,7 +51,7 @@ public class AuthServiceImpl implements AuthService {
     private final UserService userService;
     private final EmailService emailService;
     private final SecurityUtil securityUtil;
-    private final UserTokenRepository userTokenRepository;
+    private final UserTokenService userTokenService;
     private final CustomOAuth2UserService oAuth2UserService;
 
     @Override
@@ -63,13 +66,13 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public LoginResponse.UserGetAccount getAccount() {
+    public UserLoginResponse.UserGetAccount getAccount() {
         long uid = SecurityUtil.getUserId();
         log.info("Fetching basic data for user ID: {}", uid);
         User currentUserDB = this.userService.getUserById(uid);
         log.debug("Fetched user details from DB - ID: {}, Email: {}", currentUserDB.getId(), currentUserDB.getEmail());
         this.userService.checkAccountBanned(currentUserDB);
-        LoginResponse.UserGetAccount userGetAccount = new LoginResponse.UserGetAccount(
+        UserLoginResponse.UserGetAccount userGetAccount = new UserLoginResponse.UserGetAccount(
                 currentUserDB.getId(),
                 currentUserDB.getEmail(),
                 currentUserDB.getName(),
@@ -85,14 +88,9 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public void logout(String deviceHash) {
         long uid = SecurityUtil.getUserId();
-        log.info("User ID: {} is attempting to log out from device: {}", uid, deviceHash);
-        Optional<UserToken> userTokenOpt = this.userTokenRepository.findByUserIdAndDeviceHash(uid, deviceHash);
-        if (userTokenOpt.isEmpty()) {
-            log.warn("Logout failed: No active session found for user ID {} on device {}", uid, deviceHash);
-            throw new ResourceInvalidException("Không tìm thấy phiên đăng nhập trên thiết bị này.");
-        }
+        UserToken userToken = this.userTokenService.findByfindByUserAndDeviceHash(uid, deviceHash);
         log.info("User ID: {} has successfully logged out from device: {}", uid, deviceHash);
-        userTokenRepository.delete(userTokenOpt.get());
+        userTokenService.deleteToken(userToken);
     }
 
     @Override
@@ -122,7 +120,7 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     @Transactional
-    public Map<String, String> verifyOtp(String email, String inputOtp) {
+    public OtpVerificationResponse verifyOtp(String email, String inputOtp) {
         log.info("Verifying OTP for email: {}", email);
         return otpCodeRepository.findByEmailAndType(email, OTPType.RESET_PASSWORD)
                 .filter(otp -> otp.getOtpCode().equals(inputOtp) && otp.getExpiresAt().isAfter(Instant.now()))
@@ -130,7 +128,7 @@ public class AuthServiceImpl implements AuthService {
                     String tempToken = securityUtil.createResetToken(email);
                     otpCodeRepository.deleteByEmailAndType(email, OTPType.RESET_PASSWORD);
                     log.info("OTP verified successfully for email: {}. Generated temp token.", email);
-                    return Map.of("tempToken", tempToken);
+                    return new OtpVerificationResponse(tempToken);
                 })
                 .orElseThrow(() -> {
                     log.warn("Failed OTP verification for email: {}. Invalid or expired OTP.", email);
@@ -157,7 +155,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public Map<String, Object> login(LoginRequest loginDTO, String userAgent) {
+    public AuthResponse login(LoginRequest loginDTO, String userAgent) {
         log.info("Login attempt for email: {}", loginDTO.getEmail());
         User currentUserDB = this.userService.getUserByUsername(loginDTO.getEmail());
         log.info("User found: id={}, email={}", currentUserDB.getId(), currentUserDB.getEmail());
@@ -167,9 +165,8 @@ public class AuthServiceImpl implements AuthService {
         Authentication authentication = authenticationManagerBuilder.getObject().authenticate(authenticationToken);
         SecurityContextHolder.getContext().setAuthentication(authentication);
         log.info("Authentication successful for user: {}", loginDTO.getEmail());
-        LoginResponse res = new LoginResponse();
-
-        LoginResponse.UserLogin userLogin = new LoginResponse.UserLogin(
+        UserLoginResponse res = new UserLoginResponse();
+        UserLoginResponse.UserLogin userLogin = new UserLoginResponse.UserLogin(
                 currentUserDB.getId(),
                 currentUserDB.getEmail(),
                 currentUserDB.getName(),
@@ -181,40 +178,26 @@ public class AuthServiceImpl implements AuthService {
         String refreshToken = this.securityUtil.createRefreshToken(loginDTO.getEmail(), res);
         log.info("Refresh token created for user: {}", loginDTO.getEmail());
         String deviceHash = Utils.generateDeviceHash(userAgent);
-        this.userService.storeUserToken(currentUserDB, refreshToken, userAgent, deviceHash);
+        this.userTokenService.storeUserToken(currentUserDB, refreshToken, userAgent, deviceHash);
         log.info("Stored refresh token for user: {}", loginDTO.getEmail());
-        return Map.of(
-                "userInfo", res,
-                "refreshToken", refreshToken,
-                "device", deviceHash
-        );
+        return new AuthResponse(res, refreshToken, deviceHash);
     }
 
     @Override
-    public Map<String, Object> getNewRefreshToken(String refreshToken, String deviceHash) {
+    public AuthResponse getNewRefreshToken(String refreshToken, String deviceHash) {
         log.info("Request to get new token. DeviceHash: {}", deviceHash);
         if ("none".equals(refreshToken)) {
             log.warn("Invalid refresh token: none");
             throw new ResourceInvalidException("Vui lòng đăng nhập");
         }
 
-        // Kiểm tra refresh token hợp lệ
-        Jwt decodedToken = this.securityUtil.checkValidToken(refreshToken);
-        String email = decodedToken.getSubject();
-        log.info("Decoded refresh token for email: {}", email);
-        // Tìm token trong bảng user_tokens theo user và deviceInfo
-        Optional<UserToken> userTokenOpt = this.userTokenRepository.findByRefreshTokenAndDeviceHash(refreshToken, deviceHash);
-        if (userTokenOpt.isEmpty() || !userTokenOpt.get().getUser().getEmail().equals(email)) {
-            log.warn("Refresh token is invalid or does not match the device. Email: {}", email);
-            throw new ResourceInvalidException("Refresh token không hợp lệ hoặc không khớp với thiết bị.");
-        }
-
-        User currentUser = userTokenOpt.get().getUser();
+        UserToken userToken = this.userTokenService.validateRefreshToken(refreshToken, deviceHash);
+        User currentUser = userToken.getUser();
         log.info("User found for refresh token: id={}, email={}", currentUser.getId(), currentUser.getEmail());
         this.userService.checkAccountBanned(currentUser);
 
-        LoginResponse res = new LoginResponse();
-        res.setUser(new LoginResponse.UserLogin(
+        UserLoginResponse res = new UserLoginResponse();
+        res.setUser(new UserLoginResponse.UserLogin(
                 currentUser.getId(),
                 currentUser.getEmail(),
                 currentUser.getName(),
@@ -222,26 +205,22 @@ public class AuthServiceImpl implements AuthService {
         ));
 
         // Tạo Access Token mới
-        String accessToken = this.securityUtil.createAccessToken(email, res);
+        String accessToken = this.securityUtil.createAccessToken(currentUser.getEmail(), res);
         res.setAccessToken(accessToken);
-        log.info("New access token created for user: {}", email);
+        log.info("New access token created for user: {}", currentUser.getEmail());
         // Tạo Refresh Token mới
-        String newRefreshToken = this.securityUtil.createRefreshToken(email, res);
-        log.info("New refresh token created for user: {}", email);
+        String newRefreshToken = this.securityUtil.createRefreshToken(currentUser.getEmail(), res);
+        log.info("New refresh token created for user: {}", currentUser.getEmail());
         // Cập nhật lại refresh token trong DB cho thiết bị đó
-        UserToken userToken = userTokenOpt.get();
         userToken.setRefreshToken(newRefreshToken);
-        userTokenRepository.save(userToken);
-        log.info("Updated refresh token in database for user: {}", email);
-        return Map.of(
-                "userInfo", res,
-                "refreshToken", newRefreshToken
-        );
+        userTokenService.saveToken(userToken);
+        log.info("Updated refresh token in database for user: {}", currentUser.getEmail());
+        return new AuthResponse(res, newRefreshToken);
     }
 
 
     @Override
-    public Map<String, Object> loginGoogle(GoogleTokenRequest request, String userAgent) throws IOException, GeneralSecurityException {
+    public AuthResponse loginGoogle(GoogleTokenRequest request, String userAgent) throws IOException, GeneralSecurityException {
         log.info("Google login attempt with user agent: {}", userAgent);
         // Xử lý token từ Google
         OAuth2User oauth2User = oAuth2UserService.processOAuth2User(request.getCredential());
@@ -256,8 +235,8 @@ public class AuthServiceImpl implements AuthService {
                 userDetails.getAuthorities()
         );
         SecurityContextHolder.getContext().setAuthentication(authentication);
-        LoginResponse res = new LoginResponse();
-        LoginResponse.UserLogin userLogin = new LoginResponse.UserLogin(
+        UserLoginResponse res = new UserLoginResponse();
+        UserLoginResponse.UserLogin userLogin = new UserLoginResponse.UserLogin(
                 currentUser.getId(),
                 currentUser.getEmail(),
                 currentUser.getName(),
@@ -272,12 +251,8 @@ public class AuthServiceImpl implements AuthService {
         String refresh_token = securityUtil.createRefreshToken(currentUser.getEmail(), res);
         log.info("Refresh token created for Google user: {}", currentUser.getEmail());
         String deviceHash = Utils.generateDeviceHash(userAgent);
-        this.userService.storeUserToken(currentUser, refresh_token, userAgent, deviceHash);
+        this.userTokenService.storeUserToken(currentUser, refresh_token, userAgent, deviceHash);
         log.info("Stored Google refresh token for user: {}", currentUser.getEmail());
-        return Map.of(
-                "userInfo", res,
-                "refreshToken", refresh_token,
-                "device", deviceHash
-        );
+        return new AuthResponse(res, refresh_token, deviceHash);
     }
 }
