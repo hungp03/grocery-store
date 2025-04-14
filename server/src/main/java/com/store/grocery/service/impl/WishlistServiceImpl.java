@@ -7,7 +7,6 @@ import com.store.grocery.domain.WishlistId;
 import com.store.grocery.dto.request.wishlist.AddWishlistRequest;
 import com.store.grocery.dto.response.PaginationResponse;
 import com.store.grocery.dto.response.wishlist.WishlistItemResponse;
-import com.store.grocery.repository.ProductRepository;
 import com.store.grocery.repository.WishlistRepository;
 import com.store.grocery.service.ProductService;
 import com.store.grocery.service.UserService;

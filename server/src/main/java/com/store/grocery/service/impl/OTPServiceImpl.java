@@ -1,7 +1,6 @@
 package com.store.grocery.service.impl;
 
 import com.store.grocery.domain.OTPCode;
-import com.store.grocery.dto.response.auth.OtpVerificationResponse;
 import com.store.grocery.repository.OTPCodeRepository;
 import com.store.grocery.service.OTPService;
 import com.store.grocery.util.enums.OTPType;

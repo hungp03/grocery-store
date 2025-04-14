@@ -5,7 +5,6 @@ import com.store.grocery.dto.request.category.CreateCategoryRequest;
 import com.store.grocery.dto.request.category.UpdateCategoryRequest;
 import com.store.grocery.dto.response.PaginationResponse;
 import com.store.grocery.repository.CategoryRepository;
-import com.store.grocery.repository.ProductRepository;
 import com.store.grocery.service.CategoryService;
 import com.store.grocery.service.ProductService;
 import com.store.grocery.util.PaginationHelper;

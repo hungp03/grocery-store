@@ -12,7 +12,6 @@ import com.store.grocery.repository.UserRepository;
 import com.store.grocery.service.CartService;
 import com.store.grocery.service.EmailService;
 import com.store.grocery.service.OrderService;
-import com.store.grocery.service.UserService;
 import com.store.grocery.util.PaginationHelper;
 import com.store.grocery.util.SecurityUtil;
 import com.store.grocery.util.exception.ResourceInvalidException;

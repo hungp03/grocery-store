@@ -1,7 +1,6 @@
 
 package com.store.grocery.config;
 
-import com.store.grocery.controller.ProductController;
 import com.store.grocery.service.impl.CustomOAuth2UserService;
 import com.store.grocery.util.SecurityUtil;
 import com.nimbusds.jose.jwk.source.ImmutableSecret;
@@ -28,8 +27,6 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.oauth2.server.resource.web.authentication.BearerTokenAuthenticationFilter;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.access.intercept.FilterSecurityInterceptor;
-import org.springframework.security.web.context.SecurityContextPersistenceFilter;
 
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;

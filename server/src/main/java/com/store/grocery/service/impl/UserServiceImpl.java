@@ -1,6 +1,5 @@
 package com.store.grocery.service.impl;
 
-import com.store.grocery.domain.OTPCode;
 import com.store.grocery.domain.Role;
 import com.store.grocery.domain.User;
 import com.store.grocery.domain.UserToken;
@@ -12,9 +11,7 @@ import com.store.grocery.dto.response.PaginationResponse;
 import com.store.grocery.dto.response.user.CreateUserResponse;
 import com.store.grocery.dto.response.user.DeviceResponse;
 import com.store.grocery.dto.response.user.UserResponse;
-import com.store.grocery.repository.OTPCodeRepository;
 import com.store.grocery.repository.UserRepository;
-import com.store.grocery.repository.UserTokenRepository;
 import com.store.grocery.service.*;
 import com.store.grocery.util.SecurityUtil;
 import com.store.grocery.util.enums.OTPType;
@@ -31,10 +28,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.time.Instant;
 import java.util.List;
-import java.util.Optional;
-import java.util.Random;
 import java.util.stream.Collectors;
 
 @Slf4j

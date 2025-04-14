@@ -1,7 +1,6 @@
 package com.store.grocery.service.impl;
 
 import com.store.grocery.config.CustomGoogleUserDetails;
-import com.store.grocery.domain.OTPCode;
 import com.store.grocery.domain.User;
 import com.store.grocery.domain.UserToken;
 import com.store.grocery.dto.request.auth.GoogleTokenRequest;
@@ -12,13 +11,10 @@ import com.store.grocery.dto.response.auth.AuthResponse;
 import com.store.grocery.dto.response.auth.OtpVerificationResponse;
 import com.store.grocery.dto.response.user.CreateUserResponse;
 import com.store.grocery.dto.response.user.UserLoginResponse;
-import com.store.grocery.repository.OTPCodeRepository;
-import com.store.grocery.repository.UserTokenRepository;
 import com.store.grocery.service.*;
 import com.store.grocery.util.Utils;
 import com.store.grocery.util.SecurityUtil;
 import com.store.grocery.util.enums.OTPType;
-import com.store.grocery.util.exception.DuplicateResourceException;
 import com.store.grocery.util.exception.ResourceInvalidException;
 import com.store.grocery.util.exception.UserNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -34,10 +30,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;
-import java.time.Instant;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Random;
 
 @Slf4j
 @Service

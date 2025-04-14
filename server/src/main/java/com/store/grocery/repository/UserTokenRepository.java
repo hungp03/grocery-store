@@ -1,6 +1,5 @@
 package com.store.grocery.repository;
 
-import com.store.grocery.domain.User;
 import com.store.grocery.domain.UserToken;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
