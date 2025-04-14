@@ -8,7 +8,12 @@ import java.io.Serializable;
 import java.time.Instant;
 
 @Entity
-@Table(name = "user_tokens")
+@Table(
+        name = "user_tokens",
+        uniqueConstraints = {
+                @UniqueConstraint(columnNames = {"user_id", "device_hash"})
+        }
+)
 @Getter
 @Setter
 public class UserToken implements Serializable {

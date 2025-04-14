@@ -34,14 +34,14 @@ public class AuthController {
     @ApiMessage("Login")
     public ResponseEntity<UserLoginResponse> login(@Valid @RequestBody LoginRequest loginDTO, @RequestHeader("User-Agent") String userAgent) {
         AuthResponse response = this.authService.login(loginDTO, userAgent);
-        ResponseCookie responseCookie = ResponseCookie.from("refresh_token", response.getRefreshToken())
+        ResponseCookie refreshCookie = ResponseCookie.from("refresh_token", response.getRefreshToken())
                 .httpOnly(true)
                 .secure(true)
                 .path("/")
                 .maxAge(refreshTokenExpiration)
                 .sameSite("None")
                 .build();
-        ResponseCookie deviceCookie = ResponseCookie.from("device", (String) response.getDevice())
+        ResponseCookie deviceCookie = ResponseCookie.from("device", response.getDevice())
                 .httpOnly(true)
                 .secure(true)
                 .path("/")
@@ -51,7 +51,7 @@ public class AuthController {
 
         // Use HttpHeaders to set multiple cookies
         HttpHeaders headers = new HttpHeaders();
-        headers.add(HttpHeaders.SET_COOKIE, responseCookie.toString());
+        headers.add(HttpHeaders.SET_COOKIE, refreshCookie.toString());
         headers.add(HttpHeaders.SET_COOKIE, deviceCookie.toString());
 
         return ResponseEntity.ok()
@@ -102,7 +102,7 @@ public class AuthController {
     @ApiMessage("Logout")
     public ResponseEntity<Void> logout(@CookieValue(name = "device", defaultValue = "none") String deviceHash) {
         this.authService.logout(deviceHash);
-        ResponseCookie deleteCookie = ResponseCookie
+        ResponseCookie refreshCookie = ResponseCookie
                 .from("refresh_token", "")
                 .httpOnly(true)
                 .secure(true)
@@ -119,7 +119,7 @@ public class AuthController {
                 .build();
 
         HttpHeaders headers = new HttpHeaders();
-        headers.add(HttpHeaders.SET_COOKIE, deviceCookie.toString());
+        headers.add(HttpHeaders.SET_COOKIE, refreshCookie.toString());
         headers.add(HttpHeaders.SET_COOKIE, deviceCookie.toString());
 
         return ResponseEntity
@@ -162,7 +162,7 @@ public class AuthController {
                                                              @RequestHeader("User-Agent") String userAgent) throws GeneralSecurityException, IOException {
         AuthResponse response = this.authService.loginGoogle(request, userAgent);
         // Tạo cookie cho refresh token
-        ResponseCookie responseCookie = ResponseCookie.from("refresh_token", response.getRefreshToken())
+        ResponseCookie refreshCookie = ResponseCookie.from("refresh_token", response.getRefreshToken())
                 .httpOnly(true)
                 .secure(true)
                 .sameSite("None")
@@ -179,7 +179,7 @@ public class AuthController {
                 .build();
 
         HttpHeaders headers = new HttpHeaders();
-        headers.add(HttpHeaders.SET_COOKIE, responseCookie.toString());
+        headers.add(HttpHeaders.SET_COOKIE, refreshCookie.toString());
         headers.add(HttpHeaders.SET_COOKIE, deviceCookie.toString());
 
         return ResponseEntity.ok()

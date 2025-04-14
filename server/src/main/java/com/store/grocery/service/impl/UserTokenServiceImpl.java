@@ -57,7 +57,7 @@ public class UserTokenServiceImpl implements UserTokenService {
     @Override
     public void storeUserToken(User user, String refreshToken, String deviceInfo, String deviceHash) {
         log.info("Storing user token for user ID: {}", user.getId());
-        Optional<UserToken> existingToken = userTokenRepository.findByUserAndDeviceInfo(user, deviceInfo);
+        Optional<UserToken> existingToken = userTokenRepository.findByUserIdAndDeviceHash(user.getId(), deviceHash);
 
         if (existingToken.isPresent()) {
             log.debug("Updating existing token for user ID: {}", user.getId());

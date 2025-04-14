@@ -96,10 +96,6 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public CreateUserResponse register(UserRegisterRequest user) {
         log.info("Attempting to register new user with email: {}", user.getEmail());
-        if (this.userService.isExistedEmail(user.getEmail())) {
-            log.warn("Registration failed: Email {} already exists", user.getEmail());
-            throw new DuplicateResourceException("Email " + user.getEmail() + " đã tồn tại");
-        }
         CreateUserResponse newUser = this.userService.create(user);
         log.info("User registered successfully with ID: {}", newUser.getId());
         return newUser;
