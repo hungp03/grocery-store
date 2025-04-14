@@ -19,6 +19,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
@@ -28,6 +29,8 @@ public class FeedbackServiceImpl implements FeedbackService {
     private final ProductRepository productRepository;
     private final UserService userService;
 
+    @Override
+    @Transactional
     public FeedbackResponse addFeedback(CreateFeedbackRequest feedbackDTO) {
         User user = userService.getUserById(SecurityUtil.getUserId());
         Product product = productRepository.findById(feedbackDTO.getProductId())
@@ -45,7 +48,6 @@ public class FeedbackServiceImpl implements FeedbackService {
 
         feedback.setDescription(feedbackDTO.getDescription());
         feedback.setRatingStar(feedbackDTO.getRating());
-
         feedbackRepository.save(feedback);
         product.setRating(feedbackRepository.calculateAverageRatingByProductId(product.getId()));
         productRepository.save(product);
@@ -76,7 +78,7 @@ public class FeedbackServiceImpl implements FeedbackService {
         feedbackRepository.findById(id).ifPresentOrElse(feedback -> {
             feedback.setStatus(!feedback.isStatus());
             feedbackRepository.save(feedback);
-            log.info("Feedback status updated for ID {}", id, feedback.isStatus());
+            log.info("Feedback status updated for ID {}", id);
         }, () -> log.warn("Feedback not found with ID: {}", id));
     }
 
@@ -102,7 +104,6 @@ public class FeedbackServiceImpl implements FeedbackService {
         meta.setTotal(feedbackPage.getTotalElements());
         p.setMeta(meta);
         p.setResult(feedbackPage.getContent());
-        log.info("Feedbacks have been retrieved");
         return p;
     }
 

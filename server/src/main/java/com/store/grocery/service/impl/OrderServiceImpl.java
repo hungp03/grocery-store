@@ -41,7 +41,6 @@ public class OrderServiceImpl implements OrderService {
     private final OrderRepository orderRepository;
     private final UserRepository userRepository;
     private final OrderDetailRepository orderDetailRepository;
-    private final UserService userService;
     private final ProductRepository productRepository;
     private final PaginationHelper paginationHelper;
     private final CartService cartService;
@@ -145,8 +144,8 @@ public class OrderServiceImpl implements OrderService {
     public Long create(CheckoutRequest request) {
         log.info("Creating new order for user ID: {}", SecurityUtil.getUserId());
         long uid = SecurityUtil.getUserId();
-        User currentUser = userService.getUserById(uid);
-
+        User currentUser = userRepository.findById(uid)
+                .orElseThrow(() -> new ResourceInvalidException("User với ID " + uid + " không tồn tại"));
         Order order = new Order();
         order.setUser(currentUser);
         order.setAddress(request.getAddress());
@@ -189,7 +188,7 @@ public class OrderServiceImpl implements OrderService {
             @Override
             public void afterCommit() {
                 log.info("Transaction committed successfully, sending order email...");
-                emailService.sendOrderEmail(uid, request);
+                emailService.sendOrderEmail(currentUser, request);
             }
         });
         return savedOrder.getId();

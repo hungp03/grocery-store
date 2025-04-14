@@ -15,7 +15,6 @@ import java.security.GeneralSecurityException;
 import java.util.Map;
 
 public interface AuthService {
-    void storeOTP(String otp, String email, OTPType otpType);
     UserLoginResponse.UserGetAccount getAccount();
     void logout(String deviceHash);
     CreateUserResponse register(UserRegisterRequest user);

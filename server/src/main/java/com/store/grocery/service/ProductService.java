@@ -8,6 +8,7 @@ import org.springframework.data.jpa.domain.Specification;
 import java.util.concurrent.CompletableFuture;
 
 public interface ProductService {
+    boolean hasProductsInCategory(long categoryId);
     Product create(Product p);
     void delete(long id);
     PaginationResponse getAll(Specification<Product> spec, Pageable pageable);

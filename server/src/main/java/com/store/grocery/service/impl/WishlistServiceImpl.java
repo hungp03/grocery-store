@@ -9,6 +9,7 @@ import com.store.grocery.dto.response.PaginationResponse;
 import com.store.grocery.dto.response.wishlist.WishlistItemResponse;
 import com.store.grocery.repository.ProductRepository;
 import com.store.grocery.repository.WishlistRepository;
+import com.store.grocery.service.ProductService;
 import com.store.grocery.service.UserService;
 import com.store.grocery.service.WishlistService;
 import com.store.grocery.util.PaginationHelper;
@@ -26,7 +27,7 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class WishlistServiceImpl implements WishlistService {
     private final WishlistRepository wishlistRepository;
-    private final ProductRepository productRepository;
+    private final ProductService productService;
     private final PaginationHelper paginationHelper;
     private final UserService userService;
 
@@ -34,7 +35,7 @@ public class WishlistServiceImpl implements WishlistService {
     public Wishlist addWishlist(AddWishlistRequest request) {
         long uid = SecurityUtil.getUserId();
         User u = this.userService.getUserById(uid);
-        Product p = this.productRepository.findById(request.getProductId()).orElseThrow(() -> new ResourceInvalidException("Product không tồn tại"));
+        Product p = this.productService.findById(request.getProductId());
         log.info("Adding product to wishlist: {} by uid {}", p.getId(), uid);
         boolean exists = wishlistRepository.existsById_UserIdAndId_ProductId(u.getId(), p.getId());
         if (exists) {
@@ -52,13 +53,12 @@ public class WishlistServiceImpl implements WishlistService {
     public void deleteWishlist(Long productId) {
         long uid = SecurityUtil.getUserId();
         log.info("Deleting product from wishlist: {} by uid {}", productId, uid);
-        User user = this.userService.getUserById(uid);
-        boolean exists = wishlistRepository.existsById_UserIdAndId_ProductId(user.getId(), productId);
+        boolean exists = wishlistRepository.existsById_UserIdAndId_ProductId(uid, productId);
         if (!exists) {
             throw new ResourceInvalidException("Sản phẩm không tồn tại trong danh sách yêu thích");
         }
 
-        WishlistId wishlistId = new WishlistId(user.getId(), productId);
+        WishlistId wishlistId = new WishlistId(uid, productId);
         wishlistRepository.deleteById(wishlistId);
         log.info("Product has been deleted from wishlist");
     }
@@ -67,8 +67,7 @@ public class WishlistServiceImpl implements WishlistService {
     public PaginationResponse getWishlistsByCurrentUser(Pageable pageable) throws ResourceInvalidException {
         log.info("Get wishlist by current user");
         long uid = SecurityUtil.getUserId();
-        User user = this.userService.getUserById(uid);
-        Page<WishlistItemResponse> wishlistItems = this.wishlistRepository.findWishlistItemsByUserId(user.getId(), pageable);
+        Page<WishlistItemResponse> wishlistItems = this.wishlistRepository.findWishlistItemsByUserId(uid, pageable);
         return this.paginationHelper.fetchAllEntities(wishlistItems);
     }
 }

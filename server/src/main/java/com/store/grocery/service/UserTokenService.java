@@ -12,5 +12,5 @@ public interface UserTokenService {
     UserToken validateRefreshToken(String refreshToken, String deviceHash);
     void saveToken(UserToken userToken);
     void storeUserToken(User user, String refreshToken, String deviceInfo, String deviceHash);
-
+    List<UserToken> findDevicesByUser(long uid);
 }

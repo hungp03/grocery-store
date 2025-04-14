@@ -14,10 +14,7 @@ import com.store.grocery.dto.response.user.CreateUserResponse;
 import com.store.grocery.dto.response.user.UserLoginResponse;
 import com.store.grocery.repository.OTPCodeRepository;
 import com.store.grocery.repository.UserTokenRepository;
-import com.store.grocery.service.AuthService;
-import com.store.grocery.service.EmailService;
-import com.store.grocery.service.UserService;
-import com.store.grocery.service.UserTokenService;
+import com.store.grocery.service.*;
 import com.store.grocery.util.Utils;
 import com.store.grocery.util.SecurityUtil;
 import com.store.grocery.util.enums.OTPType;
@@ -47,23 +44,13 @@ import java.util.Random;
 @RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
     private final AuthenticationManagerBuilder authenticationManagerBuilder;
-    private final OTPCodeRepository otpCodeRepository;
+    private final OTPService otpService;
     private final UserService userService;
     private final EmailService emailService;
     private final SecurityUtil securityUtil;
     private final UserTokenService userTokenService;
     private final CustomOAuth2UserService oAuth2UserService;
 
-    @Override
-    public void storeOTP(String otp, String email, OTPType otpType) {
-        log.info("Storing OTP for email: {} with type: {}", email, otpType);
-        OTPCode otpCode = otpCodeRepository.findByEmailAndType(email, otpType).orElse(new OTPCode());
-        otpCode.setEmail(email);
-        otpCode.setOtpCode(otp);
-        otpCode.setType(otpType);
-        otpCodeRepository.save(otpCode);
-        log.info("OTP successfully stored for email: {}", email);
-    }
 
     @Override
     public UserLoginResponse.UserGetAccount getAccount() {
@@ -108,8 +95,8 @@ public class AuthServiceImpl implements AuthService {
             log.warn("Forgot password request failed: Email {} does not exist", email);
             throw new UserNotFoundException("Email " + email + " không tồn tại");
         }
-        String otp = String.format("%06d", new Random().nextInt(1000000));
-        this.storeOTP(otp, email, OTPType.RESET_PASSWORD);
+        String otp = otpService.generateOTP();
+        otpService.storeOTP(otp, email, OTPType.RESET_PASSWORD);
         this.emailService.sendEmailFromTemplateSync(email, "Reset password", "forgotPassword", email, otp);
         log.info("OTP for password reset sent to email: {}", email);
     }
@@ -118,18 +105,13 @@ public class AuthServiceImpl implements AuthService {
     @Transactional
     public OtpVerificationResponse verifyOtp(String email, String inputOtp) {
         log.info("Verifying OTP for email: {}", email);
-        return otpCodeRepository.findByEmailAndType(email, OTPType.RESET_PASSWORD)
-                .filter(otp -> otp.getOtpCode().equals(inputOtp) && otp.getExpiresAt().isAfter(Instant.now()))
-                .map(otp -> {
-                    String tempToken = securityUtil.createResetToken(email);
-                    otpCodeRepository.deleteByEmailAndType(email, OTPType.RESET_PASSWORD);
-                    log.info("OTP verified successfully for email: {}. Generated temp token.", email);
-                    return new OtpVerificationResponse(tempToken);
-                })
-                .orElseThrow(() -> {
-                    log.warn("Failed OTP verification for email: {}. Invalid or expired OTP.", email);
-                    return new ResourceInvalidException("Mã OTP không hợp lệ hoặc đã hết hạn.");
-                });
+        boolean validOTP = otpService.verifyOTP(email, inputOtp, OTPType.RESET_PASSWORD);
+        if (!validOTP){
+            log.warn("Failed OTP verification for email: {}. Invalid or expired OTP.", email);
+            throw new ResourceInvalidException("OTP không hợp lệ hoặc đã hết hạn");
+        }
+        otpService.deleteOtpByEmailAndType(email, OTPType.RESET_PASSWORD);
+        return new OtpVerificationResponse(securityUtil.createResetToken(email));
     }
 
     @Override

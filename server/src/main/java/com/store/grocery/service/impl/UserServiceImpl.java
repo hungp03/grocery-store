@@ -44,9 +44,9 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final FileService fileService;
-    private final UserTokenRepository userTokenRepository;
+    private final UserTokenService userTokenService;
     private final EmailService emailService;
-    private final OTPCodeRepository otpCodeRepository;
+    private final OTPService otpService;
 
     @Override
     public CreateUserResponse create(UserRegisterRequest user) {
@@ -247,7 +247,7 @@ public class UserServiceImpl implements UserService {
     public List<DeviceResponse> getLoggedInDevices(String deviceHash) {
         log.info("Getting logged in devices for current user");
         long userId = SecurityUtil.getUserId();
-        List<UserToken> userTokens = this.userTokenRepository.findByUserId(userId);
+        List<UserToken> userTokens = this.userTokenService.findDevicesByUser(userId);
         return userTokens.stream()
                 .map(token -> new DeviceResponse(token.getDeviceInfo(), token.getCreatedAt(), token.getDeviceHash(), token.getDeviceHash().equals(deviceHash)))
                 .toList();
@@ -260,27 +260,26 @@ public class UserServiceImpl implements UserService {
         if (!isExistedEmail(email)) {
             throw new UserNotFoundException("Email " + email + " không tồn tại");
         }
-        String otp = String.format("%06d", new Random().nextInt(1000000));
-        OTPCode otpCode = otpCodeRepository.findByEmailAndType(email, OTPType.DEACTIVE_ACCOUNT).orElse(new OTPCode());
-        otpCode.setEmail(email);
-        otpCode.setOtpCode(otp);
-        otpCode.setType(OTPType.DEACTIVE_ACCOUNT);
-        otpCodeRepository.save(otpCode);
+        String otp = otpService.generateOTP();
+        otpService.storeOTP(otp, email, OTPType.DEACTIVE_ACCOUNT);
         this.emailService.sendEmailFromTemplateSync(email, "Deactive Account", "deactiveAccount", email, otp);
     }
 
     @Override
+    @Transactional
     public void verifyOTPAndDisableAccount(String inputOtp) {
         String email = SecurityUtil.getCurrentUserLogin().orElse("");
         log.info("Verifying OTP for account deactivation - Email: {}", email);
-        OTPCode otp = otpCodeRepository.findByEmailAndType(email, OTPType.DEACTIVE_ACCOUNT)
-                .filter(o -> o.getOtpCode().equals(inputOtp) && o.getExpiresAt().isAfter(Instant.now()))
-                .orElseThrow(() -> new ResourceInvalidException("OTP không hợp lệ hoặc đã hết hạn"));
-
+        boolean validOTP = otpService.verifyOTP(email, inputOtp, OTPType.DEACTIVE_ACCOUNT);
+        if (!validOTP){
+            log.warn("Failed OTP verification for email: {}. Invalid or expired OTP.", email);
+            throw new ResourceInvalidException("OTP không hợp lệ hoặc đã hết hạn");
+        }
+        otpService.deleteOtpByEmailAndType(email, OTPType.DEACTIVE_ACCOUNT);
         User u = getUserByUsername(email);
         u.setStatus(false);
         userRepository.save(u);
-        otpCodeRepository.delete(otp);
+        log.info("Account {} has been deactivated", email);
     }
 }
 

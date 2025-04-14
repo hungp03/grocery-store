@@ -5,6 +5,7 @@ import com.store.grocery.dto.request.order.CheckoutRequest;
 import com.store.grocery.dto.response.order.OrderDetailResponse;
 import com.store.grocery.repository.UserRepository;
 import com.store.grocery.service.EmailService;
+import com.store.grocery.service.UserService;
 import com.store.grocery.util.exception.UserNotFoundException;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
@@ -30,7 +31,6 @@ import java.util.Locale;
 @RequiredArgsConstructor
 public class EmailServiceImpl implements EmailService {
 //    private final MailSender mailSender;
-    private final UserRepository userRepository;
     private final JavaMailSender javaMailSender;
     private final SpringTemplateEngine templateEngine;
 
@@ -97,11 +97,8 @@ public class EmailServiceImpl implements EmailService {
 
     @Override
     @Async
-    public void sendOrderEmail(long uid, CheckoutRequest checkoutRequestDTO) {
+    public void sendOrderEmail(User u, CheckoutRequest checkoutRequestDTO) {
         try {
-            User u = this.userRepository.findById(uid)
-                    .orElseThrow(() -> new UserNotFoundException("User không tồn tại"));
-
             String templateName = "checkout";
             String subject = "Thông tin đơn hàng";
 
@@ -111,7 +108,7 @@ public class EmailServiceImpl implements EmailService {
                     checkoutRequestDTO.getPaymentMethod(), checkoutRequestDTO.getTotalPrice(),
                     checkoutRequestDTO.getItems()
             );
-            log.info("Order email sent to uid {} for order total {}", uid, formatCurrency(checkoutRequestDTO.getTotalPrice()));
+            log.info("Order email sent to uid {} for order total {}", u.getId(), formatCurrency(checkoutRequestDTO.getTotalPrice()));
         } catch (Exception e) {
             log.info("Cannot send email: {}", e.getMessage());
         }
