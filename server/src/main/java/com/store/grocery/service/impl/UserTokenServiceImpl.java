@@ -2,7 +2,6 @@ package com.store.grocery.service.impl;
 
 import com.store.grocery.domain.User;
 import com.store.grocery.domain.UserToken;
-import com.store.grocery.dto.response.user.DeviceResponse;
 import com.store.grocery.repository.UserTokenRepository;
 import com.store.grocery.service.UserTokenService;
 import com.store.grocery.util.SecurityUtil;
@@ -79,6 +78,8 @@ public class UserTokenServiceImpl implements UserTokenService {
         }
     }
 
-
+    public List<UserToken> findDevicesByUser(long uid){
+        return this.userTokenRepository.findByUserId(uid);
+    }
 
 }

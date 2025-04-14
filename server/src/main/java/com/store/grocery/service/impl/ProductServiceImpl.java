@@ -45,6 +45,11 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
+    public boolean hasProductsInCategory(long categoryId) {
+        return productRepository.existsByCategoryId(categoryId);
+    }
+
+    @Override
     public Product create(Product p) {
         log.info("Creating new product with name: {}", p.getProductName());
         if (!this.checkValidCategoryId(p.getCategory().getId())) {

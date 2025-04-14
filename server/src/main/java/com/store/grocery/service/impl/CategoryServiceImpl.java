@@ -7,6 +7,7 @@ import com.store.grocery.dto.response.PaginationResponse;
 import com.store.grocery.repository.CategoryRepository;
 import com.store.grocery.repository.ProductRepository;
 import com.store.grocery.service.CategoryService;
+import com.store.grocery.service.ProductService;
 import com.store.grocery.util.PaginationHelper;
 import com.store.grocery.util.exception.CannotDeleteException;
 import com.store.grocery.util.exception.DuplicateResourceException;
@@ -21,8 +22,8 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class CategoryServiceImpl implements CategoryService {
     private final CategoryRepository categoryRepository;
-    private final ProductRepository productRepository;
     private final PaginationHelper paginationHelper;
+    private final ProductService productService;
 
     @Override
     public boolean isCategoryExisted(String name) {
@@ -73,7 +74,7 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     public void delete(long id) {
         log.info("Deleting category with ID {}", id);
-        if (productRepository.existsByCategoryId(id)) {
+        if (productService.hasProductsInCategory(id)) {
             log.warn("Cannot delete category ID {} because it has associated products", id);
             throw new CannotDeleteException("Không thể xóa vì category có sản phẩm liên quan.");
         }
