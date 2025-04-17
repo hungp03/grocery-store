@@ -10,7 +10,9 @@ import com.store.grocery.dto.request.user.UpdateUserStatusRequest;
 import com.store.grocery.dto.response.PaginationResponse;
 import com.store.grocery.dto.response.user.CreateUserResponse;
 import com.store.grocery.dto.response.user.DeviceResponse;
+import com.store.grocery.dto.response.user.UpdateUserResponse;
 import com.store.grocery.dto.response.user.UserResponse;
+import com.store.grocery.mapper.UserMapper;
 import com.store.grocery.repository.UserRepository;
 import com.store.grocery.service.*;
 import com.store.grocery.util.SecurityUtil;
@@ -25,9 +27,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -37,7 +37,7 @@ import java.util.stream.Collectors;
 public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-    private final FileService fileService;
+    private final UserMapper userMapper;
     private final UserTokenService userTokenService;
     private final EmailService emailService;
     private final OTPService otpService;
@@ -58,7 +58,7 @@ public class UserServiceImpl implements UserService {
         u.setRole(r);
         User savedUser = this.userRepository.save(u);
         log.info("Successfully created user with ID: {}", savedUser.getId());
-        return convertToCreateDTO(savedUser);
+        return userMapper.toCreateUserResponse(savedUser);
     }
 
     @Override
@@ -85,65 +85,36 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public CreateUserResponse convertToCreateDTO(User user) {
-        log.debug("Converting User to CreateUserDTO for user ID: {}", user.getId());
-        CreateUserResponse res = new CreateUserResponse();
-        res.setId(user.getId());
-        res.setEmail(user.getEmail());
-        res.setName(user.getName());
-        res.setStatus(user.isStatus());
-        return res;
-    }
-
-    @Override
-    public UserResponse convertToUserDTO(User user) {
-        log.debug("Converting User to UserDTO for user ID: {}", user.getId());
-        UserResponse res = new UserResponse();
-        res.setId(user.getId());
-        res.setEmail(user.getEmail());
-        res.setName(user.getName());
-        res.setAddress(user.getAddress());
-        res.setStatus(user.isStatus());
-        res.setPhone(user.getPhone());
-        res.setAvatarUrl(user.getAvatarUrl());
-        return res;
-    }
-
-    @Override
-    public User getUserById(long id) {
+    public User findById(long id) {
         log.debug("Fetching user by ID: {}", id);
         return this.userRepository.findById(id).orElseThrow(() -> new UserNotFoundException("User không tồn tại"));
+
+    }
+
+    @Override
+    public UserResponse getUserById(long id) {
+        return userMapper.toUserResponse(findById(id));
     }
 
     @Override
     public PaginationResponse fetchAllUser(Specification<User> specification, Pageable pageable) {
         log.info("Fetching all users with pagination");
         Page<User> userPage = this.userRepository.findAll(pageable);
-
-        PaginationResponse p = new PaginationResponse();
-        PaginationResponse.Meta meta = new PaginationResponse.Meta();
-
-        meta.setPage(pageable.getPageNumber() + 1);
-        meta.setPageSize(pageable.getPageSize());
-        meta.setPages(userPage.getTotalPages());
-        meta.setTotal(userPage.getTotalElements());
-
-        p.setMeta(meta);
-
-        // remove sensitive data like password
+        PaginationResponse paginationResponse = PaginationResponse.from(userPage, pageable);
+        // remove sensitive data like password...
         List<UserResponse> listUser = userPage.getContent()
-                .stream().map(this::convertToUserDTO)
+                .stream().map(userMapper::toUserResponse)
                 .collect(Collectors.toList());
 
-        p.setResult(listUser);
+        paginationResponse.setResult(listUser);
         log.debug("Found {} users", userPage.getTotalElements());
-        return p;
+        return paginationResponse;
     }
 
     @Override
     public void updateStatus(UpdateUserStatusRequest reqUser) {
         log.info("Updating status for user ID: {}", reqUser.getId());
-        User currentUser = this.getUserById(reqUser.getId());
+        User currentUser = findById(reqUser.getId());
         if (currentUser != null) {
             currentUser.setStatus(reqUser.isStatus());
             this.userRepository.save(currentUser);
@@ -151,19 +122,6 @@ public class UserServiceImpl implements UserService {
         }
     }
 
-    //    @Override
-//    public UpdateUserDTO convertToUpdateUserDTO(User user) {
-//        log.debug("Converting User to UpdateUserDTO for user ID: {}", user.getId());
-//        UpdateUserDTO u = new UpdateUserDTO();
-//        u.setId(user.getId());
-//        u.setEmail(user.getEmail());
-//        u.setName(user.getName());
-//        u.setPhone(user.getPhone());
-//        u.setAddress(user.getAddress());
-//        u.setStatus(user.getStatus());
-//        u.setAvatarUrl(user.getAvatarUrl());
-//        return u;
-//    }
     @Override
     public User getUserByUsername(String username) {
         log.debug("Fetching user by username: {}", username);
@@ -194,27 +152,20 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public void updateUser(UpdateUserRequest request, MultipartFile avatar) {
+    public UpdateUserResponse updateUser(UpdateUserRequest request) {
         log.info("Updating user profile");
         long uid = SecurityUtil.getUserId();
-        User currentUserDB = this.getUserById(uid);
+        User currentUserDB = findById(uid);
         // Cập nhật thông tin người dùng
         currentUserDB.setName(request.getName());
         currentUserDB.setPhone(request.getPhone());
         currentUserDB.setAddress(request.getAddress());
-        // Nếu có avatar mới, lưu ảnh vào server
-        if (avatar != null && !avatar.isEmpty()) {
-            try {
-                log.debug("Updating avatar for user ID: {}", currentUserDB.getId());
-                String avatarUrl = fileService.upload(avatar);
-                currentUserDB.setAvatarUrl(avatarUrl);
-            } catch (IOException e) {
-                log.error("Failed to store avatar file for user ID: {}", currentUserDB.getId(), e);
-                throw new StorageException("Failed to store avatar file");
-            }
+        if (request.getAvatarUrl() != null){
+            currentUserDB.setAvatarUrl(request.getAvatarUrl());
         }
         userRepository.save(currentUserDB);
         log.info("Successfully updated user profile for user ID: {}", currentUserDB.getId());
+        return userMapper.toUpdateUserResponse(currentUserDB);
     }
 
     @Override

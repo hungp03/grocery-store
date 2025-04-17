@@ -48,18 +48,10 @@ public class AuthServiceImpl implements AuthService {
     public UserLoginResponse.UserGetAccount getAccount() {
         long uid = SecurityUtil.getUserId();
         log.info("Fetching basic data for user ID: {}", uid);
-        User currentUserDB = this.userService.getUserById(uid);
+        User currentUserDB = this.userService.findById(uid);
         log.debug("Fetched user details from DB - ID: {}, Email: {}", currentUserDB.getId(), currentUserDB.getEmail());
         this.userService.checkAccountBanned(currentUserDB);
-        UserLoginResponse.UserGetAccount userGetAccount = new UserLoginResponse.UserGetAccount(
-                currentUserDB.getId(),
-                currentUserDB.getEmail(),
-                currentUserDB.getName(),
-                currentUserDB.isStatus(),
-                currentUserDB.getPhone(),
-                currentUserDB.getAddress(),
-                currentUserDB.getAvatarUrl(),
-                currentUserDB.getRole());
+        UserLoginResponse.UserGetAccount userGetAccount = UserLoginResponse.UserGetAccount.from(currentUserDB);
         log.info("Successfully retrieved account info for user ID: {}", uid);
         return userGetAccount;
     }
@@ -136,12 +128,7 @@ public class AuthServiceImpl implements AuthService {
         SecurityContextHolder.getContext().setAuthentication(authentication);
         log.info("Authentication successful for user: {}", loginDTO.getEmail());
         UserLoginResponse res = new UserLoginResponse();
-        UserLoginResponse.UserLogin userLogin = new UserLoginResponse.UserLogin(
-                currentUserDB.getId(),
-                currentUserDB.getEmail(),
-                currentUserDB.getName(),
-                currentUserDB.getRole());
-        res.setUser(userLogin);
+        res.setUser(UserLoginResponse.UserLogin.from(currentUserDB));
         String accessToken = this.securityUtil.createAccessToken(authentication.getName(), res);
         log.info("Access token created for user: {}", loginDTO.getEmail());
         res.setAccessToken(accessToken);
@@ -167,12 +154,7 @@ public class AuthServiceImpl implements AuthService {
         this.userService.checkAccountBanned(currentUser);
 
         UserLoginResponse res = new UserLoginResponse();
-        res.setUser(new UserLoginResponse.UserLogin(
-                currentUser.getId(),
-                currentUser.getEmail(),
-                currentUser.getName(),
-                currentUser.getRole()
-        ));
+        res.setUser(UserLoginResponse.UserLogin.from(currentUser));
 
         // Tạo Access Token mới
         String accessToken = this.securityUtil.createAccessToken(currentUser.getEmail(), res);
@@ -206,13 +188,7 @@ public class AuthServiceImpl implements AuthService {
         );
         SecurityContextHolder.getContext().setAuthentication(authentication);
         UserLoginResponse res = new UserLoginResponse();
-        UserLoginResponse.UserLogin userLogin = new UserLoginResponse.UserLogin(
-                currentUser.getId(),
-                currentUser.getEmail(),
-                currentUser.getName(),
-                currentUser.getRole());
-        res.setUser(userLogin);
-
+        res.setUser(UserLoginResponse.UserLogin.from(currentUser));
         // Tạo access token
         String accessToken = securityUtil.createAccessToken(currentUser.getEmail(), res);
         res.setAccessToken(accessToken);

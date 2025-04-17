@@ -8,6 +8,7 @@ import com.store.grocery.dto.request.user.UpdateUserStatusRequest;
 import com.store.grocery.dto.response.PaginationResponse;
 import com.store.grocery.dto.response.user.CreateUserResponse;
 import com.store.grocery.dto.response.user.DeviceResponse;
+import com.store.grocery.dto.response.user.UpdateUserResponse;
 import com.store.grocery.dto.response.user.UserResponse;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -21,26 +22,20 @@ public interface UserService {
     boolean isExistedEmail(String email);
 
     void delete(long id);
-
-    CreateUserResponse convertToCreateDTO(User user);
-
-    UserResponse convertToUserDTO(User user);
-
-    User getUserById(long id);
+    User findById(long id);
+    UserResponse getUserById(long id);
 
     PaginationResponse fetchAllUser(Specification<User> specification, Pageable pageable);
 
     void updateStatus(UpdateUserStatusRequest reqUser);
 
-    //    UpdateUserDTO convertToUpdateUserDTO(User user);
     User getUserByUsername(String username);
 
     void updatePassword(String email, String newPassword);
 
     void checkAccountBanned(User user);
 
-    void updateUser(UpdateUserRequest request, MultipartFile avatar);
-
+    UpdateUserResponse updateUser(UpdateUserRequest request);
     void changePassword(UpdatePasswordRequest dto);
     List<DeviceResponse> getLoggedInDevices(String deviceHash);
     void requestDeactiveAccount();

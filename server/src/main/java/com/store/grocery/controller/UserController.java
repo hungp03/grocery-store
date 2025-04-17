@@ -7,6 +7,7 @@ import com.store.grocery.dto.request.user.UserDisableOTPRequest;
 import com.store.grocery.dto.request.user.UpdateUserStatusRequest;
 import com.store.grocery.dto.response.PaginationResponse;
 import com.store.grocery.dto.response.user.DeviceResponse;
+import com.store.grocery.dto.response.user.UpdateUserResponse;
 import com.store.grocery.dto.response.user.UserResponse;
 import com.store.grocery.service.UserService;
 import com.store.grocery.util.annotation.ApiMessage;
@@ -48,8 +49,7 @@ public class UserController {
     @GetMapping("users/{id}")
     @ApiMessage("Get user by id")
     public ResponseEntity<UserResponse> getUser(@PathVariable("id") long id) throws ResourceInvalidException {
-        User currentUser = this.userService.getUserById(id);
-        return ResponseEntity.status(HttpStatus.OK).body(this.userService.convertToUserDTO(currentUser));
+        return ResponseEntity.status(HttpStatus.OK).body(this.userService.getUserById(id));
     }
 
     @GetMapping("users")
@@ -67,18 +67,16 @@ public class UserController {
 
     @PutMapping("users/status")
     @ApiMessage("Update user status")
-    public ResponseEntity<Void> updateUser(@RequestBody UpdateUserStatusRequest user) throws ResourceInvalidException {
+    public ResponseEntity<Void> updateUserStatus(@RequestBody UpdateUserStatusRequest user) throws ResourceInvalidException {
         this.userService.updateStatus(user);
         return ResponseEntity.ok().build();
     }
 
-    @PutMapping(value = "users/account", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PutMapping(value = "users/account")
     @ApiMessage("Update user information")
-    public ResponseEntity<Void> updateUser(
-            @RequestPart("user") UpdateUserRequest request,
-            @RequestPart(value = "avatarUrl", required = false) MultipartFile avatar) throws IOException {
-        this.userService.updateUser(request, avatar);
-        return ResponseEntity.ok().build();
+    public ResponseEntity<UpdateUserResponse> updateUser(
+            @RequestBody UpdateUserRequest request) throws IOException {
+        return ResponseEntity.ok(this.userService.updateUser(request));
     }
 
     @PostMapping("deactivate/account")

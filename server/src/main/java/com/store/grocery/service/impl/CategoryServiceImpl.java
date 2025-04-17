@@ -7,12 +7,12 @@ import com.store.grocery.dto.response.PaginationResponse;
 import com.store.grocery.repository.CategoryRepository;
 import com.store.grocery.service.CategoryService;
 import com.store.grocery.service.ProductService;
-import com.store.grocery.util.PaginationHelper;
 import com.store.grocery.util.exception.CannotDeleteException;
 import com.store.grocery.util.exception.DuplicateResourceException;
 import com.store.grocery.util.exception.ResourceInvalidException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
@@ -21,7 +21,6 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class CategoryServiceImpl implements CategoryService {
     private final CategoryRepository categoryRepository;
-    private final PaginationHelper paginationHelper;
     private final ProductService productService;
 
     @Override
@@ -83,7 +82,8 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     public PaginationResponse fetchAllCategories(Pageable pageable) {
+        Page<Category> categories = this.categoryRepository.findAll(pageable);
         log.info("Fetching all categories with pagination");
-        return paginationHelper.fetchAllEntities(pageable, categoryRepository);
+        return PaginationResponse.from(categories, pageable);
     }
 }

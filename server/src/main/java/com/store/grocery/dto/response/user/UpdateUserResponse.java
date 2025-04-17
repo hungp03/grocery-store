@@ -12,7 +12,7 @@ public class UpdateUserResponse {
 
     private String email;
 
-    private int status;
+    private boolean status;
 
     private String phone;
 

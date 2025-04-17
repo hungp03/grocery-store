@@ -5,10 +5,10 @@ import com.store.grocery.domain.Product;
 import com.store.grocery.dto.response.PaginationResponse;
 import com.store.grocery.dto.response.product.ProductResponse;
 import com.store.grocery.dto.response.product.SearchProductResponse;
+import com.store.grocery.mapper.ProductMapper;
 import com.store.grocery.repository.CategoryRepository;
 import com.store.grocery.repository.ProductRepository;
 import com.store.grocery.service.ProductService;
-import com.store.grocery.util.PaginationHelper;
 import com.store.grocery.util.exception.ResourceInvalidException;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.criteria.*;
@@ -20,6 +20,7 @@ import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.scheduling.annotation.Async;
@@ -37,7 +38,7 @@ public class ProductServiceImpl implements ProductService {
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
     private final EntityManager entityManager;
-    private final PaginationHelper paginationHelper;
+    private final ProductMapper productMapper;
 
     private boolean checkValidCategoryId(long categoryId) {
         log.debug("Checking if category ID: {} is valid", categoryId);
@@ -77,34 +78,9 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public PaginationResponse getAll(Specification<Product> spec, Pageable pageable) {
         log.info("Fetching all products");
-        Page<Product> productPage = this.productRepository.findAll(spec, pageable);
-        PaginationResponse p = new PaginationResponse();
-        PaginationResponse.Meta meta = new PaginationResponse.Meta();
-        meta.setPage(pageable.getPageNumber() + 1);
-        meta.setPageSize(pageable.getPageSize());
-        meta.setPages(productPage.getTotalPages());
-        meta.setTotal(productPage.getTotalElements());
-        p.setMeta(meta);
-        List<ProductResponse> listProducts = productPage.getContent().stream().map(this::convertToProductDTO).toList();
-        p.setResult(listProducts);
+        Page<ProductResponse> productPage = this.productRepository.findAll(spec, pageable).map(productMapper::toProductResponse);
         log.info("Successfully fetched all products");
-        return p;
-    }
-
-    private ProductResponse convertToProductDTO(Product p) {
-        log.debug("Converting Product to ResProductDTO for product ID: {}", p.getId());
-        ProductResponse res = new ProductResponse();
-        res.setId(p.getId());
-        res.setProduct_name(p.getProductName());
-        res.setCategory(p.getCategory().getSlug());
-        res.setPrice(p.getPrice());
-        res.setSold(p.getSold());
-        res.setQuantity(p.getQuantity());
-        res.setImageUrl(p.getImageUrl());
-        res.setUnit(p.getUnit());
-        res.setDescription(p.getDescription());
-        res.setRating(p.getRating());
-        return res;
+        return PaginationResponse.from(productPage, pageable);
     }
 
     @Override
@@ -120,30 +96,26 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public Product update(Product p) {
         log.info("Updating product with ID: {}", p.getId());
-        Product curr = this.findById(p.getId());
-        if (curr == null) {
-            throw new ResourceInvalidException("Product id = " + p.getId() + " không tồn tại");
-        }
-        curr.setProductName(p.getProductName());
-        curr.setPrice(p.getPrice());
-        curr.setImageUrl(p.getImageUrl());
-        curr.setDescription(p.getDescription());
-        curr.setQuantity(p.getQuantity());
-        curr.setUnit(p.getUnit());
+        Product prod = this.findById(p.getId());
+        prod.setProductName(p.getProductName());
+        prod.setPrice(p.getPrice());
+        prod.setImageUrl(p.getImageUrl());
+        prod.setDescription(p.getDescription());
+        prod.setQuantity(p.getQuantity());
+        prod.setUnit(p.getUnit());
         if (p.getCategory() != null) {
             Category category = this.categoryRepository.findById(p.getCategory().getId())
                     .orElseThrow(() -> new ResourceInvalidException("Category id = " + p.getCategory().getId() + " không tồn tại"));
-            curr.setCategory(category);
+            prod.setCategory(category);
         }
-        Product updatedProduct = this.productRepository.save(curr);
+        Product updatedProduct = this.productRepository.save(prod);
         log.info("Successfully updated product with ID: {}", updatedProduct.getId());
         return updatedProduct;
     }
 
     @Override
     public Product updateQuantity(long id, int quantity) {
-        Product p = this.productRepository.findById(id)
-                .orElseThrow(() -> new ResourceInvalidException("Product id = " + id + " không tồn tại"));
+        Product p = this.findById(id);
 
         if (quantity > p.getQuantity()) {
             throw new ResourceInvalidException("Product id = " + id + " không đủ số lượng tồn kho");
@@ -157,8 +129,7 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public PaginationResponse search(Specification<Product> spec, Pageable pageable) {
         log.info("Searching for products");
-        Page<SearchProductResponse> productPage = this.searchProduct(spec, pageable);
-        return this.paginationHelper.buildPaginationDTO(productPage);
+        return PaginationResponse.from(this.searchProduct(spec, pageable), pageable);
     }
 
     private Page<SearchProductResponse> searchProduct(Specification<Product> specification, Pageable pageable) {
@@ -194,7 +165,6 @@ public class ProductServiceImpl implements ProductService {
         }
 
         Long totalCount = entityManager.createQuery(countQuery).getSingleResult();
-
         return new PageImpl<>(resultList, pageable, totalCount);
     }
 
@@ -208,32 +178,48 @@ public class ProductServiceImpl implements ProductService {
 
                 // Tiêu đề cột
                 List<String> headers = List.of("ID", "Name", "Image", "Quantity", "Price", "Sold", "Unit", "Rating", "Description");
-                Row headerRow = sheet.createRow(0);
-                for (int i = 0; i < headers.size(); i++) {
-                    headerRow.createCell(i).setCellValue(headers.get(i));
-                }
+                createHeaderRow(sheet, headers);
 
-                // Lấy dữ liệu từ database
-                List<Product> products = productRepository.findAll();
+                // Phân trang và lấy dữ liệu từ database
+                Pageable pageable = PageRequest.of(0, 100);
+                Page<Product> productPage;
                 int rowIndex = 1;
-                for (Product p : products) {
-                    Row row = sheet.createRow(rowIndex++);
-                    row.createCell(0).setCellValue(p.getId());
-                    row.createCell(1).setCellValue(p.getProductName());
-                    row.createCell(2).setCellValue(p.getImageUrl());
-                    row.createCell(3).setCellValue(p.getQuantity());
-                    row.createCell(4).setCellValue(p.getPrice());
-                    row.createCell(5).setCellValue(p.getSold());
-                    row.createCell(6).setCellValue(p.getUnit());
-                    row.createCell(7).setCellValue(p.getRating());
-                    row.createCell(8).setCellValue(p.getDescription());
-                }
+
+                do {
+                    productPage = productRepository.findAll(pageable);
+                    for (Product p : productPage) {
+                        Row row = sheet.createRow(rowIndex++);
+                        populateProductRow(row, p);
+                    }
+                    pageable = pageable.next();
+                } while (productPage.hasNext());  // Lặp lại nếu còn trang tiếp theo
 
                 workbook.write(outputStream);
                 return outputStream.toByteArray();
             } catch (IOException e) {
+                log.error("Error creating Excel file: ", e);
                 throw new RuntimeException("Lỗi khi tạo file Excel", e);
             }
         });
     }
+
+    private void createHeaderRow(Sheet sheet, List<String> headers) {
+        Row headerRow = sheet.createRow(0);
+        for (int i = 0; i < headers.size(); i++) {
+            headerRow.createCell(i).setCellValue(headers.get(i));
+        }
+    }
+
+    private void populateProductRow(Row row, Product p) {
+        row.createCell(0).setCellValue(p.getId());
+        row.createCell(1).setCellValue(p.getProductName());
+        row.createCell(2).setCellValue(p.getImageUrl());
+        row.createCell(3).setCellValue(p.getQuantity());
+        row.createCell(4).setCellValue(p.getPrice());
+        row.createCell(5).setCellValue(p.getSold());
+        row.createCell(6).setCellValue(p.getUnit());
+        row.createCell(7).setCellValue(p.getRating());
+        row.createCell(8).setCellValue(p.getDescription());
+    }
+
 }

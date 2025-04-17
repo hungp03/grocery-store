@@ -6,6 +6,7 @@ import com.store.grocery.domain.User;
 import com.store.grocery.dto.request.feedback.CreateFeedbackRequest;
 import com.store.grocery.dto.response.PaginationResponse;
 import com.store.grocery.dto.response.feedback.FeedbackResponse;
+import com.store.grocery.mapper.FeedbackMapper;
 import com.store.grocery.repository.FeedbackRepository;
 import com.store.grocery.repository.ProductRepository;
 import com.store.grocery.service.FeedbackService;
@@ -28,11 +29,12 @@ public class FeedbackServiceImpl implements FeedbackService {
     private final FeedbackRepository feedbackRepository;
     private final ProductRepository productRepository;
     private final UserService userService;
+    private final FeedbackMapper feedbackMapper;
 
     @Override
     @Transactional
     public FeedbackResponse addFeedback(CreateFeedbackRequest feedbackDTO) {
-        User user = userService.getUserById(SecurityUtil.getUserId());
+        User user = userService.findById(SecurityUtil.getUserId());
         Product product = productRepository.findById(feedbackDTO.getProductId())
                 .orElseThrow(() -> new ResourceInvalidException("Sản phẩm không tồn tại"));
 
@@ -52,7 +54,7 @@ public class FeedbackServiceImpl implements FeedbackService {
         product.setRating(feedbackRepository.calculateAverageRatingByProductId(product.getId()));
         productRepository.save(product);
         log.info("Feedback has been added");
-        return convertToFeedbackDTO(feedback);
+        return feedbackMapper.toFeedbackResponse(feedback);
     }
 
     @Override
@@ -62,17 +64,11 @@ public class FeedbackServiceImpl implements FeedbackService {
             pageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(sort).descending());
         }
         Page<FeedbackResponse> feedbackPage = this.feedbackRepository.findByStatus(status, pageable);
-        PaginationResponse p = new PaginationResponse();
-        PaginationResponse.Meta meta = new PaginationResponse.Meta();
-        meta.setPage(pageable.getPageNumber() + 1);
-        meta.setPageSize(pageable.getPageSize());
-        meta.setPages(feedbackPage.getTotalPages());
-        meta.setTotal(feedbackPage.getTotalElements());
-        p.setMeta(meta);
-        p.setResult(feedbackPage.getContent());
+        PaginationResponse p = PaginationResponse.from(feedbackPage, pageable);
         log.info("Feedbacks have been retrieved");
         return p;
     }
+
     @Override
     public void changeFeedbackStatus(Long id) {
         feedbackRepository.findById(id).ifPresentOrElse(feedback -> {
@@ -96,28 +92,6 @@ public class FeedbackServiceImpl implements FeedbackService {
     public PaginationResponse getByProductId(Long productId, Pageable pageable) {
         log.info("Getting feedbacks by product ID: {}", productId);
         Page<FeedbackResponse> feedbackPage = this.feedbackRepository.findByProductId(productId, pageable);
-        PaginationResponse p = new PaginationResponse();
-        PaginationResponse.Meta meta = new PaginationResponse.Meta();
-        meta.setPage(pageable.getPageNumber() + 1);
-        meta.setPageSize(pageable.getPageSize());
-        meta.setPages(feedbackPage.getTotalPages());
-        meta.setTotal(feedbackPage.getTotalElements());
-        p.setMeta(meta);
-        p.setResult(feedbackPage.getContent());
-        return p;
-    }
-
-    private FeedbackResponse convertToFeedbackDTO(Feedback feedback) {
-        log.info("Converting feedback to feedback DTO");
-        return new FeedbackResponse(
-                feedback.getId(),
-                feedback.getUser().getName(),
-                feedback.getUser().getAvatarUrl(),
-                feedback.getProduct().getProductName(),
-                feedback.getRatingStar(),
-                feedback.getDescription(),
-                feedback.isStatus(),
-                feedback.getUpdatedAt()
-        );
+        return PaginationResponse.from(feedbackPage, pageable);
     }
 }

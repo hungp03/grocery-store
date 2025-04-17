@@ -5,6 +5,7 @@ import com.store.grocery.dto.request.order.CheckoutRequest;
 import com.store.grocery.dto.response.PaginationResponse;
 import com.store.grocery.dto.response.order.OrderResponse;
 import com.store.grocery.dto.response.order.WeeklyRevenueResponse;
+import com.store.grocery.mapper.OrderMapper;
 import com.store.grocery.repository.OrderDetailRepository;
 import com.store.grocery.repository.OrderRepository;
 import com.store.grocery.repository.ProductRepository;
@@ -12,7 +13,6 @@ import com.store.grocery.repository.UserRepository;
 import com.store.grocery.service.CartService;
 import com.store.grocery.service.EmailService;
 import com.store.grocery.service.OrderService;
-import com.store.grocery.util.PaginationHelper;
 import com.store.grocery.util.SecurityUtil;
 import com.store.grocery.util.exception.ResourceInvalidException;
 import lombok.RequiredArgsConstructor;
@@ -31,7 +31,6 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 @Slf4j
@@ -41,50 +40,28 @@ public class OrderServiceImpl implements OrderService {
     private final UserRepository userRepository;
     private final OrderDetailRepository orderDetailRepository;
     private final ProductRepository productRepository;
-    private final PaginationHelper paginationHelper;
     private final CartService cartService;
     private final EmailService emailService;
+    private final OrderMapper orderMapper;
     private Order get(long id) {
         log.debug("Fetching order by ID: {}", id);
         return this.orderRepository.findById(id).orElse(null);
     }
 
     @Override
-    public Optional<OrderResponse> findOrder(long id) {
+    public OrderResponse findOrder(long id) {
         log.info("Fetching order by ID: {}", id);
-        Optional<Order> orderOptional = this.orderRepository.findById(id);
-        if (orderOptional.isPresent()) {
-            Order order = orderOptional.get();
-            return Optional.of(this.convertToOrderDTO(order));
-        } else {
-            return Optional.empty();
-        }
+        Order order = this.orderRepository.findById(id)
+                .orElseThrow(() -> new ResourceInvalidException("Không tìm thấy đơn hàng với ID: " + id));
+        return orderMapper.toOrderResponse(order);
     }
 
     @Override
     public PaginationResponse getAll(Specification<Order> spec, Pageable pageable) {
         log.info("Fetching all orders with pagination");
-        Page<Order> ordersPage = orderRepository.findAll(spec, pageable);
+        Page<OrderResponse> ordersPage = orderRepository.findAll(spec, pageable).map(orderMapper::toOrderResponse);
         log.debug("Found {} orders", ordersPage.getTotalElements());
-        Page<OrderResponse> orderDTOPage = ordersPage.map(this::convertToOrderDTO);
-        return paginationHelper.fetchAllEntities(orderDTOPage);
-    }
-
-    private OrderResponse convertToOrderDTO(Order order) {
-        log.debug("Converting Order to OrderDTO for order ID: {}", order.getId());
-        OrderResponse res = new OrderResponse();
-        res.setId(order.getId());
-        res.setOrderTime(order.getOrderTime());
-        res.setDeliveryTime(order.getDeliveryTime());
-        res.setPhone(order.getPhone());
-        res.setStatus(order.getStatus());
-        res.setPaymentMethod(order.getPaymentMethod());
-        res.setAddress(order.getAddress());
-        res.setTotal_price(order.getTotal_price());
-        res.setUserEmail(order.getUser().getEmail());
-        res.setUserId(order.getUser().getId());
-        res.setUserName(order.getUser().getName());
-        return res;
+        return PaginationResponse.from(ordersPage, pageable);
     }
 
     private void increaseProductSales(Long orderId) {
@@ -198,22 +175,20 @@ public class OrderServiceImpl implements OrderService {
     public PaginationResponse getOrdersByCurrentUser(Integer status, Pageable pageable) {
         log.info("Fetching orders for user ID: {}", SecurityUtil.getUserId());
         long uid = SecurityUtil.getUserId();
-
         // Thêm sort
         Pageable sortedPageable = PageRequest.of(
                 pageable.getPageNumber(),
                 pageable.getPageSize(),
                 Sort.by(Sort.Direction.DESC, "id")
         );
-
         Page<Order> ordersPage = (status != null)
                 ? orderRepository.findByUserIdAndStatus(uid, status, sortedPageable)
                 : orderRepository.findByUserId(uid, sortedPageable);
-
         log.debug("Found {} orders for user ID: {}", ordersPage.getTotalElements(), uid);
-        Page<OrderResponse> orderDTOPage = ordersPage.map(this::convertToOrderDTO);
 
-        return paginationHelper.fetchAllEntities(orderDTOPage);
+        PaginationResponse paginationResponse = PaginationResponse.from(ordersPage.map(orderMapper::toOrderResponse), sortedPageable);
+        log.info("Returning paginated orders for user ID: {}", uid);
+        return paginationResponse;
     }
 
     @Override
