@@ -32,15 +32,15 @@ const FeatureProduct = ({ flag = 'new' }) => {
         {flag === "new" ? 'Sản phẩm mới': 'Có thể bạn sẽ thích'}
       </h2>
 
-      <div className="grid grid-cols-6 gap-4 mt-4">
+      <div className="mt-4 min-h-[20vh] w-full flex justify-center items-center">
         {loading ? (
-          <div className="absolute top-0 left-0 w-full h-full flex justify-center items-center min-h-[20vh] z-10">
-            <PropagateLoader color="#36d7b7" loading={loading} size={20} />
-          </div>
+          <PropagateLoader color="#36d7b7" loading={loading} size={20} />
         ) : (
-          products?.map((e) => (
-            <ProductCard key={e.id} productData={e} />
-          ))
+          <div className="grid grid-cols-6 gap-4 w-full">
+            {products?.map((e) => (
+              <ProductCard key={e.id} productData={e} />
+            ))}
+          </div>
         )}
       </div>
       {flag === "new" ? <ProductBanner /> : null}
