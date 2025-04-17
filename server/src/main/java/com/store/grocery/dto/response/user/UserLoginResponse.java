@@ -2,6 +2,7 @@ package com.store.grocery.dto.response.user;
 
 import com.store.grocery.domain.Role;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.store.grocery.domain.User;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -23,6 +24,16 @@ public class UserLoginResponse {
         private String email;
         private String name;
         private Role role;
+
+        public static UserLogin from(User user) {
+            return new UserLogin(
+                    user.getId(),
+                    user.getEmail(),
+                    user.getName(),
+                    user.getRole()
+            );
+        }
+
     }
 
     @Getter
@@ -38,6 +49,20 @@ public class UserLoginResponse {
         private String address;
         private String avatarUrl;
         private Role role;
+
+        public static UserGetAccount from(User user) {
+            return new UserGetAccount(
+                    user.getId(),
+                    user.getEmail(),
+                    user.getName(),
+                    user.isStatus(),
+                    user.getPhone(),
+                    user.getAddress(),
+                    user.getAvatarUrl(),
+                    user.getRole()
+            );
+        }
+
     }
 
     @Getter

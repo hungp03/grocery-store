@@ -12,7 +12,7 @@ import java.util.*;
 
 
 public interface OrderService {
-    Optional<OrderResponse> findOrder(long id);
+    OrderResponse findOrder(long id);
     PaginationResponse getAll(Specification<Order> spec, Pageable pageable);
     void updateOrderStatus(Long orderId, int status);
     Long create(CheckoutRequest request);

@@ -79,11 +79,8 @@ export const apiGetAllUser = async (params) =>
 
 export const apiUpdateCurrentUser = async (formData) => {
     return axiosInstance.put("/users/account", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
     });
 };
-
-
 
 
 export const getUserById = async (id) => {

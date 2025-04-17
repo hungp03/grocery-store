@@ -11,7 +11,6 @@ import com.store.grocery.repository.WishlistRepository;
 import com.store.grocery.service.ProductService;
 import com.store.grocery.service.UserService;
 import com.store.grocery.service.WishlistService;
-import com.store.grocery.util.PaginationHelper;
 import com.store.grocery.util.SecurityUtil;
 import com.store.grocery.util.exception.DuplicateResourceException;
 import com.store.grocery.util.exception.ResourceInvalidException;
@@ -27,13 +26,12 @@ import org.springframework.stereotype.Service;
 public class WishlistServiceImpl implements WishlistService {
     private final WishlistRepository wishlistRepository;
     private final ProductService productService;
-    private final PaginationHelper paginationHelper;
     private final UserService userService;
 
     @Override
     public Wishlist addWishlist(AddWishlistRequest request) {
         long uid = SecurityUtil.getUserId();
-        User u = this.userService.getUserById(uid);
+        User u = this.userService.findById(uid);
         Product p = this.productService.findById(request.getProductId());
         log.info("Adding product to wishlist: {} by uid {}", p.getId(), uid);
         boolean exists = wishlistRepository.existsById_UserIdAndId_ProductId(u.getId(), p.getId());
@@ -67,6 +65,6 @@ public class WishlistServiceImpl implements WishlistService {
         log.info("Get wishlist by current user");
         long uid = SecurityUtil.getUserId();
         Page<WishlistItemResponse> wishlistItems = this.wishlistRepository.findWishlistItemsByUserId(uid, pageable);
-        return this.paginationHelper.fetchAllEntities(wishlistItems);
+        return PaginationResponse.from(wishlistItems, pageable);
     }
 }

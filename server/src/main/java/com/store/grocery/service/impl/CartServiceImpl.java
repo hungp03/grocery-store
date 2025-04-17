@@ -12,7 +12,6 @@ import com.store.grocery.repository.CartRepository;
 import com.store.grocery.service.CartService;
 import com.store.grocery.service.ProductService;
 import com.store.grocery.service.UserService;
-import com.store.grocery.util.PaginationHelper;
 import com.store.grocery.util.SecurityUtil;
 import com.store.grocery.util.exception.ResourceInvalidException;
 import lombok.RequiredArgsConstructor;
@@ -31,13 +30,12 @@ public class CartServiceImpl implements CartService{
     private final CartRepository cartRepository;
     private final ProductService productService;
     private final UserService userService;
-    private final PaginationHelper paginationHelper;
 
     @Override
     public Cart addOrUpdateCart(AddToCartRequest cartRequest) {
         long uid = SecurityUtil.getUserId();
         log.info("User {} is adding/updating cart item with productId={}", uid, cartRequest.getProductId());
-        User u = this.userService.getUserById(uid);
+        User u = this.userService.findById(uid);
         Product p = this.productService.findById(cartRequest.getProductId());
         if (cartRequest.getQuantity() > p.getQuantity()) {
             log.warn("User {} tried to add {} items, but only {} available", uid, cartRequest.getQuantity(), p.getQuantity());
@@ -75,7 +73,7 @@ public class CartServiceImpl implements CartService{
     public void deleteFromCart(long productId) {
         long uid = SecurityUtil.getUserId();
         log.info("User {} is deleting product {} from cart", uid, productId);
-        User u = this.userService.getUserById(uid);
+        User u = this.userService.findById(uid);
         boolean exists = this.cartRepository.existsById(new CartId(uid, productId));
         if (!exists) {
             log.warn("User {} tried to delete non-existent product {} from cart", uid, productId);
@@ -91,7 +89,7 @@ public class CartServiceImpl implements CartService{
         log.info("Fetching cart items for user {}", uid);
         Page<CartItemResponse> cartItems = this.cartRepository.findCartItemsByUserId(uid, pageable);
         log.info("Fetched cart items for user {}", uid);
-        return this.paginationHelper.fetchAllEntities(cartItems);
+        return PaginationResponse.from(cartItems, pageable);
     }
     @Override
     public List<SelectedProductInCart> getCartItemsByProductIds(List<Long> productIds, Pageable pageable) {

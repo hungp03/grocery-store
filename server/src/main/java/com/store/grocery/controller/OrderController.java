@@ -37,7 +37,7 @@ public class OrderController {
 
     @GetMapping("order-info/{orderId}")
     @ApiMessage("Get order information")
-    public ResponseEntity<Optional<OrderResponse>> getOrderInfo(@PathVariable("orderId") long orderId) {
+    public ResponseEntity<OrderResponse> getOrderInfo(@PathVariable("orderId") long orderId) {
         return ResponseEntity.ok(this.orderService.findOrder(orderId));
     }
 
