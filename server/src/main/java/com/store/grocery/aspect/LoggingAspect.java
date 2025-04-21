@@ -24,9 +24,9 @@ public class LoggingAspect {
         logBefore(joinPoint, "Service");
     }
 
-    @AfterReturning(value = "execution(* com.store.grocery.service..*(..))", returning = "result")
-    public void logAfterReturningService(JoinPoint joinPoint, Object result) {
-        logAfterReturning(joinPoint, result, "Service");
+    @AfterReturning(value = "execution(* com.store.grocery.service..*(..))")
+    public void logAfterReturningService(JoinPoint joinPoint) {
+        logAfterReturning(joinPoint,"Service");
     }
 
     @AfterThrowing(value = "execution(* com.store.grocery.util.exception..*(..))", throwing = "ex")
@@ -56,8 +56,8 @@ public class LoggingAspect {
         log.info("[{}] BEFORE: {} | IP: {}", layer, joinPoint.getSignature().toShortString(), clientIp);
     }
 
-    private void logAfterReturning(JoinPoint joinPoint, Object result, String layer) {
-        log.info("[{}] AFTER RETURNING: {} | Result: {}", layer, joinPoint.getSignature().toShortString(), result);
+    private void logAfterReturning(JoinPoint joinPoint, String layer) {
+        log.info("[{}] AFTER RETURNING: {}", layer, joinPoint.getSignature().toShortString());
     }
 
     private Object logExecutionTime(ProceedingJoinPoint joinPoint, String layer) throws Throwable {
