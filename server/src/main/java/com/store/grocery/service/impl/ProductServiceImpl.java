@@ -2,6 +2,7 @@ package com.store.grocery.service.impl;
 
 import com.store.grocery.domain.Category;
 import com.store.grocery.domain.Product;
+import com.store.grocery.dto.request.product.ProductRequest;
 import com.store.grocery.dto.response.PaginationResponse;
 import com.store.grocery.dto.response.product.ProductResponse;
 import com.store.grocery.dto.response.product.SearchProductResponse;
@@ -51,12 +52,25 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public Product create(Product p) {
-        log.info("Creating new product with name: {}", p.getProductName());
-        if (!this.checkValidCategoryId(p.getCategory().getId())) {
+    public Product create(ProductRequest productRequest) {
+        log.info("Creating new product with name: {}", productRequest.getProductName());
+        if (!this.checkValidCategoryId(productRequest.getCategory().getId())) {
             throw new ResourceInvalidException("Category không tồn tại");
         }
-        Product savedProduct = this.productRepository.save(p);
+        Category category = Category.builder()
+                .id(productRequest.getCategory().getId())
+                .build();
+
+        Product product = Product.builder()
+                .productName(productRequest.getProductName())
+                .price(productRequest.getPrice())
+                .imageUrl(productRequest.getImageUrl())
+                .quantity(productRequest.getQuantity())
+                .description(productRequest.getDescription())
+                .unit(productRequest.getUnit())
+                .category(category)
+                .build();
+        Product savedProduct = this.productRepository.save(product);
         log.info("Successfully created product with ID: {}", savedProduct.getId());
         return savedProduct;
     }
@@ -94,23 +108,28 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public Product update(Product p) {
-        log.info("Updating product with ID: {}", p.getId());
-        Product prod = this.findById(p.getId());
-        prod.setProductName(p.getProductName());
-        prod.setPrice(p.getPrice());
-        prod.setImageUrl(p.getImageUrl());
-        prod.setDescription(p.getDescription());
-        prod.setQuantity(p.getQuantity());
-        prod.setUnit(p.getUnit());
-        if (p.getCategory() != null) {
-            Category category = this.categoryRepository.findById(p.getCategory().getId())
-                    .orElseThrow(() -> new ResourceInvalidException("Category id = " + p.getCategory().getId() + " không tồn tại"));
-            prod.setCategory(category);
-        }
-        Product updatedProduct = this.productRepository.save(prod);
+    public Product update(long id, ProductRequest productRequest) {
+        log.info("Updating product with ID: {}", id);
+        Product prod = this.findById(id);
+        Category updatedCategory = (productRequest.getCategory() != null)
+                ? this.categoryRepository.findById(productRequest.getCategory().getId())
+                .orElseThrow(() -> new ResourceInvalidException("Category id = " + productRequest.getCategory().getId() + " không tồn tại"))
+                : prod.getCategory();
+
+        Product updatedProduct = Product.builder()
+                .id(prod.getId())
+                .productName(productRequest.getProductName())
+                .price(productRequest.getPrice())
+                .imageUrl(productRequest.getImageUrl())
+                .description(productRequest.getDescription())
+                .quantity(productRequest.getQuantity())
+                .unit(productRequest.getUnit())
+                .category(updatedCategory)
+                .build();
+
+        Product saved = this.productRepository.save(updatedProduct);
         log.info("Successfully updated product with ID: {}", updatedProduct.getId());
-        return updatedProduct;
+        return saved;
     }
 
     @Override
@@ -170,7 +189,7 @@ public class ProductServiceImpl implements ProductService {
 
     @Async
     @Override
-    public CompletableFuture<byte[]> exportDataToExcelAsync() {
+    public CompletableFuture<byte[]> exportDataToExcel() {
         log.info("Exporting data to Excel asynchronously");
         return CompletableFuture.supplyAsync(() -> {
             try (Workbook workbook = new XSSFWorkbook(); ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {

@@ -1,8 +1,7 @@
 package com.store.grocery.service.impl;
 
 import com.store.grocery.domain.Category;
-import com.store.grocery.dto.request.category.CreateCategoryRequest;
-import com.store.grocery.dto.request.category.UpdateCategoryRequest;
+import com.store.grocery.dto.request.category.CategoryRequest;
 import com.store.grocery.dto.response.PaginationResponse;
 import com.store.grocery.repository.CategoryRepository;
 import com.store.grocery.service.CategoryService;
@@ -29,16 +28,17 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
-    public Category create(CreateCategoryRequest categoryDTO) {
+    public Category create(CategoryRequest categoryDTO) {
         log.info("Creating new category: {}", categoryDTO.getName());
         if (this.isCategoryExisted(categoryDTO.getName())) {
             log.warn("Category '{}' already exists", categoryDTO.getName());
             throw new DuplicateResourceException("Category đã tồn tại");
         }
         log.info("Category '{}' created successfully", categoryDTO.getName());
-        Category category = new Category();
-        category.setName(categoryDTO.getName());
-        category.setImageUrl(categoryDTO.getImageUrl());
+        Category category = Category.builder()
+                .name(categoryDTO.getName())
+                .imageUrl(categoryDTO.getImageUrl())
+                .build();
         return this.categoryRepository.save(category);
     }
 
@@ -56,16 +56,16 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
-    public Category update(UpdateCategoryRequest categoryDTO) {
-        Category curr = this.findById(categoryDTO.getId());
-        log.info("Updating category ID {} with new name '{}'", categoryDTO.getId(), categoryDTO.getName());
-        if (!this.isCategoryNameUnique(categoryDTO.getId(), categoryDTO.getName())) {
-            log.warn("Category name '{}' is not unique for ID {}", categoryDTO.getName(), categoryDTO.getId());
+    public Category update(long id, CategoryRequest categoryDTO) {
+        Category curr = this.findById(id);
+        log.info("Updating category ID {} with new name '{}'", id, categoryDTO.getName());
+        if (!this.isCategoryNameUnique(id, categoryDTO.getName())) {
+            log.warn("Category name '{}' is not unique for ID {}", categoryDTO.getName(), id);
             throw new DuplicateResourceException("Category bị trùng");
         }
         curr.setName(categoryDTO.getName());
         curr.setImageUrl(categoryDTO.getImageUrl());
-        log.info("Category ID {} updated successfully", categoryDTO.getId());
+        log.info("Category ID {} updated successfully", id);
         return categoryRepository.save(curr);
     }
 

@@ -3,8 +3,7 @@ package com.store.grocery.domain;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Min;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 import java.io.Serial;
 import java.io.Serializable;
@@ -14,6 +13,9 @@ import java.time.Instant;
 @Table(name = "cart")
 @Getter
 @Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class Cart implements Serializable {
     @Serial
     private static final long serialVersionUID = 1L;

@@ -1,8 +1,7 @@
 package com.store.grocery.domain;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 import java.io.Serial;
 import java.io.Serializable;
@@ -12,6 +11,9 @@ import java.time.Instant;
 @Table(name = "feedbacks")
 @Getter
 @Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class Feedback implements Serializable {
     @Serial
     private static final long serialVersionUID = 1L;

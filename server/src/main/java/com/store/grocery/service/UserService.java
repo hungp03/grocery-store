@@ -27,7 +27,7 @@ public interface UserService {
 
     PaginationResponse fetchAllUser(Specification<User> specification, Pageable pageable);
 
-    void updateStatus(UpdateUserStatusRequest reqUser);
+    void updateStatus(Long id, UpdateUserStatusRequest req);
 
     User getUserByUsername(String username);
 

@@ -109,7 +109,7 @@ public class SecurityUtil {
 
     public String createResetToken(String email) {
         Instant now = Instant.now();
-        Instant validity = now.plus(10, ChronoUnit.MINUTES);
+        Instant validity = now.plus(3, ChronoUnit.MINUTES);
         return createToken(email, now, validity, Map.of("type", "RESET_PASSWORD"));
     }
 

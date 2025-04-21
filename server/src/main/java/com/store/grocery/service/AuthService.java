@@ -15,13 +15,13 @@ import java.security.GeneralSecurityException;
 import java.util.Map;
 
 public interface AuthService {
-    UserLoginResponse.UserGetAccount getAccount();
+    UserLoginResponse.UserGetAccount getMyAccount();
     void logout(String deviceHash);
     CreateUserResponse register(UserRegisterRequest user);
     void forgotPassword(String email);
     OtpVerificationResponse verifyOtp(String email, String inputOtp);
     void resetPassword(String token, ResetPasswordRequest request);
     AuthResponse login(LoginRequest loginDTO, String userAgent);
-    AuthResponse getNewRefreshToken(String refreshToken, String deviceHash);
+    AuthResponse renewToken(String refreshToken, String deviceHash);
     AuthResponse loginGoogle(GoogleTokenRequest request, String userAgent)throws IOException, GeneralSecurityException;
 }

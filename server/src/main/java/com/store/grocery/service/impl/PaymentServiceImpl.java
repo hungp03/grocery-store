@@ -2,7 +2,7 @@ package com.store.grocery.service.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.store.grocery.config.VNPAYConfig;
-import com.store.grocery.dto.request.order.CheckoutRequest;
+import com.store.grocery.dto.request.order.OrderRequest;
 import com.store.grocery.dto.response.payment.PaymentResponse;
 import com.store.grocery.service.OrderService;
 import com.store.grocery.service.PaymentService;
@@ -52,10 +52,10 @@ public class PaymentServiceImpl implements PaymentService {
     }
 
     @Override
-    public CheckoutRequest getOrderData(String orderData) {
+    public OrderRequest getOrderData(String orderData) {
         try {
             log.info("Parsing order data: {}", orderData);
-            return objectMapper.readValue(orderData, CheckoutRequest.class);
+            return objectMapper.readValue(orderData, OrderRequest.class);
         } catch (Exception e) {
             log.error("Error parsing order data: {}", e.getMessage());
             throw new RuntimeException("Invalid order data");

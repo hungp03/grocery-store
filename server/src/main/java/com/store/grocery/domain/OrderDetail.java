@@ -2,8 +2,7 @@ package com.store.grocery.domain;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Min;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 import java.io.Serial;
 import java.io.Serializable;
@@ -12,6 +11,9 @@ import java.io.Serializable;
 @Table(name = "order_detail")
 @Getter
 @Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class OrderDetail implements Serializable {
     @Serial
     private static final long serialVersionUID = 1L;
@@ -31,5 +33,5 @@ public class OrderDetail implements Serializable {
     @Min(value = 1)
     private int quantity;
 
-    private Double unit_price;
+    private Double unitPrice;
 }

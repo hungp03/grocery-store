@@ -5,8 +5,8 @@ import com.store.grocery.domain.User;
 import com.store.grocery.domain.UserToken;
 import com.store.grocery.dto.request.user.UpdatePasswordRequest;
 import com.store.grocery.dto.request.user.UpdateUserRequest;
-import com.store.grocery.dto.request.user.UserRegisterRequest;
 import com.store.grocery.dto.request.user.UpdateUserStatusRequest;
+import com.store.grocery.dto.request.user.UserRegisterRequest;
 import com.store.grocery.dto.response.PaginationResponse;
 import com.store.grocery.dto.response.user.CreateUserResponse;
 import com.store.grocery.dto.response.user.DeviceResponse;
@@ -14,10 +14,16 @@ import com.store.grocery.dto.response.user.UpdateUserResponse;
 import com.store.grocery.dto.response.user.UserResponse;
 import com.store.grocery.mapper.UserMapper;
 import com.store.grocery.repository.UserRepository;
-import com.store.grocery.service.*;
+import com.store.grocery.service.EmailService;
+import com.store.grocery.service.OTPService;
+import com.store.grocery.service.UserService;
+import com.store.grocery.service.UserTokenService;
 import com.store.grocery.util.SecurityUtil;
 import com.store.grocery.util.enums.OTPType;
-import com.store.grocery.util.exception.*;
+import com.store.grocery.util.exception.AuthException;
+import com.store.grocery.util.exception.DuplicateResourceException;
+import com.store.grocery.util.exception.ResourceInvalidException;
+import com.store.grocery.util.exception.UserNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -49,13 +55,12 @@ public class UserServiceImpl implements UserService {
             log.error("Email already exists: {}", user.getEmail());
             throw new DuplicateResourceException("Email " + user.getEmail() + " đã tồn tại");
         }
-        Role r = new Role(2);
-        User u = new User();
-        u.setEmail(user.getEmail());
-        u.setName(user.getName());
-        u.setPassword(passwordEncoder.encode(user.getPassword()));
-        u.setStatus(true);
-        u.setRole(r);
+        User u = User.builder()
+                .email(user.getEmail())
+                .name(user.getName())
+                .password(passwordEncoder.encode(user.getPassword()))
+                .status(true)
+                .role(new Role(2L)).build();
         User savedUser = this.userRepository.save(u);
         log.info("Successfully created user with ID: {}", savedUser.getId());
         return userMapper.toCreateUserResponse(savedUser);
@@ -112,13 +117,13 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public void updateStatus(UpdateUserStatusRequest reqUser) {
-        log.info("Updating status for user ID: {}", reqUser.getId());
-        User currentUser = findById(reqUser.getId());
+    public void updateStatus(Long id, UpdateUserStatusRequest req) {
+        log.info("Updating status for user ID: {}", id);
+        User currentUser = findById(id);
         if (currentUser != null) {
-            currentUser.setStatus(reqUser.isStatus());
+            currentUser.setStatus(req.getStatus());
             this.userRepository.save(currentUser);
-            log.info("Successfully updated status for user ID: {}", reqUser.getId());
+            log.info("Successfully updated status for user ID: {}", id);
         }
     }
 
@@ -156,16 +161,17 @@ public class UserServiceImpl implements UserService {
         log.info("Updating user profile");
         long uid = SecurityUtil.getUserId();
         User currentUserDB = findById(uid);
-        // Cập nhật thông tin người dùng
-        currentUserDB.setName(request.getName());
-        currentUserDB.setPhone(request.getPhone());
-        currentUserDB.setAddress(request.getAddress());
-        if (request.getAvatarUrl() != null){
-            currentUserDB.setAvatarUrl(request.getAvatarUrl());
-        }
-        userRepository.save(currentUserDB);
-        log.info("Successfully updated user profile for user ID: {}", currentUserDB.getId());
-        return userMapper.toUpdateUserResponse(currentUserDB);
+
+        User updatedUser = currentUserDB.toBuilder()
+                .name(request.getName())
+                .phone(request.getPhone())
+                .address(request.getAddress())
+                .avatarUrl(request.getAvatarUrl() != null ? request.getAvatarUrl() : currentUserDB.getAvatarUrl())  // Cập nhật avatarUrl nếu có
+                .build();
+
+        userRepository.save(updatedUser);
+        log.info("Successfully updated user profile for user ID: {}", updatedUser.getId());
+        return userMapper.toUpdateUserResponse(updatedUser);
     }
 
     @Override
@@ -216,7 +222,7 @@ public class UserServiceImpl implements UserService {
         String email = SecurityUtil.getCurrentUserLogin().orElse("");
         log.info("Verifying OTP for account deactivation - Email: {}", email);
         boolean validOTP = otpService.verifyOTP(email, inputOtp, OTPType.DEACTIVE_ACCOUNT);
-        if (!validOTP){
+        if (!validOTP) {
             log.warn("Failed OTP verification for email: {}. Invalid or expired OTP.", email);
             throw new ResourceInvalidException("OTP không hợp lệ hoặc đã hết hạn");
         }

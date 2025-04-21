@@ -14,4 +14,5 @@ public interface OTPCodeRepository extends JpaRepository<OTPCode, Long> {
     // Xóa tất cả OTP đã hết hạn
     void deleteByExpiresAtBefore(Instant now);
     void deleteByEmailAndType(String email, OTPType resetPassword);
+    boolean existsByEmailAndType(String email, OTPType otpType);
 }

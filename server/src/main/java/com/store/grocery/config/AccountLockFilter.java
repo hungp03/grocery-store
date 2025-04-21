@@ -36,7 +36,7 @@ public class AccountLockFilter extends OncePerRequestFilter {
                 restResponse.setStatusCode(-4);
                 restResponse.setData(null);
                 restResponse.setError("Account is locked");
-                restResponse.setMessage("Tài khoản đã bị khóa");
+                restResponse.setMessage("Tài khoản đã bị vô hiệu hóa");
                 response.setStatus(HttpServletResponse.SC_FORBIDDEN);
                 response.setContentType("application/json");
                 response.setCharacterEncoding("UTF-8");

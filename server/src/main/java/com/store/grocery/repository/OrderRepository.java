@@ -22,7 +22,7 @@ public interface OrderRepository extends JpaRepository<Order, Long>, JpaSpecific
             @Param("year") int year
     );
 
-    @Query("SELECT SUM(o.total_price) FROM Order o WHERE o.status = :status")
+    @Query("SELECT SUM(o.totalPrice) FROM Order o WHERE o.status = :status")
     double sumTotalPriceByStatus(@Param("status") int status);
 }
 

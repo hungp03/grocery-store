@@ -22,6 +22,8 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Optional;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -41,11 +43,7 @@ public class FeedbackServiceImpl implements FeedbackService {
         Feedback feedback = feedbackRepository.findByUserIdAndProductId(user.getId(), product.getId())
                 .orElseGet(() -> {
                     log.info("Creating new feedback for product: {} by user: {}", product.getId(), user.getId());
-                    Feedback newFeedback = new Feedback();
-                    newFeedback.setUser(user);
-                    newFeedback.setProduct(product);
-                    newFeedback.setStatus(true);
-                    return newFeedback;
+                    return Feedback.builder().user(user).product(product).status(true).build();
                 });
 
         feedback.setDescription(feedbackDTO.getDescription());
@@ -70,12 +68,20 @@ public class FeedbackServiceImpl implements FeedbackService {
     }
 
     @Override
-    public void changeFeedbackStatus(Long id) {
-        feedbackRepository.findById(id).ifPresentOrElse(feedback -> {
-            feedback.setStatus(!feedback.isStatus());
+    public boolean changeFeedbackStatus(Long id) {
+        Optional<Feedback> optionalFeedback = feedbackRepository.findById(id);
+
+        if (optionalFeedback.isPresent()) {
+            Feedback feedback = optionalFeedback.get();
+            boolean currentStatus = feedback.isStatus();
+            feedback.setStatus(!currentStatus);
             feedbackRepository.save(feedback);
-            log.info("Feedback status updated for ID {}", id);
-        }, () -> log.warn("Feedback not found with ID: {}", id));
+            log.info("Feedback status updated for ID {}. New status: {}", id, !currentStatus);
+            return !currentStatus;
+        } else {
+            log.warn("Feedback not found with ID: {}", id);
+            throw new ResourceInvalidException("Không tìm thấy feedback ID: " + id);
+        }
     }
 
     @Override

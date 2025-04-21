@@ -45,7 +45,7 @@ public class AuthServiceImpl implements AuthService {
 
 
     @Override
-    public UserLoginResponse.UserGetAccount getAccount() {
+    public UserLoginResponse.UserGetAccount getMyAccount() {
         long uid = SecurityUtil.getUserId();
         log.info("Fetching basic data for user ID: {}", uid);
         User currentUserDB = this.userService.findById(uid);
@@ -102,6 +102,7 @@ public class AuthServiceImpl implements AuthService {
     public void resetPassword(String token, ResetPasswordRequest request) {
         log.info("Reset password requested using token.");
         Jwt decodedToken = this.securityUtil.checkValidToken(token);
+
         if (!request.getNewPassword().equals(request.getConfirmPassword())) {
             log.warn("Password reset failed: Confirm password does not match.");
             throw new ResourceInvalidException("Mật khẩu xác nhận không khớp.");
@@ -141,7 +142,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public AuthResponse getNewRefreshToken(String refreshToken, String deviceHash) {
+    public AuthResponse renewToken(String refreshToken, String deviceHash) {
         log.info("Request to get new token. DeviceHash: {}", deviceHash);
         if ("none".equals(refreshToken)) {
             log.warn("Invalid refresh token: none");

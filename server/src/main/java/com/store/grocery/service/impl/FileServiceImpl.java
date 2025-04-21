@@ -43,10 +43,10 @@ public class FileServiceImpl implements FileService {
         }
     }
 
-    public String upload(MultipartFile file) throws IOException {
+    public String upload(MultipartFile file, String folder) throws IOException {
         validateFile(file);
         Map uploadResult = cloudinary.uploader().upload(file.getBytes(), ObjectUtils.asMap(
-                "folder", defaultFolder
+                "folder", defaultFolder + "/" + folder
         ));
         return uploadResult.get("url").toString();
     }

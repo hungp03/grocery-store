@@ -8,7 +8,7 @@ import java.util.List;
 
 @Getter
 @Setter
-public class CheckoutRequest {
+public class OrderRequest {
     private String address;
     private String phone;
     private String paymentMethod;

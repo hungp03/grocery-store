@@ -20,10 +20,12 @@ public class OTPServiceImpl implements OTPService {
     @Override
     public void storeOTP(String otp, String email, OTPType otpType) {
         log.info("Storing OTP for email: {} with type: {}", email, otpType);
-        OTPCode otpCode = otpCodeRepository.findByEmailAndType(email, otpType).orElse(new OTPCode());
-        otpCode.setEmail(email);
-        otpCode.setOtpCode(otp);
-        otpCode.setType(otpType);
+        OTPCode otpCode = otpCodeRepository.findByEmailAndType(email, otpType)
+                .orElseGet(() -> OTPCode.builder()
+                        .email(email)
+                        .otpCode(otp)
+                        .type(otpType)
+                        .build());
         otpCodeRepository.save(otpCode);
         log.info("OTP successfully stored for email: {}", email);
     }
@@ -36,6 +38,7 @@ public class OTPServiceImpl implements OTPService {
                 .isPresent();
     }
 
+    @Override
     public void deleteOtpByEmailAndType(String email, OTPType otpType) {
         log.info("Deleting OTP for email: {}, type: {}", email, otpType);
         otpCodeRepository.deleteByEmailAndType(email, otpType);
@@ -45,5 +48,10 @@ public class OTPServiceImpl implements OTPService {
     @Override
     public String generateOTP() {
         return String.format("%06d", new Random().nextInt(1000000));
+    }
+
+    @Override
+    public boolean checkExistOTP(String email, OTPType otpType){
+        return otpCodeRepository.existsByEmailAndType(email, otpType);
     }
 }
