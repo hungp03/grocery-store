@@ -1,7 +1,7 @@
 package com.store.grocery.service.impl;
 
 import com.store.grocery.domain.*;
-import com.store.grocery.dto.request.order.CheckoutRequest;
+import com.store.grocery.dto.request.order.OrderRequest;
 import com.store.grocery.dto.response.PaginationResponse;
 import com.store.grocery.dto.response.order.OrderResponse;
 import com.store.grocery.dto.response.order.WeeklyRevenueResponse;
@@ -43,6 +43,7 @@ public class OrderServiceImpl implements OrderService {
     private final CartService cartService;
     private final EmailService emailService;
     private final OrderMapper orderMapper;
+
     private Order get(long id) {
         log.debug("Fetching order by ID: {}", id);
         return this.orderRepository.findById(id).orElse(null);
@@ -57,7 +58,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public PaginationResponse getAll(Specification<Order> spec, Pageable pageable) {
+    public PaginationResponse getAllOrder(Specification<Order> spec, Pageable pageable) {
         log.info("Fetching all orders with pagination");
         Page<OrderResponse> ordersPage = orderRepository.findAll(spec, pageable).map(orderMapper::toOrderResponse);
         log.debug("Found {} orders", ordersPage.getTotalElements());
@@ -117,18 +118,18 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     @Transactional
-    public Long create(CheckoutRequest request) {
+    public Long create(OrderRequest request) {
         log.info("Creating new order for user ID: {}", SecurityUtil.getUserId());
         long uid = SecurityUtil.getUserId();
         User currentUser = userRepository.findById(uid)
                 .orElseThrow(() -> new ResourceInvalidException("User với ID " + uid + " không tồn tại"));
-        Order order = new Order();
-        order.setUser(currentUser);
-        order.setAddress(request.getAddress());
-        order.setPhone(request.getPhone());
-        order.setTotal_price(request.getTotalPrice());
-        order.setPaymentMethod(request.getPaymentMethod());
-        order.setStatus(0);
+        Order order = Order.builder()
+                .user(currentUser)
+                .address(request.getAddress())
+                .phone(request.getPhone())
+                .totalPrice(request.getTotalPrice())
+                .paymentMethod(request.getPaymentMethod())
+                .status(0).build();
 
         Order savedOrder = orderRepository.save(order);
         log.info("Successfully created order with ID: {}", savedOrder.getId());
@@ -148,13 +149,12 @@ public class OrderServiceImpl implements OrderService {
             purchasedProductIds.add(product.getId());
 
             OrderDetailId id = new OrderDetailId(savedOrder.getId(), product.getId());
-            OrderDetail orderDetail = new OrderDetail();
-            orderDetail.setId(id);
-            orderDetail.setOrder(savedOrder);
-            orderDetail.setProduct(product);
-            orderDetail.setQuantity(item.getQuantity());
-            orderDetail.setUnit_price(product.getPrice());
-            return orderDetail;
+            return OrderDetail.builder()
+                    .id(id)
+                    .order(savedOrder)
+                    .product(product)
+                    .quantity(item.getQuantity())
+                    .unitPrice(product.getPrice()).build();
         }).toList();
 
         cartService.deleteSelectedItems(purchasedProductIds);
@@ -172,7 +172,7 @@ public class OrderServiceImpl implements OrderService {
 
 
     @Override
-    public PaginationResponse getOrdersByCurrentUser(Integer status, Pageable pageable) {
+    public PaginationResponse getMyOrders(Integer status, Pageable pageable) {
         log.info("Fetching orders for user ID: {}", SecurityUtil.getUserId());
         long uid = SecurityUtil.getUserId();
         // Thêm sort
@@ -186,7 +186,7 @@ public class OrderServiceImpl implements OrderService {
                 : orderRepository.findByUserId(uid, sortedPageable);
         log.debug("Found {} orders for user ID: {}", ordersPage.getTotalElements(), uid);
 
-        PaginationResponse paginationResponse = PaginationResponse.from(ordersPage.map(orderMapper::toOrderResponse), sortedPageable);
+        PaginationResponse paginationResponse = PaginationResponse.from(ordersPage.map(orderMapper::toMyOrderResponse), sortedPageable);
         log.info("Returning paginated orders for user ID: {}", uid);
         return paginationResponse;
     }

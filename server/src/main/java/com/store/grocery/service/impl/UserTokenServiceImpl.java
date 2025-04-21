@@ -21,11 +21,12 @@ import java.util.Optional;
 public class UserTokenServiceImpl implements UserTokenService {
     private final UserTokenRepository userTokenRepository;
     private final SecurityUtil securityUtil;
+
     @Override
     public UserToken findByfindByUserAndDeviceHash(long uid, String deviceHash) {
         log.info("Get refresh token for user id: {}", uid);
         Optional<UserToken> userTokenOpt = this.userTokenRepository.findByUserIdAndDeviceHash(uid, deviceHash);
-        if (userTokenOpt.isEmpty()){
+        if (userTokenOpt.isEmpty()) {
             log.warn("No refresh token found for user ID {} on device {}", uid, deviceHash);
             throw new ResourceInvalidException("Không tìm thấy phiên đăng nhập trên thiết bị này.");
         }
@@ -68,17 +69,18 @@ public class UserTokenServiceImpl implements UserTokenService {
         } else {
             log.debug("Creating new token for user ID: {}", user.getId());
             // Tạo mới UserToken
-            UserToken newUserToken = new UserToken();
-            newUserToken.setUser(user);
-            newUserToken.setRefreshToken(refreshToken);
-            newUserToken.setDeviceInfo(deviceInfo);
-            newUserToken.setDeviceHash(deviceHash);
-            newUserToken.setCreatedAt(Instant.now());
+            UserToken newUserToken = UserToken.builder()
+                    .user(user)
+                    .refreshToken(refreshToken)
+                    .deviceInfo(deviceInfo)
+                    .deviceHash(deviceHash)
+                    .createdAt(Instant.now())
+                    .build();
             userTokenRepository.save(newUserToken);
         }
     }
 
-    public List<UserToken> findDevicesByUser(long uid){
+    public List<UserToken> findDevicesByUser(long uid) {
         return this.userTokenRepository.findByUserId(uid);
     }
 

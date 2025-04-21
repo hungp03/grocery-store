@@ -2,12 +2,12 @@ package com.store.grocery.controller;
 
 import com.store.grocery.domain.Order;
 
-import com.store.grocery.dto.request.order.CheckoutRequest;
+import com.store.grocery.dto.request.order.OrderRequest;
+import com.store.grocery.dto.request.order.OrderStatusUpdateRequest;
 import com.store.grocery.dto.response.PaginationResponse;
 import com.store.grocery.dto.response.order.OrderResponse;
 import com.store.grocery.dto.response.order.WeeklyRevenueResponse;
 import com.store.grocery.service.OrderService;
-import com.store.grocery.util.exception.ResourceInvalidException;
 import jakarta.validation.Valid;
 
 import lombok.RequiredArgsConstructor;
@@ -29,53 +29,51 @@ import org.springframework.http.HttpStatus;
 public class OrderController {
     private final OrderService orderService;
 
-    @GetMapping("all-orders")
+    @GetMapping("orders")
     @ApiMessage("Get all Orders")
-    public ResponseEntity<PaginationResponse> getAll(@Filter Specification<Order> spec, Pageable pageable) {
-        return ResponseEntity.ok(this.orderService.getAll(spec, pageable));
+    public ResponseEntity<PaginationResponse> getAllOrder(@Filter Specification<Order> spec, Pageable pageable) {
+        return ResponseEntity.ok(this.orderService.getAllOrder(spec, pageable));
     }
 
-    @GetMapping("order-info/{orderId}")
+    @GetMapping("orders/me")
+    @ApiMessage("Get orders by user")
+    public ResponseEntity<PaginationResponse> getMyOrders(
+            Pageable pageable,
+            @RequestParam(value = "status", required = false) Integer status){
+        return ResponseEntity.ok(this.orderService.getMyOrders(status, pageable));
+    }
+
+    @GetMapping("orders/{orderId}/info")
     @ApiMessage("Get order information")
-    public ResponseEntity<OrderResponse> getOrderInfo(@PathVariable("orderId") long orderId) {
+    public ResponseEntity<OrderResponse> getOrderDetail(@PathVariable("orderId") long orderId) {
         return ResponseEntity.ok(this.orderService.findOrder(orderId));
     }
 
-    @PutMapping("update-order-status/{orderId}")
+    @PatchMapping("/orders/{orderId}/status")
     @ApiMessage("Update order status")
     public ResponseEntity<Void> updateOrderStatus(
             @PathVariable Long orderId,
-            @RequestParam("status") int status) {
-
-        orderService.updateOrderStatus(orderId, status);
+            @RequestBody OrderStatusUpdateRequest request) {
+        orderService.updateOrderStatus(orderId, request.getStatus());
         return ResponseEntity.ok().build();
     }
 
-    @PostMapping("checkout")
-    @ApiMessage("Create a checkout payment")
-    public ResponseEntity<Void> create(@RequestBody @Valid CheckoutRequest request) {
+    @PostMapping("/orders/checkout")
+    @ApiMessage("Create a order")
+    public ResponseEntity<Void> createOrder(@RequestBody @Valid OrderRequest request) {
         orderService.create(request);
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
-    @GetMapping("orders")
-    @ApiMessage("Get orders by user")
-    public ResponseEntity<PaginationResponse> getOrderByUser(
-            Pageable pageable,
-            @RequestParam(value = "status", required = false) Integer status
-    ) throws ResourceInvalidException {
-        return ResponseEntity.ok(this.orderService.getOrdersByCurrentUser(status, pageable));
-    }
-
-    @GetMapping("/monthly-orders-revenue")
+    @GetMapping("/reports/revenue/monthly")
     @ApiMessage("Get data for monthly revenue chart")
     public ResponseEntity<List<WeeklyRevenueResponse>> getMonthlyRevenue(@RequestParam int month, @RequestParam int year) {
         return ResponseEntity.ok(this.orderService.getMonthlyRevenue(month, year));
     }
 
-    @GetMapping("/admin/summary")
-    @ApiMessage("Get ...")
-    public ResponseEntity<List<Object>> getOverview() {
+    @GetMapping("/admin/overview")
+    @ApiMessage("Get admin overview")
+    public ResponseEntity<List<Object>> getAdminOverview() {
         return ResponseEntity.of(Optional.ofNullable(this.orderService.getOverviewStats()));
     }
 }

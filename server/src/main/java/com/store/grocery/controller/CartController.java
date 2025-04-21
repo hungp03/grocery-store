@@ -6,6 +6,7 @@ import com.store.grocery.dto.response.PaginationResponse;
 import com.store.grocery.dto.response.cart.SelectedProductInCart;
 import com.store.grocery.service.CartService;
 import com.store.grocery.util.annotation.ApiMessage;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -22,7 +23,7 @@ public class CartController {
 
     @PostMapping("cart")
     @ApiMessage("Add to cart")
-    public ResponseEntity<Cart> add(@RequestBody AddToCartRequest cartRequest){
+    public ResponseEntity<Cart> addOrUpdateCartItem(@Valid @RequestBody AddToCartRequest cartRequest){
         return ResponseEntity.status(HttpStatus.CREATED).body(this.cartService.addOrUpdateCart(cartRequest));
     }
 
@@ -38,7 +39,7 @@ public class CartController {
     public ResponseEntity<PaginationResponse> getCartByUser(Pageable pageable) {
         return ResponseEntity.ok(this.cartService.getCartByCurrentUser(pageable));
     }
-    @GetMapping("cart/product-selected")
+    @GetMapping("cart/selected")
     @ApiMessage("Get products from cart")
     public ResponseEntity<List<SelectedProductInCart>> getSelectedItemsCart(@RequestParam("productIds") List<Long> productIds, Pageable pageable){
         return ResponseEntity.ok(this.cartService.getCartItemsByProductIds(productIds, pageable));

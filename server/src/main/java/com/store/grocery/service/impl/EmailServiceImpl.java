@@ -1,7 +1,7 @@
 package com.store.grocery.service.impl;
 
 import com.store.grocery.domain.User;
-import com.store.grocery.dto.request.order.CheckoutRequest;
+import com.store.grocery.dto.request.order.OrderRequest;
 import com.store.grocery.dto.response.order.OrderDetailResponse;
 import com.store.grocery.service.EmailService;
 import jakarta.mail.MessagingException;
@@ -94,18 +94,18 @@ public class EmailServiceImpl implements EmailService {
 
     @Override
     @Async
-    public void sendOrderEmail(User u, CheckoutRequest checkoutRequestDTO) {
+    public void sendOrderEmail(User u, OrderRequest orderRequestDTO) {
         try {
             String templateName = "checkout";
             String subject = "Thông tin đơn hàng";
 
             sendEmailFromTemplateSyncCheckout(
                     u.getEmail(), subject, templateName, u.getName(),
-                    checkoutRequestDTO.getAddress(), checkoutRequestDTO.getPhone(),
-                    checkoutRequestDTO.getPaymentMethod(), checkoutRequestDTO.getTotalPrice(),
-                    checkoutRequestDTO.getItems()
+                    orderRequestDTO.getAddress(), orderRequestDTO.getPhone(),
+                    orderRequestDTO.getPaymentMethod(), orderRequestDTO.getTotalPrice(),
+                    orderRequestDTO.getItems()
             );
-            log.info("Order email sent to uid {} for order total {}", u.getId(), formatCurrency(checkoutRequestDTO.getTotalPrice()));
+            log.info("Order email sent to uid {} for order total {}", u.getId(), formatCurrency(orderRequestDTO.getTotalPrice()));
         } catch (Exception e) {
             log.info("Cannot send email: {}", e.getMessage());
         }

@@ -58,12 +58,8 @@ public class CartServiceImpl implements CartService{
             cartItem.setQuantity(newQuantity);
             log.info("Updated cart item: userId={}, productId={}, newQuantity={}", uid, p.getId(), newQuantity);
         } else {
-            cartItem = new Cart();
             CartId cartId = new CartId(u.getId(), p.getId());
-            cartItem.setId(cartId);
-            cartItem.setUser(u);
-            cartItem.setProduct(p);
-            cartItem.setQuantity(cartRequest.getQuantity());
+            cartItem = Cart.builder().id(cartId).user(u).product(p).quantity(cartRequest.getQuantity()).build();
             log.info("Added new cart item: userId={}, productId={}, quantity={}", uid, p.getId(), cartRequest.getQuantity());
         }
         return this.cartRepository.save(cartItem);

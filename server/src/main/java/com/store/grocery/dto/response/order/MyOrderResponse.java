@@ -3,12 +3,12 @@ package com.store.grocery.dto.response.order;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 import lombok.Setter;
-import java.time.Instant;
 
+import java.time.Instant;
 
 @Getter
 @Setter
-public class OrderResponse {
+public class MyOrderResponse {
     private long id;
     private Instant orderTime;
     private Instant deliveryTime;
@@ -18,7 +18,4 @@ public class OrderResponse {
     private String phone;
     @JsonProperty("total_price")
     private double totalPrice;
-    private String userEmail;
-    private String userName;
-    private Long userId;
 }

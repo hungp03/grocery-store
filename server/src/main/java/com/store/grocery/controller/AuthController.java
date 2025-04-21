@@ -59,17 +59,17 @@ public class AuthController {
     }
 
 
-    @GetMapping("auth/account")
+    @GetMapping("auth/me")
     @ApiMessage("Get user")
-    public ResponseEntity<UserLoginResponse.UserGetAccount> getAccount() {
-        return ResponseEntity.ok(this.authService.getAccount());
+    public ResponseEntity<UserLoginResponse.UserGetAccount> getMyAccount() {
+        return ResponseEntity.ok(this.authService.getMyAccount());
     }
 
-    @GetMapping("auth/refresh")
+    @PostMapping("auth/refresh")
     @ApiMessage("Get new token")
-    public ResponseEntity<UserLoginResponse> getNewRefreshToken(@CookieValue(name = "refresh_token", defaultValue = "none") String refreshToken,
+    public ResponseEntity<UserLoginResponse> renewToken(@CookieValue(name = "refresh_token", defaultValue = "none") String refreshToken,
                                                                 @CookieValue(name = "device", defaultValue = "none") String deviceHash) {
-        AuthResponse response = this.authService.getNewRefreshToken(refreshToken, deviceHash);
+        AuthResponse response = this.authService.renewToken(refreshToken, deviceHash);
         // set cookies
         ResponseCookie refreshCookie = ResponseCookie
                 .from("refresh_token", response.getRefreshToken())
@@ -134,19 +134,19 @@ public class AuthController {
     }
 
     @PostMapping("auth/forgot")
-    @ApiMessage("Forgot password - OTP")
+    @ApiMessage("Send forgot password email")
     public ResponseEntity<Void> forgotPassword(@Valid @RequestBody ForgotPasswordRequest forgotPasswordRequest) {
         this.authService.forgotPassword(forgotPasswordRequest.getEmail());
         return ResponseEntity.ok().build();
     }
 
-    @PostMapping("auth/validate-otp")
+    @PostMapping("/auth/otp/verify")
     @ApiMessage("Validate OTP")
     public ResponseEntity<OtpVerificationResponse> verifyOtp(@Valid @RequestBody OTPResetRequest request) {
         return ResponseEntity.ok(this.authService.verifyOtp(request.getEmail(), request.getOtp()));
     }
 
-    @PutMapping("auth/reset-password")
+    @PostMapping("auth/reset-password")
     @ApiMessage("Reset password")
     public ResponseEntity<Void> resetPassword(
             @RequestParam("token") String token,
@@ -155,7 +155,7 @@ public class AuthController {
         return ResponseEntity.ok().build();
     }
 
-    @PostMapping("auth/signin/google")
+    @PostMapping("auth/google-login")
     @ApiMessage("Login with Google")
     public ResponseEntity<UserLoginResponse> loginWithGoogle(@Valid @RequestBody GoogleTokenRequest request,
                                                              @RequestHeader("User-Agent") String userAgent) throws GeneralSecurityException, IOException {

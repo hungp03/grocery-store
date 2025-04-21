@@ -2,16 +2,21 @@ package com.store.grocery.mapper;
 
 import com.store.grocery.domain.OrderDetail;
 import com.store.grocery.dto.response.order.OrderDetailResponse;
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
+import org.springframework.stereotype.Component;
 
-@Mapper(componentModel = "spring")
-public interface OrderDetailMapper {
+@Component
+public class OrderDetailMapper {
 
-    @Mapping(source = "product.id", target = "productId")
-    @Mapping(source = "product.productName", target = "productName")
-    @Mapping(source = "product.price", target = "unit_price")
-    @Mapping(source = "product.imageUrl", target = "imageUrl")
-    OrderDetailResponse toOrderDetailResponse(OrderDetail orderDetail);
+    public OrderDetailResponse toOrderDetailResponse(OrderDetail orderDetail) {
+        if (orderDetail == null) {
+            return null;
+        }
+        OrderDetailResponse response = new OrderDetailResponse();
+        response.setProductId(orderDetail.getProduct().getId());
+        response.setProductName(orderDetail.getProduct().getProductName());
+        response.setQuantity(orderDetail.getQuantity());
+        response.setUnit_price(orderDetail.getUnitPrice()); // Dùng đúng đơn giá của order detail
+        response.setImageUrl(orderDetail.getProduct().getImageUrl());
+        return response;
+    }
 }
-

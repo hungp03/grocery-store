@@ -1,8 +1,7 @@
 package com.store.grocery.domain;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 import java.io.Serial;
 import java.io.Serializable;
@@ -12,6 +11,9 @@ import java.time.Instant;
 @Table(name = "orders")
 @Getter
 @Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class Order implements Serializable {
     @Serial
     private static final long serialVersionUID = 1L;
@@ -32,7 +34,7 @@ public class Order implements Serializable {
 
     private String phone;
 
-    private double total_price;
+    private double totalPrice;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)

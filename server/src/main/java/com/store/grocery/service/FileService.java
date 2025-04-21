@@ -12,5 +12,5 @@ public interface FileService {
 //    long getFileLength (String fileName, String folder) throws URISyntaxException;
 //    InputStreamResource getResource(String fileName, String folder) throws URISyntaxException, FileNotFoundException;
     void validateFile(MultipartFile file);
-    String upload(MultipartFile file) throws IOException;
+    String upload(MultipartFile file, String folder) throws IOException;
 }

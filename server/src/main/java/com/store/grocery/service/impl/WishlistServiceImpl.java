@@ -39,10 +39,11 @@ public class WishlistServiceImpl implements WishlistService {
             log.error("Product already exists in wishlist");
             throw new DuplicateResourceException("Sản phẩm đã có trong danh sách yêu thích");
         }
-        Wishlist wishlist = new Wishlist();
-        wishlist.setId(new WishlistId(u.getId(), p.getId()));
-        wishlist.setUser(u);
-        wishlist.setProduct(p);
+        Wishlist wishlist = Wishlist.builder()
+                .id(new WishlistId(u.getId(), p.getId()))
+                .user(u)
+                .product(p)
+                .build();
         return this.wishlistRepository.save(wishlist);
     }
 
@@ -61,7 +62,7 @@ public class WishlistServiceImpl implements WishlistService {
     }
 
     @Override
-    public PaginationResponse getWishlistsByCurrentUser(Pageable pageable) throws ResourceInvalidException {
+    public PaginationResponse getWishlistsByCurrentUser(Pageable pageable) {
         log.info("Get wishlist by current user");
         long uid = SecurityUtil.getUserId();
         Page<WishlistItemResponse> wishlistItems = this.wishlistRepository.findWishlistItemsByUserId(uid, pageable);

@@ -13,15 +13,14 @@ import com.store.grocery.service.UserService;
 import com.store.grocery.util.annotation.ApiMessage;
 import com.store.grocery.util.exception.ResourceInvalidException;
 import com.turkraft.springfilter.boot.Filter;
+import io.swagger.v3.oas.annotations.Hidden;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.List;
@@ -38,17 +37,18 @@ public class UserController {
         return ResponseEntity.ok(this.userService.getLoggedInDevices(deviceHash));
     }
 
+    @Hidden
     @DeleteMapping("users/{id}")
     @ApiMessage("Delete user")
     // Not use
-    public ResponseEntity<Void> deleteUser(@PathVariable("id") long id) throws ResourceInvalidException {
+    public ResponseEntity<Void> deleteUser(@PathVariable("id") long id){
         this.userService.delete(id);
         return ResponseEntity.ok().build();
     }
 
     @GetMapping("users/{id}")
     @ApiMessage("Get user by id")
-    public ResponseEntity<UserResponse> getUser(@PathVariable("id") long id) throws ResourceInvalidException {
+    public ResponseEntity<UserResponse> getUser(@PathVariable("id") long id) {
         return ResponseEntity.status(HttpStatus.OK).body(this.userService.getUserById(id));
     }
 
@@ -58,28 +58,28 @@ public class UserController {
         return ResponseEntity.ok(this.userService.fetchAllUser(spec, pageable));
     }
 
-    @PutMapping("users/update-password")
+    @PatchMapping("users/password")
     @ApiMessage("Change password")
     public ResponseEntity<Void> changePassword(@Valid @RequestBody UpdatePasswordRequest dto){
         this.userService.changePassword(dto);
         return ResponseEntity.ok().build();
     }
 
-    @PutMapping("users/status")
+    @PatchMapping("users/{id}/status")
     @ApiMessage("Update user status")
-    public ResponseEntity<Void> updateUserStatus(@RequestBody UpdateUserStatusRequest user) throws ResourceInvalidException {
-        this.userService.updateStatus(user);
+    public ResponseEntity<Void> updateUserStatus(@PathVariable("id") long id, @Valid @RequestBody UpdateUserStatusRequest user) {
+        this.userService.updateStatus(id, user);
         return ResponseEntity.ok().build();
     }
 
     @PutMapping(value = "users/account")
     @ApiMessage("Update user information")
     public ResponseEntity<UpdateUserResponse> updateUser(
-            @RequestBody UpdateUserRequest request) throws IOException {
+            @RequestBody UpdateUserRequest request){
         return ResponseEntity.ok(this.userService.updateUser(request));
     }
 
-    @PostMapping("deactivate/account")
+    @PostMapping("deactivate/request")
     @ApiMessage("Request deactivate account")
     public ResponseEntity<Void> requestDisableOTP() {
         userService.requestDeactiveAccount();

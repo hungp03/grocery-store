@@ -2,8 +2,7 @@ package com.store.grocery.domain;
 
 import com.store.grocery.util.enums.OTPType;
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 import java.time.Instant;
 import java.util.concurrent.TimeUnit;
@@ -14,6 +13,9 @@ import java.util.concurrent.TimeUnit;
 @Table(name = "otp_codes", indexes = {
         @Index(name = "idx_email_type", columnList = "email, type")
 })
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class OTPCode {
 
     @Id

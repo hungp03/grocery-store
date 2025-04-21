@@ -65,16 +65,15 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
     private User registerNewUser(String email, String name, String picture, String providerId) {
         log.info("Registering new GOOGLE user with email: {}", email);
-        User user = new User();
-        user.setEmail(email);
-        user.setName(name);
-        user.setAvatarUrl(picture);
-        user.setProvider("GOOGLE");
-        user.setProviderId(providerId);
-        user.setStatus(true);
-        Role role = new Role();
-        role.setId(2L); // USER role
-        user.setRole(role);
+        User user = User.builder()
+                .email(email)
+                .name(name)
+                .avatarUrl(picture)
+                .provider("GOOGLE")
+                .providerId(providerId)
+                .status(true)
+                .role(new Role(2L))
+                .build();
         return userRepository.save(user);
     }
 }

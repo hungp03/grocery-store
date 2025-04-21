@@ -25,7 +25,7 @@ public class FeedbackController {
         return ResponseEntity.status(HttpStatus.CREATED).body(this.feedbackService.addFeedback(feedbackDTO));
     }
 
-    @GetMapping("product/ratings/{id}")
+    @GetMapping("product/{id}/ratings")
     @ApiMessage("Get feedbacks by product")
     public ResponseEntity<PaginationResponse> getByProductId(
             @PathVariable Long id,
@@ -44,10 +44,9 @@ public class FeedbackController {
         return ResponseEntity.ok(this.feedbackService.getBySortAndFilter(pageable, status, sort));
     }
 
-    @PutMapping("ratings/{id}")
+    @PatchMapping("ratings/{id}/status")
     @ApiMessage("Change feedback status")
-    public ResponseEntity<Void> hideFeedback(@PathVariable Long id) {
-        this.feedbackService.changeFeedbackStatus(id);
-        return ResponseEntity.ok().build();
+    public ResponseEntity<Boolean> changeFeedbackStatus(@PathVariable Long id) {
+        return ResponseEntity.ok(this.feedbackService.changeFeedbackStatus(id));
     }
 }

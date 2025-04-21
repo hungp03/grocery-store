@@ -1,10 +1,10 @@
 package com.store.grocery.controller;
 
 import com.store.grocery.domain.Product;
+import com.store.grocery.dto.request.product.ProductRequest;
 import com.store.grocery.dto.response.PaginationResponse;
 import com.store.grocery.service.ProductService;
 import com.store.grocery.util.annotation.ApiMessage;
-import com.store.grocery.util.exception.ResourceInvalidException;
 import com.turkraft.springfilter.boot.Filter;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -27,19 +27,19 @@ public class ProductController {
 
     @PostMapping("products")
     @ApiMessage("Create product")
-    public ResponseEntity<Product> create(@Valid @RequestBody Product p){
-        return ResponseEntity.status(HttpStatus.CREATED).body(this.productService.create(p));
+    public ResponseEntity<Product> create(@Valid @RequestBody ProductRequest productRequest){
+        return ResponseEntity.status(HttpStatus.CREATED).body(this.productService.create(productRequest));
     }
 
     @GetMapping("products/{id}")
     @ApiMessage("Get product")
-    public ResponseEntity<Product> get(@PathVariable("id") long id) throws ResourceInvalidException {
+    public ResponseEntity<Product> get(@PathVariable("id") long id){
         return ResponseEntity.ok(this.productService.findById(id));
     }
 
     @DeleteMapping("products/{id}")
     @ApiMessage("Delete product")
-    public ResponseEntity<Void> delete(@PathVariable("id") long id) throws ResourceInvalidException {
+    public ResponseEntity<Void> delete(@PathVariable("id") long id) {
         this.productService.delete(id);
         return ResponseEntity.ok().build();
     }
@@ -50,10 +50,10 @@ public class ProductController {
         return ResponseEntity.ok(this.productService.getAll(spec, pageable));
     }
 
-    @PutMapping("products")
+    @PutMapping("products/{id}")
     @ApiMessage("Update product")
-    public ResponseEntity<Product> update(@Valid @RequestBody Product p) {
-        return ResponseEntity.ok(this.productService.update(p));
+    public ResponseEntity<Product> update(@PathVariable("id") long id, @Valid @RequestBody ProductRequest productRequest) {
+        return ResponseEntity.ok(this.productService.update(id, productRequest));
     }
 
     @GetMapping("products/search")
@@ -62,10 +62,10 @@ public class ProductController {
         return ResponseEntity.ok(this.productService.search(spec, pageable));
     }
 
-    @GetMapping("products/exportExcel")
+    @GetMapping("products/export/excel")
     @ApiMessage("Export product data to excel")
     public ResponseEntity<byte[]> exportProductDataToExcel() throws IOException, ExecutionException, InterruptedException {
-        byte[] excelData = productService.exportDataToExcelAsync().get();
+        byte[] excelData = productService.exportDataToExcel().get();
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=product_data.xlsx")
