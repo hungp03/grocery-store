@@ -26,7 +26,7 @@ public interface FeedbackRepository extends JpaRepository<Feedback,Long>, JpaSpe
     Page<FeedbackResponse> findByStatus(Boolean status, Pageable pageable);
     @Query("SELECT new com.store.grocery.dto.response.feedback.FeedbackResponse(f.id, u.name, u.avatarUrl, p.productName, f.ratingStar, f.description, f.status, f.updatedAt) " +
             "FROM Feedback f JOIN f.user u JOIN f.product p " +
-            "WHERE f.product.id = :productId AND f.status = true")
+            "WHERE p.id = :productId AND f.status = true AND p.isActive = true")
     Page<FeedbackResponse> findByProductId(@Param("productId") Long productId, Pageable pageable);
     @Query("SELECT AVG(f.ratingStar) FROM Feedback f WHERE f.product.id = :productId")
     double calculateAverageRatingByProductId(@Param("productId") Long productId);

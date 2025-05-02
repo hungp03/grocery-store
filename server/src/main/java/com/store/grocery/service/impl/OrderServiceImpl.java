@@ -137,11 +137,11 @@ public class OrderServiceImpl implements OrderService {
         List<Long> purchasedProductIds = new ArrayList<>();
         List<OrderDetail> orderDetails = request.getItems().stream().map(item -> {
             log.debug("Processing order item for product ID: {}", item.getProductId());
-            Product product = productRepository.findById(item.getProductId())
+            Product product = productRepository.findByIdAndIsActiveTrue(item.getProductId())
                     .orElseThrow(() -> new ResourceInvalidException("Product not found: " + item.getProductId()));
 
             if (product.getQuantity() < item.getQuantity()) {
-                throw new ResourceInvalidException("Not enough stock for product: " + product.getId());
+                throw new ResourceInvalidException("Số lượng hàng không đủ cho sản phẩm id: " + product.getId());
             }
 
             product.setQuantity(product.getQuantity() - item.getQuantity());

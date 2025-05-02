@@ -13,4 +13,5 @@ public class WishlistItemResponse {
     private Double price;
     private String imageUrl;
     private String category;
+    private boolean isActive;
 }

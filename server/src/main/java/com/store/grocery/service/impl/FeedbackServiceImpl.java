@@ -37,8 +37,8 @@ public class FeedbackServiceImpl implements FeedbackService {
     @Transactional
     public FeedbackResponse addFeedback(CreateFeedbackRequest feedbackDTO) {
         User user = userService.findById(SecurityUtil.getUserId());
-        Product product = productRepository.findById(feedbackDTO.getProductId())
-                .orElseThrow(() -> new ResourceInvalidException("Sản phẩm không tồn tại"));
+        Product product = productRepository.findByIdAndIsActiveTrue(feedbackDTO.getProductId())
+                .orElseThrow(() -> new ResourceInvalidException("Sản phẩm không tồn tại hoặc ngừng kinh doanh"));
 
         Feedback feedback = feedbackRepository.findByUserIdAndProductId(user.getId(), product.getId())
                 .orElseGet(() -> {

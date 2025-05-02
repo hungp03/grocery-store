@@ -37,7 +37,8 @@ public interface WishlistRepository extends JpaRepository<Wishlist, WishlistId>,
                     product.getProductName(),
                     product.getPrice(),
                     product.getImageUrl(),
-                    product.getCategory().getName()
+                    product.getCategory().getSlug(),
+                    product.isActive()
             );
         });
     }

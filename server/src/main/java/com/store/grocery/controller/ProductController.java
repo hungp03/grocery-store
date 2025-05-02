@@ -34,7 +34,7 @@ public class ProductController {
     @GetMapping("products/{id}")
     @ApiMessage("Get product")
     public ResponseEntity<Product> get(@PathVariable("id") long id){
-        return ResponseEntity.ok(this.productService.findById(id));
+        return ResponseEntity.ok(this.productService.findByIdAndIsActiveTrue(id));
     }
 
     @DeleteMapping("products/{id}")

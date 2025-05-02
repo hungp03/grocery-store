@@ -9,9 +9,13 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
 
+import javax.swing.text.html.Option;
+import java.util.Optional;
+
 @Repository
 public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpecificationExecutor<Product> {
     boolean existsByCategoryId(Long categoryId);
     @EntityGraph(attributePaths = {"category"})
     Page<Product> findAll(Specification<Product> specification, Pageable pageable);
+    Optional<Product> findByIdAndIsActiveTrue(Long id);
 }

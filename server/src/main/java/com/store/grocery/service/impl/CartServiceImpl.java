@@ -7,7 +7,7 @@ import com.store.grocery.domain.User;
 import com.store.grocery.dto.request.cart.AddToCartRequest;
 import com.store.grocery.dto.response.PaginationResponse;
 import com.store.grocery.dto.response.cart.CartItemResponse;
-import com.store.grocery.dto.response.cart.SelectedProductInCart;
+import com.store.grocery.dto.response.cart.PreOrderCartItem;
 import com.store.grocery.repository.CartRepository;
 import com.store.grocery.service.CartService;
 import com.store.grocery.service.ProductService;
@@ -36,7 +36,7 @@ public class CartServiceImpl implements CartService{
         long uid = SecurityUtil.getUserId();
         log.info("User {} is adding/updating cart item with productId={}", uid, cartRequest.getProductId());
         User u = this.userService.findById(uid);
-        Product p = this.productService.findById(cartRequest.getProductId());
+        Product p = this.productService.findByIdAndIsActiveTrue(cartRequest.getProductId());
         if (cartRequest.getQuantity() > p.getQuantity()) {
             log.warn("User {} tried to add {} items, but only {} available", uid, cartRequest.getQuantity(), p.getQuantity());
             throw new ResourceInvalidException("Số lượng hàng không đủ");
@@ -88,7 +88,7 @@ public class CartServiceImpl implements CartService{
         return PaginationResponse.from(cartItems, pageable);
     }
     @Override
-    public List<SelectedProductInCart> getCartItemsByProductIds(List<Long> productIds, Pageable pageable) {
+    public List<PreOrderCartItem> getCartItemsByProductIds(List<Long> productIds, Pageable pageable) {
         long uid = SecurityUtil.getUserId();
         log.info("Fetching selected cart items for user {}", uid);
         return this.cartRepository.findCartItemsByUserIdAndProductId(uid, productIds, pageable);
