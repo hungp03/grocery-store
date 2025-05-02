@@ -14,11 +14,16 @@ import com.store.grocery.service.WishlistService;
 import com.store.grocery.util.SecurityUtil;
 import com.store.grocery.util.exception.DuplicateResourceException;
 import com.store.grocery.util.exception.ResourceInvalidException;
+import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Slf4j
 @Service
@@ -65,7 +70,30 @@ public class WishlistServiceImpl implements WishlistService {
     public PaginationResponse getWishlistsByCurrentUser(Pageable pageable) {
         log.info("Get wishlist by current user");
         long uid = SecurityUtil.getUserId();
-        Page<WishlistItemResponse> wishlistItems = this.wishlistRepository.findWishlistItemsByUserId(uid, pageable);
+
+        Page<WishlistItemResponse> wishlistItems = findWishlistItemsByUserId(uid, pageable);
         return PaginationResponse.from(wishlistItems, pageable);
+    }
+
+    private Page<WishlistItemResponse> findWishlistItemsByUserId(Long userId, Pageable pageable) {
+        // Define specification in service
+        Specification<Wishlist> spec = (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+            predicates.add(cb.equal(root.get("id").get("userId"), userId));
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
+
+        // Query repository and map to DTO
+        return wishlistRepository.findAll(spec, pageable).map(wishlist -> {
+            Product product = wishlist.getProduct();
+            return new WishlistItemResponse(
+                    product.getId(),
+                    product.getProductName(),
+                    product.getPrice(),
+                    product.getImageUrl(),
+                    product.getCategory().getSlug(),
+                    product.isActive()
+            );
+        });
     }
 }
