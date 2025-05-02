@@ -32,11 +32,11 @@ public class WishlistServiceImpl implements WishlistService {
     public Wishlist addWishlist(AddWishlistRequest request) {
         long uid = SecurityUtil.getUserId();
         User u = this.userService.findById(uid);
-        Product p = this.productService.findById(request.getProductId());
+        Product p = this.productService.findByIdAndIsActiveTrue(request.getProductId());
         log.info("Adding product to wishlist: {} by uid {}", p.getId(), uid);
         boolean exists = wishlistRepository.existsById_UserIdAndId_ProductId(u.getId(), p.getId());
         if (exists) {
-            log.error("Product already exists in wishlist");
+            log.warn("Product already exists in wishlist");
             throw new DuplicateResourceException("Sản phẩm đã có trong danh sách yêu thích");
         }
         Wishlist wishlist = Wishlist.builder()

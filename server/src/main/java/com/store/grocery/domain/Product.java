@@ -57,6 +57,8 @@ public class Product implements Serializable {
     @Column(columnDefinition = "MEDIUMTEXT")
     private String description;
 
+    private boolean isActive;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id")
     @NotNull(message = "Category không được để trống")
@@ -77,6 +79,7 @@ public class Product implements Serializable {
 
     @PrePersist
     public void handleBeforeCreate() {
+        this.isActive = true;
         this.createdBy = SecurityUtil.getCurrentUserLogin().orElse("");
         this.createdAt = Instant.now();
     }

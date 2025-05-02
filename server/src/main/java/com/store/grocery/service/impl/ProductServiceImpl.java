@@ -68,31 +68,27 @@ public class ProductServiceImpl implements ProductService {
                 .quantity(productRequest.getQuantity())
                 .description(productRequest.getDescription())
                 .unit(productRequest.getUnit())
-                .category(category)
-                .build();
+                .category(category).build();
         Product savedProduct = this.productRepository.save(product);
         log.info("Successfully created product with ID: {}", savedProduct.getId());
         return savedProduct;
     }
 
-    private boolean checkValidProductId(long id) {
-        return this.productRepository.existsById(id);
-    }
-
     @Override
     public void delete(long id) {
-        log.info("Attempting to delete product with ID: {}", id);
-        if (!this.checkValidProductId(id)) {
-            throw new ResourceInvalidException("Product id = " + id + " không tồn tại");
-        }
-        this.productRepository.deleteById(id);
-        log.info("Successfully deleted product with ID: {}", id);
+        log.info("Attempting to soft delete product with ID: {}", id);
+        Product product = findById(id);
+        product.setActive(false);
+        this.productRepository.save(product);
+        log.info("Successfully marked product with ID: {} as inactive", id);
     }
 
     @Override
     public PaginationResponse getAll(Specification<Product> spec, Pageable pageable) {
         log.info("Fetching all products");
-        Page<ProductResponse> productPage = this.productRepository.findAll(spec, pageable).map(productMapper::toProductResponse);
+        Specification<Product> isActiveOnly = (root, query, cb) -> cb.isTrue(root.get("isActive"));
+        Specification<Product> productSpecification = isActiveOnly.and(spec);
+        Page<ProductResponse> productPage = this.productRepository.findAll(productSpecification, pageable).map(productMapper::toProductResponse);
         log.info("Successfully fetched all products");
         return PaginationResponse.from(productPage, pageable);
     }
@@ -100,49 +96,29 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public Product findById(long id) {
         log.debug("Fetching product by ID: {}", id);
-        return this.productRepository.findById(id)
-                .orElseThrow(() -> {
-                    log.error("Product not found with ID: {}", id);
-                    return new ResourceInvalidException("Product id = " + id + " không tồn tại");
-                });
+        return this.productRepository.findById(id).orElseThrow(() -> {
+            log.error("Product not found with ID: {}", id);
+            return new ResourceInvalidException("Product id = " + id + " không tồn tại");
+        });
     }
 
     @Override
     public Product update(long id, ProductRequest productRequest) {
         log.info("Updating product with ID: {}", id);
-        Product prod = this.findById(id);
-        Category updatedCategory = (productRequest.getCategory() != null)
-                ? this.categoryRepository.findById(productRequest.getCategory().getId())
-                .orElseThrow(() -> new ResourceInvalidException("Category id = " + productRequest.getCategory().getId() + " không tồn tại"))
-                : prod.getCategory();
-
-        Product updatedProduct = Product.builder()
-                .id(prod.getId())
-                .productName(productRequest.getProductName())
-                .price(productRequest.getPrice())
-                .imageUrl(productRequest.getImageUrl())
-                .description(productRequest.getDescription())
-                .quantity(productRequest.getQuantity())
-                .unit(productRequest.getUnit())
-                .category(updatedCategory)
-                .build();
-
+        Product prod = this.findByIdAndIsActiveTrue(id);
+        Category updatedCategory = (productRequest.getCategory() != null) ? this.categoryRepository.findById(productRequest.getCategory().getId()).orElseThrow(() -> new ResourceInvalidException("Category id = " + productRequest.getCategory().getId() + " không tồn tại")) : prod.getCategory();
+        Product updatedProduct = Product.builder().
+                id(prod.getId()).
+                productName(productRequest.getProductName())
+                .price(productRequest.getPrice()).
+                imageUrl(productRequest.getImageUrl()).
+                description(productRequest.getDescription()).
+                quantity(productRequest.getQuantity()).
+                unit(productRequest.getUnit()).
+                category(updatedCategory).build();
         Product saved = this.productRepository.save(updatedProduct);
         log.info("Successfully updated product with ID: {}", updatedProduct.getId());
         return saved;
-    }
-
-    @Override
-    public Product updateQuantity(long id, int quantity) {
-        Product p = this.findById(id);
-
-        if (quantity > p.getQuantity()) {
-            throw new ResourceInvalidException("Product id = " + id + " không đủ số lượng tồn kho");
-        }
-
-        p.setQuantity(p.getQuantity() - quantity);
-        p.setSold(p.getSold() + quantity);
-        return this.productRepository.save(p);
     }
 
     @Override
@@ -157,11 +133,15 @@ public class ProductServiceImpl implements ProductService {
         Root<Product> productRoot = query.from(Product.class);
         Join<Product, Category> categoryJoin = productRoot.join("category");
         Predicate predicate = specification.toPredicate(productRoot, query, cb);
+        Predicate isActivePredicate = cb.isTrue(productRoot.get("isActive"));
         if (predicate != null) {
-            query.where(predicate);
+            query.where(cb.and(predicate, isActivePredicate));
+        } else {
+            query.where(isActivePredicate);
         }
 
-        query.select(cb.construct(SearchProductResponse.class,
+        query.select(cb.construct(
+                SearchProductResponse.class,
                 productRoot.get("id"),
                 productRoot.get("productName"),
                 productRoot.get("price"),
@@ -169,21 +149,22 @@ public class ProductServiceImpl implements ProductService {
                 categoryJoin.get("slug")
         ));
 
-        List<SearchProductResponse> resultList = entityManager.createQuery(query)
-                .setFirstResult((int) pageable.getOffset())
-                .setMaxResults(pageable.getPageSize())
-                .getResultList();
-
+        List<SearchProductResponse> resultList = entityManager.createQuery(query).setFirstResult((int) pageable.getOffset()).setMaxResults(pageable.getPageSize()).getResultList();
         CriteriaQuery<Long> countQuery = cb.createQuery(Long.class);
         Root<Product> countRoot = countQuery.from(Product.class);
-        countQuery.select(cb.count(countRoot));
 
         Predicate countPredicate = specification.toPredicate(countRoot, countQuery, cb);
+        Predicate isActiveCountPredicate = cb.isTrue(countRoot.get("isActive"));
+
         if (countPredicate != null) {
-            countQuery.where(countPredicate);
+            countQuery.where(cb.and(countPredicate, isActiveCountPredicate));
+        } else {
+            countQuery.where(isActiveCountPredicate);
         }
 
+        countQuery.select(cb.count(countRoot));
         Long totalCount = entityManager.createQuery(countQuery).getSingleResult();
+
         return new PageImpl<>(resultList, pageable, totalCount);
     }
 
@@ -220,6 +201,11 @@ public class ProductServiceImpl implements ProductService {
                 throw new RuntimeException("Lỗi khi tạo file Excel", e);
             }
         });
+    }
+
+    @Override
+    public Product findByIdAndIsActiveTrue(long id) {
+        return productRepository.findByIdAndIsActiveTrue(id).orElseThrow(() -> new ResourceInvalidException("Sản phẩm không tồn tại hoặc đã ngừng kinh doanh"));
     }
 
     private void createHeaderRow(Sheet sheet, List<String> headers) {

@@ -11,8 +11,9 @@ public class CartItemResponse {
     private Long id;
     private String productName;
     private Double price;
-    private int quantity;
+    private Integer quantity;
     private String imageUrl;
     private String category;
-    private int stock;
+    private Integer stock;
+    private Boolean isActive;
 }

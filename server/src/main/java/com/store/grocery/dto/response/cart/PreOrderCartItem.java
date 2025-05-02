@@ -7,9 +7,9 @@ import lombok.Setter;
 @Getter
 @Setter
 @AllArgsConstructor
-public class SelectedProductInCart {
-    private long id;
+public class PreOrderCartItem {
+    private Long id;
     private String productName;
-    private int quantity;
-    private double price;
+    private Double price;
+    private Integer quantity;
 }

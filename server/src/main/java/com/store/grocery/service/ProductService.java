@@ -15,7 +15,8 @@ public interface ProductService {
     PaginationResponse getAll(Specification<Product> spec, Pageable pageable);
     Product findById(long id);
     Product update(long id, ProductRequest productRequest);
-    Product updateQuantity(long id, int quantity);
     PaginationResponse search(Specification<Product> spec, Pageable pageable);
     CompletableFuture<byte[]> exportDataToExcel();
+
+    Product findByIdAndIsActiveTrue(long id);
 }
