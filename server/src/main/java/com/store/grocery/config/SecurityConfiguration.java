@@ -90,6 +90,7 @@ public class SecurityConfiguration {
                                 userInfo -> userInfo.userService(customOauth2)
                         ).successHandler(authenticationSuccessHandler)
                 )
+                .exceptionHandling(ex -> ex.authenticationEntryPoint(customAuthenticationEntryPoint))
                 .oauth2ResourceServer(oauth2 -> oauth2
                         .jwt(Customizer.withDefaults())
                         .authenticationEntryPoint(customAuthenticationEntryPoint))

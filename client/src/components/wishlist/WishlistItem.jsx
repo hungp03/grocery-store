@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom';
 import { ClipLoader } from 'react-spinners';
 import icons from '@/utils/icons';
 import product_default from '@/assets/product_default.png';
-import { is } from 'date-fns/locale';
 
 const { IoTrashBinOutline } = icons;
 
