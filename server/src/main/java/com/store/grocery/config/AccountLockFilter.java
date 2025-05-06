@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.store.grocery.domain.User;
 import com.store.grocery.dto.response.RestResponse;
 import com.store.grocery.repository.UserRepository;
+import com.store.grocery.util.constants.StatusCodeConstant;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -33,7 +34,7 @@ public class AccountLockFilter extends OncePerRequestFilter {
             if (user != null && !user.isStatus()) {
                 SecurityContextHolder.clearContext();
                 RestResponse<Object> restResponse = new RestResponse<>();
-                restResponse.setStatusCode(-4);
+                restResponse.setStatusCode(StatusCodeConstant.AUTH_EXCEPTION_STATUS);
                 restResponse.setData(null);
                 restResponse.setError("Account is locked");
                 restResponse.setMessage("Tài khoản đã bị vô hiệu hóa");
@@ -45,7 +46,6 @@ public class AccountLockFilter extends OncePerRequestFilter {
             }
         }
 
-        // Cho phép request tiếp tục nếu không có vấn đề
         filterChain.doFilter(request, response);
     }
 }

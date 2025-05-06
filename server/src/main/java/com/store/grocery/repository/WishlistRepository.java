@@ -16,9 +16,4 @@ public interface WishlistRepository extends JpaRepository<Wishlist, WishlistId>,
 
     @EntityGraph(attributePaths = {"product", "product.category"})
     Page<Wishlist> findAll(Specification<Wishlist> spec, Pageable pageable);
-
-//    @Query("SELECT new com.store.grocery.domain.response.wishlist.WishlistItemDTO" +
-//            "(p.id, p.productName, p.price, p.imageUrl, c.name) " +
-//            "FROM Wishlist w JOIN w.product p JOIN p.category c WHERE w.user.id = :userId")
-//    Page<WishlistItemDTO> findWishlistItemsByUserId(@Param("userId") Long userId, Pageable pageable);
 }
