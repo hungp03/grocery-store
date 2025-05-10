@@ -53,7 +53,7 @@ public class OrderController {
     @ApiMessage("Update order status")
     public ResponseEntity<Void> updateOrderStatus(
             @PathVariable Long orderId,
-            @RequestBody OrderStatusUpdateRequest request) {
+            @Valid @RequestBody OrderStatusUpdateRequest request) {
         orderService.updateOrderStatus(orderId, request.getStatus());
         return ResponseEntity.ok().build();
     }

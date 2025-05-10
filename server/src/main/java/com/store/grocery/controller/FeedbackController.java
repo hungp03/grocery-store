@@ -29,9 +29,8 @@ public class FeedbackController {
     @ApiMessage("Get feedbacks by product")
     public ResponseEntity<PaginationResponse> getByProductId(
             @PathVariable Long id,
-            @RequestParam(value = "size", required = false) Integer size,
             Pageable pageable) {
-        PaginationResponse result = feedbackService.getFeedbacksWithAdjustedSize(id, size, pageable);
+        PaginationResponse result = feedbackService.getByProductId(id, pageable);
         return ResponseEntity.ok(result);
     }
 

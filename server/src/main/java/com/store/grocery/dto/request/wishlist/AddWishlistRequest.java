@@ -1,10 +1,12 @@
 package com.store.grocery.dto.request.wishlist;
 
+import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
 
 @Getter
 @Setter
 public class AddWishlistRequest {
-    private long productId;
+    @NotNull(message = "Product ID không được để trống")
+    private Long productId;
 }
