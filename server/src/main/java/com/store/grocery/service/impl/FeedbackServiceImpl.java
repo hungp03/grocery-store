@@ -85,16 +85,6 @@ public class FeedbackServiceImpl implements FeedbackService {
     }
 
     @Override
-    public PaginationResponse getFeedbacksWithAdjustedSize(Long productId, Integer size, Pageable pageable) {
-        if (size == null || size < 1) {
-            long totalEls = this.feedbackRepository.countByProductId(productId);
-            size = totalEls > 0 ? (int) totalEls : 1;
-        }
-
-        Pageable updatedPageable = PageRequest.of(pageable.getPageNumber(), size);
-        return getByProductId(productId, updatedPageable);
-    }
-    @Override
     public PaginationResponse getByProductId(Long productId, Pageable pageable) {
         log.info("Getting feedbacks by product ID: {}", productId);
         Page<FeedbackResponse> feedbackPage = this.feedbackRepository.findByProductId(productId, pageable);

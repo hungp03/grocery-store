@@ -5,6 +5,7 @@ import com.store.grocery.dto.request.wishlist.AddWishlistRequest;
 import com.store.grocery.dto.response.PaginationResponse;
 import com.store.grocery.service.WishlistService;
 import com.store.grocery.util.annotation.ApiMessage;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -19,7 +20,7 @@ public class WishlistController {
 
     @PostMapping("wishlist")
     @ApiMessage("Add wishlist")
-    public ResponseEntity<Wishlist> add(@RequestBody AddWishlistRequest request){
+    public ResponseEntity<Wishlist> add(@Valid @RequestBody AddWishlistRequest request){
         return ResponseEntity.status(HttpStatus.CREATED).body(this.wishlistService.addWishlist(request));
     }
 

@@ -10,6 +10,5 @@ public interface FeedbackService {
     FeedbackResponse addFeedback(CreateFeedbackRequest feedbackDTO);
     PaginationResponse getBySortAndFilter(Pageable pageable, Boolean status, String sort);
     boolean changeFeedbackStatus(Long id);
-    PaginationResponse getFeedbacksWithAdjustedSize(Long productId, Integer size, Pageable pageable);
     PaginationResponse getByProductId(Long productId, Pageable pageable);
 }

@@ -9,8 +9,9 @@ import lombok.Setter;
 public class ProductRequest {
     @NotBlank(message = "Tên không được để trống")
     private String productName;
-    @DecimalMin(value = "0.1", message = "Giá sản phẩm phải lớn hơn 0")
-    private double price;
+    @NotNull(message = "Tổng giá không được để trống")
+    @Positive(message = "Tổng giá phải lớn hơn 0")
+    private Double price;
     @Min(value = 0, message = "Số lượng không thể âm")
     private int quantity;
     private String description;

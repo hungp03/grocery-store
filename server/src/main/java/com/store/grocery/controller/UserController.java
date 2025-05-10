@@ -89,7 +89,7 @@ public class UserController {
     @PostMapping("/deactivate/confirm")
     @ApiMessage("Confirm deactivate account")
     public ResponseEntity<Void> confirmDisableAccount(
-            @RequestBody UserDisableOTPRequest otpCode) {
+            @Valid @RequestBody UserDisableOTPRequest otpCode) {
         userService.verifyOTPAndDisableAccount(otpCode.getOtpCode());
         return ResponseEntity.ok().build();
     }
