@@ -10,4 +10,5 @@ public class StatusCodeConstant {
     public static final int DUPLICATE_RESOURCE_EXCEPTION_STATUS = -7;
     public static final int CANNOT_DELETE_EXCEPTION_STATUS = -8;
     public static final int VALIDATION_EXCEPTION_STATUS = -9;
+    public static final int RESOURCE_NOT_FOUND_EXCEPTION_STATUS = -10;
 }

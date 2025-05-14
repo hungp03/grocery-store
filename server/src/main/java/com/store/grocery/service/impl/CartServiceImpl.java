@@ -14,6 +14,7 @@ import com.store.grocery.service.ProductService;
 import com.store.grocery.service.UserService;
 import com.store.grocery.util.SecurityUtil;
 import com.store.grocery.util.exception.ResourceInvalidException;
+import com.store.grocery.util.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -73,12 +74,13 @@ public class CartServiceImpl implements CartService{
         boolean exists = this.cartRepository.existsById(new CartId(uid, productId));
         if (!exists) {
             log.warn("User {} tried to delete non-existent product {} from cart", uid, productId);
-            throw new ResourceInvalidException("Sản phẩm không tồn tại trong giỏ hàng");
+            throw new ResourceNotFoundException("Sản phẩm không tồn tại trong giỏ hàng");
         }
         CartId cartId = new CartId(uid, productId);
         this.cartRepository.deleteById(cartId);
         log.info("Deleted product {} from cart for user {}", productId, uid);
     }
+
     @Override
     public PaginationResponse getCartByCurrentUser(Pageable pageable) {
         long uid = SecurityUtil.getUserId();

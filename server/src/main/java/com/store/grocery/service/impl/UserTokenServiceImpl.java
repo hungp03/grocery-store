@@ -6,6 +6,7 @@ import com.store.grocery.repository.UserTokenRepository;
 import com.store.grocery.service.UserTokenService;
 import com.store.grocery.util.SecurityUtil;
 import com.store.grocery.util.exception.ResourceInvalidException;
+import com.store.grocery.util.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -28,7 +29,7 @@ public class UserTokenServiceImpl implements UserTokenService {
         Optional<UserToken> userTokenOpt = this.userTokenRepository.findByUserIdAndDeviceHash(uid, deviceHash);
         if (userTokenOpt.isEmpty()) {
             log.warn("No refresh token found for user ID {} on device {}", uid, deviceHash);
-            throw new ResourceInvalidException("Không tìm thấy phiên đăng nhập trên thiết bị này.");
+            throw new ResourceNotFoundException("Không tìm thấy phiên đăng nhập trên thiết bị này.");
         }
         return userTokenOpt.get();
     }

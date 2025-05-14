@@ -10,4 +10,6 @@ public interface WishlistService {
     Wishlist addWishlist(AddWishlistRequest request);
     void deleteWishlist(Long productId);
     PaginationResponse getWishlistsByCurrentUser(Pageable pageable);
+
+    boolean isProductWishlisted(long productId);
 }

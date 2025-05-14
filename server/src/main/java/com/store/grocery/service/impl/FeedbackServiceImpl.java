@@ -12,7 +12,7 @@ import com.store.grocery.repository.ProductRepository;
 import com.store.grocery.service.FeedbackService;
 import com.store.grocery.service.UserService;
 import com.store.grocery.util.SecurityUtil;
-import com.store.grocery.util.exception.ResourceInvalidException;
+import com.store.grocery.util.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -38,7 +38,7 @@ public class FeedbackServiceImpl implements FeedbackService {
     public FeedbackResponse addFeedback(CreateFeedbackRequest feedbackDTO) {
         User user = userService.findById(SecurityUtil.getUserId());
         Product product = productRepository.findByIdAndIsActiveTrue(feedbackDTO.getProductId())
-                .orElseThrow(() -> new ResourceInvalidException("Sản phẩm không tồn tại hoặc ngừng kinh doanh"));
+                .orElseThrow(() -> new ResourceNotFoundException("Sản phẩm không tồn tại hoặc ngừng kinh doanh"));
 
         Feedback feedback = feedbackRepository.findByUserIdAndProductId(user.getId(), product.getId())
                 .orElseGet(() -> {
@@ -80,7 +80,7 @@ public class FeedbackServiceImpl implements FeedbackService {
             return !currentStatus;
         } else {
             log.warn("Feedback not found with ID: {}", id);
-            throw new ResourceInvalidException("Không tìm thấy feedback ID: " + id);
+            throw new ResourceNotFoundException("Không tìm thấy feedback ID: " + id);
         }
     }
 

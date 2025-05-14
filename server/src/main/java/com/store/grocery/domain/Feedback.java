@@ -30,7 +30,6 @@ public class Feedback implements Serializable {
 
     private Instant updatedAt;
 
-    private Instant timestamp;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
@@ -42,7 +41,6 @@ public class Feedback implements Serializable {
 
     @PrePersist
     public void handleCreateFeedback() {
-        this.timestamp = Instant.now();
         this.updatedAt = Instant.now();
     }
 

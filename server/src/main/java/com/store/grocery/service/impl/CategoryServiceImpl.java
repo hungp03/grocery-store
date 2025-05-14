@@ -8,7 +8,7 @@ import com.store.grocery.service.CategoryService;
 import com.store.grocery.service.ProductService;
 import com.store.grocery.util.exception.CannotDeleteException;
 import com.store.grocery.util.exception.DuplicateResourceException;
-import com.store.grocery.util.exception.ResourceInvalidException;
+import com.store.grocery.util.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -52,7 +52,7 @@ public class CategoryServiceImpl implements CategoryService {
     public Category findById(long id) {
         log.info("Fetching category with ID {}", id);
         return this.categoryRepository.findById(id)
-                .orElseThrow(() -> new ResourceInvalidException("Category không tồn tại"));
+                .orElseThrow(() -> new ResourceNotFoundException("Category không tồn tại"));
     }
 
     @Override
