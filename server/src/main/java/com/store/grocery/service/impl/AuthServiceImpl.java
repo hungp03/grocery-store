@@ -49,10 +49,9 @@ public class AuthServiceImpl implements AuthService {
         long uid = SecurityUtil.getUserId();
         log.info("Fetching basic data for user ID: {}", uid);
         User currentUserDB = this.userService.findById(uid);
-        log.debug("Fetched user details from DB - ID: {}, Email: {}", currentUserDB.getId(), currentUserDB.getEmail());
         this.userService.checkAccountBanned(currentUserDB);
         UserLoginResponse.UserGetAccount userGetAccount = UserLoginResponse.UserGetAccount.from(currentUserDB);
-        log.info("Successfully retrieved account info for user ID: {}", uid);
+        log.info("Successfully get account info, user ID: {}", uid);
         return userGetAccount;
     }
 
@@ -60,29 +59,29 @@ public class AuthServiceImpl implements AuthService {
     public void logout(String deviceHash) {
         long uid = SecurityUtil.getUserId();
         UserToken userToken = this.userTokenService.findByfindByUserAndDeviceHash(uid, deviceHash);
-        log.info("User ID: {} has successfully logged out from device: {}", uid, deviceHash);
+        log.info("Logout - User ID: {} | device: {}", uid, deviceHash);
         userTokenService.deleteToken(userToken);
     }
 
     @Override
     public CreateUserResponse register(UserRegisterRequest user) {
-        log.info("Attempting to register new user with email: {}", user.getEmail());
+        log.info("Register new user with email: {}", user.getEmail());
         CreateUserResponse newUser = this.userService.create(user);
-        log.info("User registered successfully with ID: {}", newUser.getId());
+        log.info("Registered successfully, user ID: {}", newUser.getId());
         return newUser;
     }
 
     @Override
     public void forgotPassword(String email) {
-        log.info("Received forgot password request for email: {}", email);
+        log.info("Forgot password request, email: {}", email);
         if (!userService.isExistedEmail(email)) {
-            log.warn("Forgot password request failed: Email {} does not exist", email);
+            log.warn("Email {} does not exist", email);
             throw new UserNotFoundException("Email " + email + " không tồn tại");
         }
         String otp = otpService.generateOTP();
         otpService.storeOTP(otp, email, OTPType.RESET_PASSWORD);
         this.emailService.sendEmailFromTemplateSync(email, "Reset password", "forgotPassword", email, otp);
-        log.info("OTP for password reset sent to email: {}", email);
+        log.info("OTP for password reset sent, email: {}", email);
     }
 
     @Override
@@ -119,33 +118,35 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public AuthResponse login(LoginRequest loginDTO, String userAgent) {
-        log.info("Login attempt for email: {}", loginDTO.getEmail());
-        User currentUserDB = this.userService.getUserByUsername(loginDTO.getEmail());
-        log.info("User found: id={}, email={}", currentUserDB.getId(), currentUserDB.getEmail());
-        UsernamePasswordAuthenticationToken authenticationToken =
-                new UsernamePasswordAuthenticationToken(loginDTO.getEmail(), loginDTO.getPassword());
+        final String email = loginDTO.getEmail();
+        log.info("Login attempt for email: {}", email);
+        User currentUserDB = this.userService.getUserByUsername(email);
+        log.info("User id={} | email={}", currentUserDB.getId(), currentUserDB.getEmail());
+        if (currentUserDB.getPassword() == null || currentUserDB.getPassword().isEmpty()) {
+            throw new ResourceInvalidException(
+                    "Tài khoản của bạn chưa được thiết lập mật khẩu. Vui lòng đăng nhập bằng bên thứ 3 hoặc chọn quên mật khẩu để đăng nhập thủ công."
+            );
+        }
 
+        UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(email, loginDTO.getPassword());
         Authentication authentication = authenticationManagerBuilder.getObject().authenticate(authenticationToken);
         SecurityContextHolder.getContext().setAuthentication(authentication);
-        log.info("Authentication successful for user: {}", loginDTO.getEmail());
-        UserLoginResponse res = new UserLoginResponse();
-        res.setUser(UserLoginResponse.UserLogin.from(currentUserDB));
-        String accessToken = this.securityUtil.createAccessToken(authentication.getName(), res);
-        log.info("Access token created for user: {}", loginDTO.getEmail());
-        res.setAccessToken(accessToken);
-        String refreshToken = this.securityUtil.createRefreshToken(loginDTO.getEmail(), res);
-        log.info("Refresh token created for user: {}", loginDTO.getEmail());
+        log.info("Authentication successful for user: {}", email);
+
+        UserLoginResponse res = buildLoginResponse(currentUserDB, authentication);
+        String refreshToken = this.securityUtil.createRefreshToken(email, res);
+        log.info("Refresh token created for user: {}", email);
         String deviceHash = Utils.generateDeviceHash(userAgent);
         this.userTokenService.storeUserToken(currentUserDB, refreshToken, userAgent, deviceHash);
-        log.info("Stored refresh token for user: {}", loginDTO.getEmail());
+        log.info("Stored refresh token for user: {}", email);
+
         return new AuthResponse(res, refreshToken, deviceHash);
     }
 
     @Override
     public AuthResponse renewToken(String refreshToken, String deviceHash) {
-        log.info("Request to get new token. DeviceHash: {}", deviceHash);
-        if ("none".equals(refreshToken)) {
-            log.warn("Invalid refresh token: none");
+        if ("none".equals(refreshToken) || "none".equals(deviceHash)) {
+            log.warn("Invalid refresh token or device: none");
             throw new ResourceInvalidException("Vui lòng đăng nhập");
         }
 
@@ -153,17 +154,16 @@ public class AuthServiceImpl implements AuthService {
         User currentUser = userToken.getUser();
         log.info("User found for refresh token: id={}, email={}", currentUser.getId(), currentUser.getEmail());
         this.userService.checkAccountBanned(currentUser);
-
         UserLoginResponse res = new UserLoginResponse();
         res.setUser(UserLoginResponse.UserLogin.from(currentUser));
 
-        // Tạo Access Token mới
         String accessToken = this.securityUtil.createAccessToken(currentUser.getEmail(), res);
         res.setAccessToken(accessToken);
         log.info("New access token created for user: {}", currentUser.getEmail());
-        // Tạo Refresh Token mới
+
         String newRefreshToken = this.securityUtil.createRefreshToken(currentUser.getEmail(), res);
         log.info("New refresh token created for user: {}", currentUser.getEmail());
+
         // Cập nhật lại refresh token trong DB cho thiết bị đó
         userToken.setRefreshToken(newRefreshToken);
         userTokenService.saveToken(userToken);
@@ -175,7 +175,7 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public AuthResponse loginGoogle(GoogleTokenRequest request, String userAgent) throws IOException, GeneralSecurityException {
         log.info("Google login attempt with user agent: {}", userAgent);
-        // Xử lý token từ Google
+
         OAuth2User oauth2User = oAuth2UserService.processOAuth2User(request.getCredential());
         CustomGoogleUserDetails userDetails = (CustomGoogleUserDetails) oauth2User;
         User currentUser = userDetails.getUser();
@@ -188,18 +188,23 @@ public class AuthServiceImpl implements AuthService {
                 userDetails.getAuthorities()
         );
         SecurityContextHolder.getContext().setAuthentication(authentication);
-        UserLoginResponse res = new UserLoginResponse();
-        res.setUser(UserLoginResponse.UserLogin.from(currentUser));
-        // Tạo access token
-        String accessToken = securityUtil.createAccessToken(currentUser.getEmail(), res);
-        res.setAccessToken(accessToken);
-        log.info("Access token created for Google user: {}", currentUser.getEmail());
-        // Tạo refresh token
+
+        UserLoginResponse res = buildLoginResponse(currentUser, authentication);
         String refresh_token = securityUtil.createRefreshToken(currentUser.getEmail(), res);
         log.info("Refresh token created for Google user: {}", currentUser.getEmail());
         String deviceHash = Utils.generateDeviceHash(userAgent);
         this.userTokenService.storeUserToken(currentUser, refresh_token, userAgent, deviceHash);
         log.info("Stored Google refresh token for user: {}", currentUser.getEmail());
+
         return new AuthResponse(res, refresh_token, deviceHash);
+    }
+
+    private UserLoginResponse buildLoginResponse(User user, Authentication auth) {
+        UserLoginResponse response = new UserLoginResponse();
+        response.setUser(UserLoginResponse.UserLogin.from(user));
+        String accessToken = securityUtil.createAccessToken(auth.getName(), response);
+        response.setAccessToken(accessToken);
+        log.info("Access tokens created for user: {}", user.getEmail());
+        return response;
     }
 }

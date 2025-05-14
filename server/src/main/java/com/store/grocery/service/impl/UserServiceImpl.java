@@ -83,7 +83,7 @@ public class UserServiceImpl implements UserService {
         boolean check = this.isExistedId(id);
         if (!check) {
             log.error("User not found with ID: {}", id);
-            throw new ResourceInvalidException("Người dùng với id " + id + " không tồn tại");
+            throw new UserNotFoundException("Người dùng với id " + id + " không tồn tại");
         }
         this.userRepository.deleteById(id);
         log.info("Successfully deleted user with ID: {}", id);

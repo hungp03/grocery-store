@@ -59,6 +59,11 @@ public class GlobalException {
         return buildResponse(StatusCodeConstant.DUPLICATE_RESOURCE_EXCEPTION_STATUS, "Duplicate resource", ex.getMessage(), HttpStatus.CONFLICT);
     }
 
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public ResponseEntity<RestResponse<Object>> handleResourceNotFoundException(ResourceNotFoundException ex) {
+        return buildResponse(StatusCodeConstant.RESOURCE_NOT_FOUND_EXCEPTION_STATUS, "Resource not found in system", ex.getMessage(), HttpStatus.NOT_FOUND);
+    }
+
     @ExceptionHandler(CannotDeleteException.class)
     public ResponseEntity<RestResponse<Object>> handleCannotDeleteException(CannotDeleteException ex) {
         return buildResponse(StatusCodeConstant.CANNOT_DELETE_EXCEPTION_STATUS, "Resources that should not be deleted", ex.getMessage(), HttpStatus.CONFLICT);

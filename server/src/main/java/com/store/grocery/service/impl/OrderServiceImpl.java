@@ -15,6 +15,8 @@ import com.store.grocery.service.EmailService;
 import com.store.grocery.service.OrderService;
 import com.store.grocery.util.SecurityUtil;
 import com.store.grocery.util.exception.ResourceInvalidException;
+import com.store.grocery.util.exception.ResourceNotFoundException;
+import com.store.grocery.util.exception.UserNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -53,7 +55,7 @@ public class OrderServiceImpl implements OrderService {
     public OrderResponse findOrder(long id) {
         log.info("Fetching order by ID: {}", id);
         Order order = this.orderRepository.findById(id)
-                .orElseThrow(() -> new ResourceInvalidException("Không tìm thấy đơn hàng với ID: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy đơn hàng với ID: " + id));
         return orderMapper.toOrderResponse(order);
     }
 
@@ -122,7 +124,7 @@ public class OrderServiceImpl implements OrderService {
         log.info("Creating new order for user ID: {}", SecurityUtil.getUserId());
         long uid = SecurityUtil.getUserId();
         User currentUser = userRepository.findById(uid)
-                .orElseThrow(() -> new ResourceInvalidException("User với ID " + uid + " không tồn tại"));
+                .orElseThrow(() -> new UserNotFoundException("User với ID " + uid + " không tồn tại"));
         Order order = Order.builder()
                 .user(currentUser)
                 .address(request.getAddress())
@@ -138,7 +140,7 @@ public class OrderServiceImpl implements OrderService {
         List<OrderDetail> orderDetails = request.getItems().stream().map(item -> {
             log.debug("Processing order item for product ID: {}", item.getProductId());
             Product product = productRepository.findByIdAndIsActiveTrue(item.getProductId())
-                    .orElseThrow(() -> new ResourceInvalidException("Product not found: " + item.getProductId()));
+                    .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy sản phẩm: " + item.getProductId()));
 
             if (product.getQuantity() < item.getQuantity()) {
                 throw new ResourceInvalidException("Số lượng hàng không đủ cho sản phẩm id: " + product.getId());

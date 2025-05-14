@@ -13,7 +13,7 @@ import com.store.grocery.service.UserService;
 import com.store.grocery.service.WishlistService;
 import com.store.grocery.util.SecurityUtil;
 import com.store.grocery.util.exception.DuplicateResourceException;
-import com.store.grocery.util.exception.ResourceInvalidException;
+import com.store.grocery.util.exception.ResourceNotFoundException;
 import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -58,7 +58,7 @@ public class WishlistServiceImpl implements WishlistService {
         log.info("Deleting product from wishlist: {} by uid {}", productId, uid);
         boolean exists = wishlistRepository.existsById_UserIdAndId_ProductId(uid, productId);
         if (!exists) {
-            throw new ResourceInvalidException("Sản phẩm không tồn tại trong danh sách yêu thích");
+            throw new ResourceNotFoundException("Sản phẩm không tồn tại trong danh sách yêu thích");
         }
 
         WishlistId wishlistId = new WishlistId(uid, productId);
@@ -73,6 +73,12 @@ public class WishlistServiceImpl implements WishlistService {
 
         Page<WishlistItemResponse> wishlistItems = findWishlistItemsByUserId(uid, pageable);
         return PaginationResponse.from(wishlistItems, pageable);
+    }
+
+    @Override
+    public boolean isProductWishlisted(long productId) {
+        long uid = SecurityUtil.getUserId();
+        return wishlistRepository.existsById_UserIdAndId_ProductId(uid, productId);
     }
 
     private Page<WishlistItemResponse> findWishlistItemsByUserId(Long userId, Pageable pageable) {

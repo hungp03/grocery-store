@@ -10,7 +10,7 @@ import com.store.grocery.mapper.ProductMapper;
 import com.store.grocery.repository.CategoryRepository;
 import com.store.grocery.repository.ProductRepository;
 import com.store.grocery.service.ProductService;
-import com.store.grocery.util.exception.ResourceInvalidException;
+import com.store.grocery.util.exception.ResourceNotFoundException;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.criteria.*;
 import lombok.RequiredArgsConstructor;
@@ -55,7 +55,7 @@ public class ProductServiceImpl implements ProductService {
     public Product create(ProductRequest productRequest) {
         log.info("Creating new product with name: {}", productRequest.getProductName());
         if (!this.checkValidCategoryId(productRequest.getCategory().getId())) {
-            throw new ResourceInvalidException("Category không tồn tại");
+            throw new ResourceNotFoundException("Category không tồn tại");
         }
         Category category = Category.builder()
                 .id(productRequest.getCategory().getId())
@@ -98,7 +98,7 @@ public class ProductServiceImpl implements ProductService {
         log.debug("Fetching product by ID: {}", id);
         return this.productRepository.findById(id).orElseThrow(() -> {
             log.error("Product not found with ID: {}", id);
-            return new ResourceInvalidException("Product id = " + id + " không tồn tại");
+            return new ResourceNotFoundException("Product id = " + id + " không tồn tại");
         });
     }
 
@@ -106,7 +106,7 @@ public class ProductServiceImpl implements ProductService {
     public Product update(long id, ProductRequest productRequest) {
         log.info("Updating product with ID: {}", id);
         Product prod = this.findByIdAndIsActiveTrue(id);
-        Category updatedCategory = (productRequest.getCategory() != null) ? this.categoryRepository.findById(productRequest.getCategory().getId()).orElseThrow(() -> new ResourceInvalidException("Category id = " + productRequest.getCategory().getId() + " không tồn tại")) : prod.getCategory();
+        Category updatedCategory = (productRequest.getCategory() != null) ? this.categoryRepository.findById(productRequest.getCategory().getId()).orElseThrow(() -> new ResourceNotFoundException("Category id = " + productRequest.getCategory().getId() + " không tồn tại")) : prod.getCategory();
         Product updatedProduct = Product.builder().
                 id(prod.getId()).
                 productName(productRequest.getProductName())
@@ -205,7 +205,7 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public Product findByIdAndIsActiveTrue(long id) {
-        return productRepository.findByIdAndIsActiveTrue(id).orElseThrow(() -> new ResourceInvalidException("Sản phẩm không tồn tại hoặc đã ngừng kinh doanh"));
+        return productRepository.findByIdAndIsActiveTrue(id).orElseThrow(() -> new ResourceNotFoundException("Sản phẩm không tồn tại hoặc đã ngừng kinh doanh"));
     }
 
     private void createHeaderRow(Sheet sheet, List<String> headers) {
