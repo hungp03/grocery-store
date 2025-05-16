@@ -16,7 +16,6 @@ public class OrderResponse {
     private String paymentMethod;
     private String address;
     private String phone;
-    @JsonProperty("total_price")
     private double totalPrice;
     private String userEmail;
     private String userName;

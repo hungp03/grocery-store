@@ -14,7 +14,7 @@ public class OrderDetailResponse {
     private long productId;
     private String productName;
     private int quantity;
-    private Double unit_price;
+    private Double unitPrice;
     private String imageUrl;
 
 }

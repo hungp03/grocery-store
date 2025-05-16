@@ -4,7 +4,6 @@ import com.store.grocery.domain.User;
 import com.store.grocery.domain.UserToken;
 import com.store.grocery.repository.UserTokenRepository;
 import com.store.grocery.service.UserTokenService;
-import com.store.grocery.util.SecurityUtil;
 import com.store.grocery.util.exception.ResourceInvalidException;
 import com.store.grocery.util.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -21,7 +20,7 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class UserTokenServiceImpl implements UserTokenService {
     private final UserTokenRepository userTokenRepository;
-    private final SecurityUtil securityUtil;
+    private final JwtService jwtService;
 
     @Override
     public UserToken findByfindByUserAndDeviceHash(long uid, String deviceHash) {
@@ -40,7 +39,7 @@ public class UserTokenServiceImpl implements UserTokenService {
     }
 
     public UserToken validateRefreshToken(String refreshToken, String deviceHash) {
-        Jwt decodedToken = this.securityUtil.checkValidToken(refreshToken);
+        Jwt decodedToken = this.jwtService.decodeToken(refreshToken);
         String email = decodedToken.getSubject();
         Optional<UserToken> userTokenOpt = this.userTokenRepository.findByRefreshTokenAndDeviceHash(refreshToken, deviceHash);
         if (userTokenOpt.isEmpty() || !userTokenOpt.get().getUser().getEmail().equals(email)) {

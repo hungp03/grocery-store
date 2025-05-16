@@ -10,7 +10,7 @@ import {
   FaStar,
   FaEye,
   FaHeart,
-  FaTruck,
+  FaTruck, FaBars,
   FaCaretDown, FaTimes, FaFileExport
 } from "react-icons/fa";
 import { IoMenu, IoLogOutOutline, IoTrashBinOutline, IoCloseSharp } from "react-icons/io5";
@@ -37,7 +37,8 @@ const icons = {
   FaTimes,
   IoTrashBinOutline,
   TbInfoTriangle,
-  FaFileExport
+  FaFileExport,
+  FaBars
 };
 
 export default icons;

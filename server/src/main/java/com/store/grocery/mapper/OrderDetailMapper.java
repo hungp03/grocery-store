@@ -15,7 +15,7 @@ public class OrderDetailMapper {
         response.setProductId(orderDetail.getProduct().getId());
         response.setProductName(orderDetail.getProduct().getProductName());
         response.setQuantity(orderDetail.getQuantity());
-        response.setUnit_price(orderDetail.getUnitPrice()); // Dùng đúng đơn giá của order detail
+        response.setUnitPrice(orderDetail.getUnitPrice());
         response.setImageUrl(orderDetail.getProduct().getImageUrl());
         return response;
     }

@@ -4,7 +4,7 @@ import com.store.grocery.config.CustomGoogleUserDetails;
 import com.store.grocery.domain.Role;
 import com.store.grocery.domain.User;
 import com.store.grocery.repository.UserRepository;
-import com.store.grocery.util.exception.AuthException;
+import com.store.grocery.util.exception.UnauthenticatedException;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
 import lombok.RequiredArgsConstructor;
@@ -59,7 +59,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
             return new CustomGoogleUserDetails(user, googleIdToken.getPayload());
         }
         log.warn("Invalid Google ID Token received");
-        throw new AuthException("Invalid ID Token");
+        throw new UnauthenticatedException("Invalid ID Token");
     }
 
 

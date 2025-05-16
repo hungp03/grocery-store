@@ -1,8 +1,8 @@
 package com.store.grocery.domain;
 
-import com.store.grocery.util.SecurityUtil;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.store.grocery.util.JwtUtil;
 import jakarta.persistence.Entity;
 import jakarta.persistence.*;
 import jakarta.persistence.Table;
@@ -80,7 +80,7 @@ public class Product implements Serializable {
     @PrePersist
     public void handleBeforeCreate() {
         this.isActive = true;
-        this.createdBy = SecurityUtil.getCurrentUserLogin().orElse("");
+        this.createdBy = JwtUtil.getCurrentUserLogin().orElse("");
         this.createdAt = Instant.now();
     }
 

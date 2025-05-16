@@ -12,7 +12,7 @@ import com.store.grocery.repository.CartRepository;
 import com.store.grocery.service.CartService;
 import com.store.grocery.service.ProductService;
 import com.store.grocery.service.UserService;
-import com.store.grocery.util.SecurityUtil;
+import com.store.grocery.util.JwtUtil;
 import com.store.grocery.util.exception.ResourceInvalidException;
 import com.store.grocery.util.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -24,17 +24,18 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class CartServiceImpl implements CartService{
+public class CartServiceImpl implements CartService {
     private final CartRepository cartRepository;
     private final ProductService productService;
     private final UserService userService;
 
     @Override
     public Cart addOrUpdateCart(AddToCartRequest cartRequest) {
-        long uid = SecurityUtil.getUserId();
+        long uid = JwtUtil.getUserId();
         log.info("User {} is adding/updating cart item with productId={}", uid, cartRequest.getProductId());
         User u = this.userService.findById(uid);
         Product p = this.productService.findByIdAndIsActiveTrue(cartRequest.getProductId());
@@ -68,7 +69,7 @@ public class CartServiceImpl implements CartService{
 
     @Override
     public void deleteFromCart(long productId) {
-        long uid = SecurityUtil.getUserId();
+        long uid = JwtUtil.getUserId();
         log.info("User {} is deleting product {} from cart", uid, productId);
         User u = this.userService.findById(uid);
         boolean exists = this.cartRepository.existsById(new CartId(uid, productId));
@@ -83,22 +84,24 @@ public class CartServiceImpl implements CartService{
 
     @Override
     public PaginationResponse getCartByCurrentUser(Pageable pageable) {
-        long uid = SecurityUtil.getUserId();
+        long uid = JwtUtil.getUserId();
         log.info("Fetching cart items for user {}", uid);
         Page<CartItemResponse> cartItems = this.cartRepository.findCartItemsByUserId(uid, pageable);
         log.info("Fetched cart items for user {}", uid);
         return PaginationResponse.from(cartItems, pageable);
     }
+
     @Override
     public List<PreOrderCartItem> getCartItemsByProductIds(List<Long> productIds, Pageable pageable) {
-        long uid = SecurityUtil.getUserId();
+        long uid = JwtUtil.getUserId();
         log.info("Fetching selected cart items for user {}", uid);
         return this.cartRepository.findCartItemsByUserIdAndProductId(uid, productIds, pageable);
     }
+
     @Override
     @Transactional
     public void deleteSelectedItems(List<Long> productIds) {
-        long uid = SecurityUtil.getUserId();
+        long uid = JwtUtil.getUserId();
         log.info("User {} is deleting selected cart items", uid);
         List<CartId> cartIds = productIds.stream()
                 .map(productId -> new CartId(uid, productId))

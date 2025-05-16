@@ -9,7 +9,7 @@ import lombok.Setter;
 @AllArgsConstructor
 public class SearchProductResponse {
     private long id;
-    private String product_name;
+    private String productName;
     private double price;
     private String imageUrl;
     private String category;

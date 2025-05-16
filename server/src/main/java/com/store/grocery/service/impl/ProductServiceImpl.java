@@ -19,6 +19,8 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -75,9 +77,10 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
+    @CacheEvict(value = "products", key = "#id")
     public void delete(long id) {
         log.info("Attempting to soft delete product with ID: {}", id);
-        Product product = findById(id);
+        Product product = findByIdAndIsActiveTrue(id);
         product.setActive(false);
         this.productRepository.save(product);
         log.info("Successfully marked product with ID: {} as inactive", id);
@@ -103,6 +106,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
+    @CacheEvict(value = "products", key = "#id")
     public Product update(long id, ProductRequest productRequest) {
         log.info("Updating product with ID: {}", id);
         Product prod = this.findByIdAndIsActiveTrue(id);
@@ -115,7 +119,7 @@ public class ProductServiceImpl implements ProductService {
                 description(productRequest.getDescription()).
                 quantity(productRequest.getQuantity()).
                 unit(productRequest.getUnit()).
-                category(updatedCategory).build();
+                category(updatedCategory).isActive(true).build();
         Product saved = this.productRepository.save(updatedProduct);
         log.info("Successfully updated product with ID: {}", updatedProduct.getId());
         return saved;
@@ -192,7 +196,7 @@ public class ProductServiceImpl implements ProductService {
                         populateProductRow(row, p);
                     }
                     pageable = pageable.next();
-                } while (productPage.hasNext());  // Lặp lại nếu còn trang tiếp theo
+                } while (productPage.hasNext());
 
                 workbook.write(outputStream);
                 return outputStream.toByteArray();
@@ -204,6 +208,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
+    @Cacheable(value = "products", key = "#id")
     public Product findByIdAndIsActiveTrue(long id) {
         return productRepository.findByIdAndIsActiveTrue(id).orElseThrow(() -> new ResourceNotFoundException("Sản phẩm không tồn tại hoặc đã ngừng kinh doanh"));
     }

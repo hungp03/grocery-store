@@ -16,7 +16,7 @@ import java.util.Map;
 
 public interface AuthService {
     UserLoginResponse.UserGetAccount getMyAccount();
-    void logout(String deviceHash);
+    void logout(String authHeader, String deviceHash);
     CreateUserResponse register(UserRegisterRequest user);
     void forgotPassword(String email);
     OtpVerificationResponse verifyOtp(String email, String inputOtp);

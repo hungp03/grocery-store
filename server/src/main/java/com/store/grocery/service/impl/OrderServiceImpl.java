@@ -13,7 +13,7 @@ import com.store.grocery.repository.UserRepository;
 import com.store.grocery.service.CartService;
 import com.store.grocery.service.EmailService;
 import com.store.grocery.service.OrderService;
-import com.store.grocery.util.SecurityUtil;
+import com.store.grocery.util.JwtUtil;
 import com.store.grocery.util.exception.ResourceInvalidException;
 import com.store.grocery.util.exception.ResourceNotFoundException;
 import com.store.grocery.util.exception.UserNotFoundException;
@@ -121,8 +121,8 @@ public class OrderServiceImpl implements OrderService {
     @Override
     @Transactional
     public Long create(OrderRequest request) {
-        log.info("Creating new order for user ID: {}", SecurityUtil.getUserId());
-        long uid = SecurityUtil.getUserId();
+        long uid = JwtUtil.getUserId();
+        log.info("Creating new order for user ID: {}", uid);
         User currentUser = userRepository.findById(uid)
                 .orElseThrow(() -> new UserNotFoundException("User với ID " + uid + " không tồn tại"));
         Order order = Order.builder()
@@ -175,8 +175,8 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public PaginationResponse getMyOrders(Integer status, Pageable pageable) {
-        log.info("Fetching orders for user ID: {}", SecurityUtil.getUserId());
-        long uid = SecurityUtil.getUserId();
+        long uid = JwtUtil.getUserId();
+        log.info("Fetching orders for user ID: {}", uid);
         // Thêm sort
         Pageable sortedPageable = PageRequest.of(
                 pageable.getPageNumber(),
@@ -187,7 +187,6 @@ public class OrderServiceImpl implements OrderService {
                 ? orderRepository.findByUserIdAndStatus(uid, status, sortedPageable)
                 : orderRepository.findByUserId(uid, sortedPageable);
         log.debug("Found {} orders for user ID: {}", ordersPage.getTotalElements(), uid);
-
         PaginationResponse paginationResponse = PaginationResponse.from(ordersPage.map(orderMapper::toMyOrderResponse), sortedPageable);
         log.info("Returning paginated orders for user ID: {}", uid);
         return paginationResponse;

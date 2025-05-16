@@ -32,14 +32,15 @@ const TopHeader = () => {
 
     return (
         <div className="w-full bg-main flex items-center justify-center">
-            <div className="w-main h-10 flex items-center justify-between text-xs text-white">
-                <a href={`${import.meta.env.VITE_BACKEND_TARGET}/swagger-ui/index.html`} target="_blank" rel="noopener noreferrer">
+            <div className="w-main h-10 flex items-center justify-between text-xs text-white px-4 md:px-0">
+                <a href={`${import.meta.env.VITE_BACKEND_TARGET}/swagger-ui/index.html`} target="_blank" rel="noopener noreferrer" className="hidden sm:block">
                     API docs
                 </a>
                 {!isLoggedIn || !current
-                    ? <Link className=" hover:text-gray-700" to={`/${path.LOGIN}`}>Đăng nhập hoặc đăng ký</Link>
+                    ? <Link className="hover:text-gray-700 text-center" to={`/${path.LOGIN}`}>Đăng nhập hoặc đăng ký</Link>
                     : <div className="flex items-center gap-2">
-                        <span>{`Welcome, ${current?.name}`}</span>
+                        <span className="hidden sm:block">{`Xin chào, ${current?.name}`}</span>
+                        <span className="sm:hidden">Xin chào</span>
                         <Logout />
                     </div>}
             </div>

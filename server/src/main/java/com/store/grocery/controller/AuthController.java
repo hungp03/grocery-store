@@ -99,8 +99,9 @@ public class AuthController {
 
     @PostMapping("auth/logout")
     @ApiMessage("Logout")
-    public ResponseEntity<Void> logout(@CookieValue(name = "device", defaultValue = "none") String deviceHash) {
-        this.authService.logout(deviceHash);
+    public ResponseEntity<Void> logout(@RequestHeader("Authorization") String authHeader,
+            @CookieValue(name = "device", defaultValue = "none") String deviceHash) {
+        this.authService.logout(authHeader, deviceHash);
         ResponseCookie refreshCookie = ResponseCookie
                 .from("refresh_token", "")
                 .httpOnly(true)

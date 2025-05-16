@@ -10,6 +10,7 @@ import { useForm } from 'react-hook-form';
 import { ClipLoader } from "react-spinners";
 import { GoogleLogin } from '@react-oauth/google';
 import { RESPONSE_STATUS } from "@/utils/responseStatus";
+import { getCategories } from "@/store/app/asyncActions";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -43,7 +44,7 @@ const Login = () => {
       const result = await apiLogin(data);
       setLoading(false);
       if (result.statusCode === RESPONSE_STATUS.SUCCESS) {
-        dispatch(login({ isLoggedIn: true, token: result.data.access_token, userData: result.data.user }));
+        dispatch(login({ isLoggedIn: true, token: result.data.accessToken, userData: result.data.user }));
         setTimeout(() => {
           navigate(`/${path.HOME}`);
         }, 1000);
@@ -58,7 +59,7 @@ const Login = () => {
     if (credential) {
       const result = await apiLoginGoogle({ credential });
       if (result.statusCode === RESPONSE_STATUS.SUCCESS) {
-        dispatch(login({ isLoggedIn: true, token: result.data.access_token, userData: result.data.user }));
+        dispatch(login({ isLoggedIn: true, token: result.data.accessToken, userData: result.data.user }));
         navigate(`/${path.HOME}`);
       }
        else {
