@@ -1,16 +1,11 @@
-package com.store.grocery.util;
+package com.store.grocery.service.impl;
 
 import com.store.grocery.dto.response.user.UserLoginResponse;
-import com.store.grocery.util.exception.AuthException;
 import com.nimbusds.jose.util.Base64;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContext;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
 import org.springframework.security.oauth2.jwt.*;
 import org.springframework.stereotype.Service;
-import org.springframework.security.core.userdetails.UserDetails;
 
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
@@ -19,7 +14,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 @Service
-public class SecurityUtil {
+public class JwtService{
     public static final MacAlgorithm JWT_ALGORITHM = MacAlgorithm.HS512;
     private final JwtEncoder jwtEncoder;
 
@@ -32,26 +27,8 @@ public class SecurityUtil {
     @Value("${jwt.refreshtoken-validity-in-seconds}")
     private long refreshTokenExpiration;
 
-    public SecurityUtil(JwtEncoder jwtEncoder) {
+    public JwtService(JwtEncoder jwtEncoder) {
         this.jwtEncoder = jwtEncoder;
-    }
-
-    public static Optional<String> getCurrentUserLogin() {
-        SecurityContext securityContext = SecurityContextHolder.getContext();
-        return Optional.ofNullable(extractPrincipal(securityContext.getAuthentication()));
-    }
-
-    private static String extractPrincipal(Authentication authentication) {
-        if (authentication == null) {
-            return null;
-        } else if (authentication.getPrincipal() instanceof UserDetails springSecurityUser) {
-            return springSecurityUser.getUsername();
-        } else if (authentication.getPrincipal() instanceof Jwt jwt) {
-            return jwt.getSubject();
-        } else if (authentication.getPrincipal() instanceof String s) {
-            return s;
-        }
-        return null;
     }
 
     private String createToken(String email, Instant now, Instant validity, Map<String, Object> additionalClaims) {
@@ -84,7 +61,7 @@ public class SecurityUtil {
         Map<String, Object> additionalClaims = new HashMap<>();
         additionalClaims.put("user", userLogin);
         additionalClaims.put("authorities", authorities);
-
+        additionalClaims.put("jti",UUID.randomUUID().toString());
         return createToken(email, now, validity, additionalClaims);
     }
 
@@ -110,7 +87,10 @@ public class SecurityUtil {
     public String createResetToken(String email) {
         Instant now = Instant.now();
         Instant validity = now.plus(3, ChronoUnit.MINUTES);
-        return createToken(email, now, validity, Map.of("type", "RESET_PASSWORD"));
+        Map<String, Object> additionalClaims = new HashMap<>();
+        additionalClaims.put("type", "RESET_PASSWORD");
+        additionalClaims.put("jti", UUID.randomUUID().toString());
+        return createToken(email, now, validity, additionalClaims);
     }
 
     private SecretKey getSecretKey() {
@@ -118,9 +98,9 @@ public class SecurityUtil {
         return new SecretKeySpec(keyBytes, 0, keyBytes.length, JWT_ALGORITHM.getName());
     }
 
-    public Jwt checkValidToken(String token) {
+    public Jwt decodeToken(String token) {
         NimbusJwtDecoder jwtDecoder = NimbusJwtDecoder.withSecretKey(
-                getSecretKey()).macAlgorithm(SecurityUtil.JWT_ALGORITHM).build();
+                getSecretKey()).macAlgorithm(JwtService.JWT_ALGORITHM).build();
         try {
             return jwtDecoder.decode(token);
         } catch (Exception e) {
@@ -129,25 +109,4 @@ public class SecurityUtil {
         }
     }
 
-        public static long getUserId() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-
-        if (authentication != null && authentication.getPrincipal() instanceof Jwt jwt) {
-
-            Object userClaimObj = jwt.getClaims().get("user");
-
-            if (userClaimObj instanceof Map<?, ?> userClaim) {
-                Object idObj = userClaim.get("id");
-                if (idObj instanceof Number) {
-                    return ((Number) idObj).longValue();
-                } else {
-                    throw new AuthException("Token không hợp lệ");
-                }
-            } else {
-                throw new AuthException("Token không hợp lệ");
-            }
-        }
-
-        throw new AuthException("User ID not found or invalid token");
-    }
 }

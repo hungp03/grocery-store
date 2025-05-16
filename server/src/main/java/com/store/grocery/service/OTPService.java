@@ -8,5 +8,4 @@ public interface OTPService {
     boolean verifyOTP(String email, String inputOtp, OTPType otpType);
     String generateOTP();
     void deleteOtpByEmailAndType(String email, OTPType otpType);
-    boolean checkExistOTP(String email, OTPType otpType);
 }

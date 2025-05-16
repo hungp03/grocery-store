@@ -11,7 +11,7 @@ import com.store.grocery.repository.WishlistRepository;
 import com.store.grocery.service.ProductService;
 import com.store.grocery.service.UserService;
 import com.store.grocery.service.WishlistService;
-import com.store.grocery.util.SecurityUtil;
+import com.store.grocery.util.JwtUtil;
 import com.store.grocery.util.exception.DuplicateResourceException;
 import com.store.grocery.util.exception.ResourceNotFoundException;
 import jakarta.persistence.criteria.Predicate;
@@ -35,7 +35,7 @@ public class WishlistServiceImpl implements WishlistService {
 
     @Override
     public Wishlist addWishlist(AddWishlistRequest request) {
-        long uid = SecurityUtil.getUserId();
+        long uid = JwtUtil.getUserId();
         User u = this.userService.findById(uid);
         Product p = this.productService.findByIdAndIsActiveTrue(request.getProductId());
         log.info("Adding product to wishlist: {} by uid {}", p.getId(), uid);
@@ -54,7 +54,7 @@ public class WishlistServiceImpl implements WishlistService {
 
     @Override
     public void deleteWishlist(Long productId) {
-        long uid = SecurityUtil.getUserId();
+        long uid = JwtUtil.getUserId();
         log.info("Deleting product from wishlist: {} by uid {}", productId, uid);
         boolean exists = wishlistRepository.existsById_UserIdAndId_ProductId(uid, productId);
         if (!exists) {
@@ -69,7 +69,7 @@ public class WishlistServiceImpl implements WishlistService {
     @Override
     public PaginationResponse getWishlistsByCurrentUser(Pageable pageable) {
         log.info("Get wishlist by current user");
-        long uid = SecurityUtil.getUserId();
+        long uid = JwtUtil.getUserId();
 
         Page<WishlistItemResponse> wishlistItems = findWishlistItemsByUserId(uid, pageable);
         return PaginationResponse.from(wishlistItems, pageable);
@@ -77,7 +77,7 @@ public class WishlistServiceImpl implements WishlistService {
 
     @Override
     public boolean isProductWishlisted(long productId) {
-        long uid = SecurityUtil.getUserId();
+        long uid = JwtUtil.getUserId();
         return wishlistRepository.existsById_UserIdAndId_ProductId(uid, productId);
     }
 

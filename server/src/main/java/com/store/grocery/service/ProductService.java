@@ -17,6 +17,5 @@ public interface ProductService {
     Product update(long id, ProductRequest productRequest);
     PaginationResponse search(Specification<Product> spec, Pageable pageable);
     CompletableFuture<byte[]> exportDataToExcel();
-
     Product findByIdAndIsActiveTrue(long id);
 }

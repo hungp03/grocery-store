@@ -18,9 +18,9 @@ import com.store.grocery.service.EmailService;
 import com.store.grocery.service.OTPService;
 import com.store.grocery.service.UserService;
 import com.store.grocery.service.UserTokenService;
-import com.store.grocery.util.SecurityUtil;
+import com.store.grocery.util.JwtUtil;
 import com.store.grocery.util.enums.OTPType;
-import com.store.grocery.util.exception.AuthException;
+import com.store.grocery.util.exception.UnauthenticatedException;
 import com.store.grocery.util.exception.DuplicateResourceException;
 import com.store.grocery.util.exception.ResourceInvalidException;
 import com.store.grocery.util.exception.UserNotFoundException;
@@ -152,14 +152,14 @@ public class UserServiceImpl implements UserService {
         log.debug("Checking if account is banned for user ID: {}", user.getId());
         if (!user.isStatus()) {
             log.error("Account is banned for user ID: {}", user.getId());
-            throw new AuthException("Tài khoản của bạn đã bị vô hiệu hóa.");
+            throw new UnauthenticatedException("Tài khoản của bạn đã bị vô hiệu hóa.");
         }
     }
 
     @Override
     public UpdateUserResponse updateUser(UpdateUserRequest request) {
         log.info("Updating user profile");
-        long uid = SecurityUtil.getUserId();
+        long uid = JwtUtil.getUserId();
         User currentUserDB = findById(uid);
 
         User updatedUser = currentUserDB.toBuilder()
@@ -197,7 +197,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public List<DeviceResponse> getLoggedInDevices(String deviceHash) {
         log.info("Getting logged in devices for current user");
-        long userId = SecurityUtil.getUserId();
+        long userId = JwtUtil.getUserId();
         List<UserToken> userTokens = this.userTokenService.findDevicesByUser(userId);
         return userTokens.stream()
                 .map(token -> new DeviceResponse(token.getDeviceInfo(), token.getCreatedAt(), token.getDeviceHash(), token.getDeviceHash().equals(deviceHash)))
@@ -206,27 +206,27 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void requestDeactiveAccount() {
-        String email = SecurityUtil.getCurrentUserLogin().orElse("");
+        String email = JwtUtil.getCurrentUserLogin().orElse("");
         log.info("Requesting account deactivation - Email: {}", email);
         if (!isExistedEmail(email)) {
             throw new UserNotFoundException("Email " + email + " không tồn tại");
         }
         String otp = otpService.generateOTP();
-        otpService.storeOTP(otp, email, OTPType.DEACTIVE_ACCOUNT);
+        otpService.storeOTP(otp, email, OTPType.DEACTIVATE_ACCOUNT);
         this.emailService.sendEmailFromTemplateSync(email, "Deactive Account", "deactiveAccount", email, otp);
     }
 
     @Override
     @Transactional
     public void verifyOTPAndDisableAccount(String inputOtp) {
-        String email = SecurityUtil.getCurrentUserLogin().orElse("");
+        String email = JwtUtil.getCurrentUserLogin().orElse("");
         log.info("Verifying OTP for account deactivation - Email: {}", email);
-        boolean validOTP = otpService.verifyOTP(email, inputOtp, OTPType.DEACTIVE_ACCOUNT);
+        boolean validOTP = otpService.verifyOTP(email, inputOtp, OTPType.DEACTIVATE_ACCOUNT);
         if (!validOTP) {
             log.warn("Failed OTP verification for email: {}. Invalid or expired OTP.", email);
             throw new ResourceInvalidException("OTP không hợp lệ hoặc đã hết hạn");
         }
-        otpService.deleteOtpByEmailAndType(email, OTPType.DEACTIVE_ACCOUNT);
+        otpService.deleteOtpByEmailAndType(email, OTPType.DEACTIVATE_ACCOUNT);
         User u = getUserByUsername(email);
         u.setStatus(false);
         userRepository.save(u);

@@ -12,8 +12,8 @@ import com.store.grocery.dto.response.auth.OtpVerificationResponse;
 import com.store.grocery.dto.response.user.CreateUserResponse;
 import com.store.grocery.dto.response.user.UserLoginResponse;
 import com.store.grocery.service.*;
+import com.store.grocery.util.JwtUtil;
 import com.store.grocery.util.Utils;
-import com.store.grocery.util.SecurityUtil;
 import com.store.grocery.util.enums.OTPType;
 import com.store.grocery.util.exception.ResourceInvalidException;
 import com.store.grocery.util.exception.UserNotFoundException;
@@ -39,14 +39,14 @@ public class AuthServiceImpl implements AuthService {
     private final OTPService otpService;
     private final UserService userService;
     private final EmailService emailService;
-    private final SecurityUtil securityUtil;
+    private final JwtService jwtService;
     private final UserTokenService userTokenService;
     private final CustomOAuth2UserService oAuth2UserService;
-
+    private final TokenBlacklistService tokenBlacklistService;
 
     @Override
     public UserLoginResponse.UserGetAccount getMyAccount() {
-        long uid = SecurityUtil.getUserId();
+        long uid = JwtUtil.getUserId();
         log.info("Fetching basic data for user ID: {}", uid);
         User currentUserDB = this.userService.findById(uid);
         this.userService.checkAccountBanned(currentUserDB);
@@ -56,8 +56,13 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public void logout(String deviceHash) {
-        long uid = SecurityUtil.getUserId();
+    public void logout(String authHeader, String deviceHash) {
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            throw new ResourceInvalidException("Token không hợp lệ");
+        }
+        String token = authHeader.substring(7);
+        tokenBlacklistService.blacklistToken(token);
+        long uid = JwtUtil.getUserId();
         UserToken userToken = this.userTokenService.findByfindByUserAndDeviceHash(uid, deviceHash);
         log.info("Logout - User ID: {} | device: {}", uid, deviceHash);
         userTokenService.deleteToken(userToken);
@@ -94,14 +99,17 @@ public class AuthServiceImpl implements AuthService {
             throw new ResourceInvalidException("OTP không hợp lệ hoặc đã hết hạn");
         }
         otpService.deleteOtpByEmailAndType(email, OTPType.RESET_PASSWORD);
-        return new OtpVerificationResponse(securityUtil.createResetToken(email));
+        return new OtpVerificationResponse(jwtService.createResetToken(email));
     }
 
     @Override
     public void resetPassword(String token, ResetPasswordRequest request) {
         log.info("Reset password requested using token.");
-        Jwt decodedToken = this.securityUtil.checkValidToken(token);
-
+        Jwt decodedToken = this.jwtService.decodeToken(token);
+        boolean isTokenRevoked = tokenBlacklistService.isTokenBlacklisted(token);
+        if (isTokenRevoked){
+            throw new ResourceInvalidException("Link đặt lại mật khẩu đã hết hạn, vui lòng yêu cầu lại");
+        }
         if (!request.getNewPassword().equals(request.getConfirmPassword())) {
             log.warn("Password reset failed: Confirm password does not match.");
             throw new ResourceInvalidException("Mật khẩu xác nhận không khớp.");
@@ -112,6 +120,7 @@ public class AuthServiceImpl implements AuthService {
             log.warn("Password reset failed: Invalid token type.");
             throw new ResourceInvalidException("Token không hợp lệ.");
         }
+        tokenBlacklistService.blacklistToken(token);
         this.userService.updatePassword(email, request.getNewPassword());
         log.info("Password reset successfully for email: {}", email);
     }
@@ -134,7 +143,7 @@ public class AuthServiceImpl implements AuthService {
         log.info("Authentication successful for user: {}", email);
 
         UserLoginResponse res = buildLoginResponse(currentUserDB, authentication);
-        String refreshToken = this.securityUtil.createRefreshToken(email, res);
+        String refreshToken = this.jwtService.createRefreshToken(email, res);
         log.info("Refresh token created for user: {}", email);
         String deviceHash = Utils.generateDeviceHash(userAgent);
         this.userTokenService.storeUserToken(currentUserDB, refreshToken, userAgent, deviceHash);
@@ -157,11 +166,11 @@ public class AuthServiceImpl implements AuthService {
         UserLoginResponse res = new UserLoginResponse();
         res.setUser(UserLoginResponse.UserLogin.from(currentUser));
 
-        String accessToken = this.securityUtil.createAccessToken(currentUser.getEmail(), res);
+        String accessToken = this.jwtService.createAccessToken(currentUser.getEmail(), res);
         res.setAccessToken(accessToken);
         log.info("New access token created for user: {}", currentUser.getEmail());
 
-        String newRefreshToken = this.securityUtil.createRefreshToken(currentUser.getEmail(), res);
+        String newRefreshToken = this.jwtService.createRefreshToken(currentUser.getEmail(), res);
         log.info("New refresh token created for user: {}", currentUser.getEmail());
 
         // Cập nhật lại refresh token trong DB cho thiết bị đó
@@ -190,7 +199,7 @@ public class AuthServiceImpl implements AuthService {
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
         UserLoginResponse res = buildLoginResponse(currentUser, authentication);
-        String refresh_token = securityUtil.createRefreshToken(currentUser.getEmail(), res);
+        String refresh_token = jwtService.createRefreshToken(currentUser.getEmail(), res);
         log.info("Refresh token created for Google user: {}", currentUser.getEmail());
         String deviceHash = Utils.generateDeviceHash(userAgent);
         this.userTokenService.storeUserToken(currentUser, refresh_token, userAgent, deviceHash);
@@ -202,7 +211,7 @@ public class AuthServiceImpl implements AuthService {
     private UserLoginResponse buildLoginResponse(User user, Authentication auth) {
         UserLoginResponse response = new UserLoginResponse();
         response.setUser(UserLoginResponse.UserLogin.from(user));
-        String accessToken = securityUtil.createAccessToken(auth.getName(), response);
+        String accessToken = jwtService.createAccessToken(auth.getName(), response);
         response.setAccessToken(accessToken);
         log.info("Access tokens created for user: {}", user.getEmail());
         return response;

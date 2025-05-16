@@ -15,7 +15,7 @@ public class FeedbackResponse {
     private long id;
     private String userName;
     private String userAvatarUrl;
-    private String product_name;
+    private String productName;
     private int ratingStar;
     private String description;
     private boolean status;

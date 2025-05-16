@@ -1,10 +1,11 @@
 
 package com.store.grocery.config;
 
+import com.store.grocery.service.TokenBlacklistService;
 import com.store.grocery.service.impl.CustomOAuth2UserService;
-import com.store.grocery.util.SecurityUtil;
 import com.nimbusds.jose.jwk.source.ImmutableSecret;
 import com.nimbusds.jose.util.Base64;
+import com.store.grocery.service.impl.JwtService;
 import com.store.grocery.util.constants.WhiteListAPI;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -19,6 +20,8 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.core.OAuth2Error;
+import org.springframework.security.oauth2.core.OAuth2TokenValidatorResult;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
@@ -103,17 +106,18 @@ public class SecurityConfiguration {
 
     //@FunctionalInterface
     @Bean
-    public JwtDecoder jwtDecoder() {
-        NimbusJwtDecoder jwtDecoder = NimbusJwtDecoder.withSecretKey(
-                getSecretKey()).macAlgorithm(SecurityUtil.JWT_ALGORITHM).build();
-        return token -> {
-            try {
-                return jwtDecoder.decode(token);
-            } catch (Exception e) {
-                System.out.println(">>> JWT error: " + e.getMessage());
-                throw e;
+    public JwtDecoder jwtDecoder(TokenBlacklistService tokenBlacklistService) {
+        NimbusJwtDecoder decoder = NimbusJwtDecoder.withSecretKey(getSecretKey())
+                .macAlgorithm(JwtService.JWT_ALGORITHM)
+                .build();
+
+        decoder.setJwtValidator(token -> {
+            if (tokenBlacklistService.isTokenBlacklisted(token.getTokenValue())) {
+                return OAuth2TokenValidatorResult.failure(new OAuth2Error("invalid_token", "Token is blacklisted", null));
             }
-        };
+            return OAuth2TokenValidatorResult.success();
+        });
+        return decoder;
     }
 
     @Bean
@@ -123,7 +127,7 @@ public class SecurityConfiguration {
 
     private SecretKey getSecretKey() {
         byte[] keyBytes = Base64.from(jwtKey).decode();
-        return new SecretKeySpec(keyBytes, 0, keyBytes.length, SecurityUtil.JWT_ALGORITHM.getName());
+        return new SecretKeySpec(keyBytes, 0, keyBytes.length, JwtService.JWT_ALGORITHM.getName());
     }
 
     @Bean

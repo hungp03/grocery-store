@@ -1,11 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { Banner, Sidebar, FeatureProduct } from "@/components";
 import { useSelector } from 'react-redux';
+import { useDispatch } from 'react-redux';
+import { getCategories } from "@/store/app/asyncActions";
 
 const Home = () => {
+    const dispatch = useDispatch();
     const { isLoggedIn } = useSelector(state => state.user);
     const [showRecommendation, setShowRecommendation] = useState(false);
-
+    useEffect(() => {
+        dispatch(getCategories());
+    }, [dispatch]);
     useEffect(() => {
         if (isLoggedIn) {
             const timer = setTimeout(() => {

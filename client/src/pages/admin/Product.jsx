@@ -162,15 +162,15 @@ const Product = () => {
             record.imageUrl
             || product_default
           }
-          alt={record.product_name || "Product Image"}
+          alt={record.productName || "Product Image"}
           style={{ width: "90px", height: "70px", objectFit: "cover" }}
         />
       ),
     },
     {
       title: "Tên sản phẩm",
-      dataIndex: "product_name",
-      key: "product_name",
+      dataIndex: "productName",
+      key: "productName",
     },
     {
       title: "Giá",
@@ -209,7 +209,7 @@ const Product = () => {
         <Button
           type="link"
           onClick={() =>
-            handleShowMessage(record.description, record.product_name)
+            handleShowMessage(record.description, record.productName)
           }
         >
           Xem mô tả

@@ -20,7 +20,7 @@ public class FeedbackMapper {
         }
 
         if (feedback.getProduct() != null) {
-            response.setProduct_name(feedback.getProduct().getProductName());
+            response.setProductName(feedback.getProduct().getProductName());
         }
 
         response.setRatingStar(feedback.getRatingStar());

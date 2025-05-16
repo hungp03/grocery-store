@@ -7,6 +7,7 @@ import lombok.Setter;
 
 import java.io.Serial;
 import java.io.Serializable;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -21,25 +22,25 @@ public class PaginationResponse implements Serializable {
     private Object result;
 
     // Factory Method to create PaginationResponse from Page and Pageable
-    public static PaginationResponse from(Page<?> pageContent, Pageable pageable) {
+    public static PaginationResponse from(Page<?> page, Pageable pageable) {
         PaginationResponse response = new PaginationResponse();
 
         // Create and set Meta
         Meta meta = new Meta();
         meta.setPage(pageable.getPageNumber() + 1);
         meta.setPageSize(pageable.getPageSize());
-        meta.setPages(pageContent.getTotalPages());
-        meta.setTotal(pageContent.getTotalElements());
+        meta.setPages(page.getTotalPages());
+        meta.setTotal(page.getTotalElements());
 
         response.setMeta(meta);
-        response.setResult(pageContent.getContent());
+        response.setResult(page.getContent());
 
         return response;
     }
 
     @Getter
     @Setter
-    public static class Meta {
+    public static class Meta implements Serializable {
         private int page;
         private int pageSize;
         private int pages;

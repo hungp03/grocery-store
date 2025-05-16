@@ -11,6 +11,8 @@ import com.store.grocery.util.exception.DuplicateResourceException;
 import com.store.grocery.util.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -56,6 +58,7 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
+    @CacheEvict(value = "categories", allEntries = true)
     public Category update(long id, CategoryRequest categoryDTO) {
         Category curr = this.findById(id);
         log.info("Updating category ID {} with new name '{}'", id, categoryDTO.getName());
@@ -70,6 +73,7 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
+    @CacheEvict(value = "categories", allEntries = true)
     public void delete(long id) {
         log.info("Deleting category with ID {}", id);
         if (productService.hasProductsInCategory(id)) {
@@ -81,6 +85,7 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
+    @Cacheable(value = "categories", key = "'p=' + #pageable.pageNumber + '&s=' + #pageable.pageSize")
     public PaginationResponse fetchAllCategories(Pageable pageable) {
         Page<Category> categories = this.categoryRepository.findAll(pageable);
         log.info("Fetching all categories with pagination");

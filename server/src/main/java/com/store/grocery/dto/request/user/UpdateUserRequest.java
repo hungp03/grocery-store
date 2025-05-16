@@ -1,8 +1,10 @@
 package com.store.grocery.dto.request.user;
 
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
-@Data
+@Getter
+@Setter
 public class UpdateUserRequest {
     private String name;
     private String phone;

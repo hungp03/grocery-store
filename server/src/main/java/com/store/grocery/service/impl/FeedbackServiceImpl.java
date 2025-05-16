@@ -11,7 +11,7 @@ import com.store.grocery.repository.FeedbackRepository;
 import com.store.grocery.repository.ProductRepository;
 import com.store.grocery.service.FeedbackService;
 import com.store.grocery.service.UserService;
-import com.store.grocery.util.SecurityUtil;
+import com.store.grocery.util.JwtUtil;
 import com.store.grocery.util.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -36,7 +36,7 @@ public class FeedbackServiceImpl implements FeedbackService {
     @Override
     @Transactional
     public FeedbackResponse addFeedback(CreateFeedbackRequest feedbackDTO) {
-        User user = userService.findById(SecurityUtil.getUserId());
+        User user = userService.findById(JwtUtil.getUserId());
         Product product = productRepository.findByIdAndIsActiveTrue(feedbackDTO.getProductId())
                 .orElseThrow(() -> new ResourceNotFoundException("Sản phẩm không tồn tại hoặc ngừng kinh doanh"));
 
