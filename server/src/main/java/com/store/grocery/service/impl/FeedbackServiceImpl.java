@@ -10,11 +10,13 @@ import com.store.grocery.mapper.FeedbackMapper;
 import com.store.grocery.repository.FeedbackRepository;
 import com.store.grocery.repository.ProductRepository;
 import com.store.grocery.service.FeedbackService;
+import com.store.grocery.service.GeminiService;
 import com.store.grocery.service.UserService;
 import com.store.grocery.util.JwtUtil;
 import com.store.grocery.util.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -85,6 +87,10 @@ public class FeedbackServiceImpl implements FeedbackService {
     }
 
     @Override
+    @Cacheable(
+            value = "feedbacks",
+            key = "'id=' + #productId + '&p=' + #pageable.pageNumber + '&s=' + #pageable.pageSize"
+    )
     public PaginationResponse getByProductId(Long productId, Pageable pageable) {
         log.info("Getting feedbacks by product ID: {}", productId);
         Page<FeedbackResponse> feedbackPage = this.feedbackRepository.findByProductId(productId, pageable);

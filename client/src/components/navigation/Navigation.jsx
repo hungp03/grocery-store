@@ -4,24 +4,40 @@ import { NavLink } from "react-router-dom";
 
 const Navigation = () => {
   return (
-    <div className="w-main mx-auto">
-      <div className="h-[48px] py-2 border-y flex items-center text-sm justify-start">
-        {navigation.map((e) => (
-          <NavLink
-            key={e.id}
-            to={e.path}
-            className={({ isActive }) =>
-              isActive
-                ? "pr-12 hover:text-main text-main md:first:pl-0 first:pl-4"
-                : "pr-12 hover:text-main"
-            }
-          >
-            {e.value}
-          </NavLink>
-        ))}
+    <div className="w-full bg-white">
+      <div className="px-4 md:px-0 md:w-main md:mx-auto">
+        <nav
+          className="
+            flex 
+            overflow-x-auto 
+            whitespace-nowrap 
+            no-scrollbar 
+            h-[48px] 
+            items-center 
+            border-y 
+            text-sm
+          "
+        >
+          {navigation.map((e, idx) => (
+            <NavLink
+              key={e.id}
+              to={e.path}
+              className={({ isActive }) => [
+                'flex-shrink-0',
+                'py-2',
+                idx === 0 ? 'pl-0 pr-8' : 'px-8',
+                isActive
+                  ? 'text-main font-semibold'
+                  : 'text-gray-700 hover:text-main'
+              ].join(' ')}
+            >
+              {e.value}
+            </NavLink>
+          ))}
+        </nav>
       </div>
     </div>
   );
-}
+};
 
 export default Navigation;

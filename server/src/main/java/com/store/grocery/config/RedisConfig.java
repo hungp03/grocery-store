@@ -42,7 +42,7 @@ public class RedisConfig {
         configuration.setPassword(redisPassword.isEmpty() ? null : redisPassword);
         LettuceClientConfiguration clientConfig = LettuceClientConfiguration.builder()
                 .commandTimeout(Duration.ofSeconds(60))
-                .useSsl()                                // SSL
+//                .useSsl()                                // SSL
                 .build();
         return new LettuceConnectionFactory(configuration, clientConfig);
     }
@@ -76,6 +76,7 @@ public class RedisConfig {
         cacheConfigurations.put("categories", RedisCacheConfiguration.defaultCacheConfig()
                 .entryTtl(Duration.ofHours(1)));
 
+        cacheConfigurations.put("feedbacks", RedisCacheConfiguration.defaultCacheConfig().entryTtl(Duration.ofMinutes(15)));
         return RedisCacheManager.builder(connectionFactory)
                 .cacheDefaults(config)
                 .withInitialCacheConfigurations(cacheConfigurations)
