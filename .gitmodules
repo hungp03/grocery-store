@@ -1,3 +1,4 @@
 [submodule "android-app"]
-	path = android-app
-	url = https://github.com/hungp03/grocery-store-android.git
+    path = android-app
+    url = https://github.com/hungp03/grocery-store-android.git
+    branch = main 

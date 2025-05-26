@@ -1,7 +1,7 @@
 import { FaPhone, FaCartShopping } from "react-icons/fa6";
 import { MdEmail } from "react-icons/md";
 import { GrNext } from "react-icons/gr";
-import { SiAdguard } from "react-icons/si";
+import { SiAdguard, SiGooglegemini } from "react-icons/si";
 import { GiReturnArrow } from "react-icons/gi";
 import {
   FaHome,
@@ -38,7 +38,8 @@ const icons = {
   IoTrashBinOutline,
   TbInfoTriangle,
   FaFileExport,
-  FaBars
+  FaBars,
+  SiGooglegemini,
 };
 
 export default icons;
