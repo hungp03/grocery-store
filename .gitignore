@@ -8,3 +8,4 @@ docker-compose.yml
 mysql/init.sql
 nginx/nginx.conf
 readme.md
+redis.acl
