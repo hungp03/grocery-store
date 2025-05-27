@@ -86,10 +86,10 @@ public class GlobalException {
         return buildResponse(StatusCode.EXCEPTION_STATUS, "Invalid input data", ex.getMessage(), HttpStatus.BAD_REQUEST);
     }
 
-//    @ExceptionHandler(Exception.class)
-//    public ResponseEntity<RestResponse<Object>> handleAllException(Exception ex) {
-//        return buildResponse(StatusCode.EXCEPTION_STATUS, "Internal Server Error", ex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
-//    }
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<RestResponse<Object>> handleAllException(Exception ex) {
+        return buildResponse(StatusCode.EXCEPTION_STATUS, "Internal Server Error", ex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+    }
 
     private ResponseEntity<RestResponse<Object>> buildResponse(int statusCode, String error, Object message, HttpStatus status) {
         RestResponse<Object> response = new RestResponse<>();
