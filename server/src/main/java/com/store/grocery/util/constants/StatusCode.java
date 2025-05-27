@@ -11,5 +11,5 @@ public class StatusCode {
     public static final int CANNOT_DELETE_EXCEPTION_STATUS = -8;
     public static final int VALIDATION_EXCEPTION_STATUS = -9;
     public static final int RESOURCE_NOT_FOUND_EXCEPTION_STATUS = -10;
-    public static final int ACCESS_DENIED_EXCEPTION_STATUS = -10;
+    public static final int ACCESS_DENIED_EXCEPTION_STATUS = -11;
 }
