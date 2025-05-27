@@ -46,8 +46,8 @@ public class GlobalException {
     }
 
     @ExceptionHandler(AccessDeniedException.class)
-    public ResponseEntity<RestResponse<Object>> handleAccessDeniedException(UnauthenticatedException ex) {
-        return buildResponse(StatusCode.ACCESS_DENIED_EXCEPTION_STATUS, "Access denied!", ex.getMessage(), HttpStatus.UNAUTHORIZED);
+    public ResponseEntity<RestResponse<Object>> handleAccessDeniedException(AccessDeniedException ex) {
+        return buildResponse(StatusCode.ACCESS_DENIED_EXCEPTION_STATUS, "Access denied!", ex.getMessage(), HttpStatus.FORBIDDEN);
     }
 
     @ExceptionHandler(ResourceInvalidException.class)

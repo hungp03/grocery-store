@@ -94,6 +94,10 @@ public class GeminiServiceImpl implements GeminiService {
                     .filter(desc -> desc != null && !desc.isBlank())
                     .collect(Collectors.joining("\n"));
 
+            if (joinedFeedback.isBlank()) {
+                return Mono.just("Không có thông tin đánh giá cụ thể từ người dùng");
+            }
+
             return generate(joinedFeedback)
                     .doOnNext(result -> {
                         redisTemplate.opsForValue().set(cacheKey, result, Duration.ofMinutes(15));

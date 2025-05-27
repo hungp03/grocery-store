@@ -20,10 +20,7 @@ import com.store.grocery.service.UserService;
 import com.store.grocery.service.UserTokenService;
 import com.store.grocery.util.JwtUtil;
 import com.store.grocery.util.enums.OTPType;
-import com.store.grocery.util.exception.UnauthenticatedException;
-import com.store.grocery.util.exception.DuplicateResourceException;
-import com.store.grocery.util.exception.ResourceInvalidException;
-import com.store.grocery.util.exception.UserNotFoundException;
+import com.store.grocery.util.exception.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -148,11 +145,11 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public void checkAccountBanned(User user) {
-        log.debug("Checking if account is banned for user ID: {}", user.getId());
+    public void checkAccountActive(User user) {
+        log.debug("Checking if account is inactive for user ID: {}", user.getId());
         if (!user.isStatus()) {
-            log.error("Account is banned for user ID: {}", user.getId());
-            throw new UnauthenticatedException("Tài khoản của bạn đã bị vô hiệu hóa.");
+            log.error("Account is inactive for user ID: {}", user.getId());
+            throw new AccessDeniedException("Tài khoản của bạn đã bị vô hiệu hóa.");
         }
     }
 

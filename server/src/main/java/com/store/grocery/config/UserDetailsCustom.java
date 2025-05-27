@@ -21,7 +21,7 @@ public class UserDetailsCustom implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         com.store.grocery.domain.User user = this.userService.getUserByUsername(username);
-        userService.checkAccountBanned(user);
+        userService.checkAccountActive(user);
         return new User(user.getEmail(), user.getPassword(), Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + user.getRole().getRoleName())));
     }
 }

@@ -12,7 +12,6 @@ import com.store.grocery.dto.response.user.UpdateUserResponse;
 import com.store.grocery.dto.response.user.UserResponse;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -33,7 +32,7 @@ public interface UserService {
 
     void updatePassword(String email, String newPassword);
 
-    void checkAccountBanned(User user);
+    void checkAccountActive(User user);
 
     UpdateUserResponse updateUser(UpdateUserRequest request);
     void changePassword(UpdatePasswordRequest dto);

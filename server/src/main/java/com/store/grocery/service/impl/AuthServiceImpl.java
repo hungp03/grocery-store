@@ -49,7 +49,7 @@ public class AuthServiceImpl implements AuthService {
         long uid = JwtUtil.getUserId();
         log.info("Fetching basic data for user ID: {}", uid);
         User currentUserDB = this.userService.findById(uid);
-        this.userService.checkAccountBanned(currentUserDB);
+        this.userService.checkAccountActive(currentUserDB);
         UserLoginResponse.UserGetAccount userGetAccount = UserLoginResponse.UserGetAccount.from(currentUserDB);
         log.info("Successfully get account info, user ID: {}", uid);
         return userGetAccount;
@@ -162,7 +162,7 @@ public class AuthServiceImpl implements AuthService {
         UserToken userToken = this.userTokenService.validateRefreshToken(refreshToken, deviceHash);
         User currentUser = userToken.getUser();
         log.info("User found for refresh token: id={}, email={}", currentUser.getId(), currentUser.getEmail());
-        this.userService.checkAccountBanned(currentUser);
+        this.userService.checkAccountActive(currentUser);
         UserLoginResponse res = new UserLoginResponse();
         res.setUser(UserLoginResponse.UserLogin.from(currentUser));
 
@@ -189,7 +189,7 @@ public class AuthServiceImpl implements AuthService {
         CustomGoogleUserDetails userDetails = (CustomGoogleUserDetails) oauth2User;
         User currentUser = userDetails.getUser();
         log.info("Google user authenticated: id={}, email={}", currentUser.getId(), currentUser.getEmail());
-        userService.checkAccountBanned(currentUser);
+        userService.checkAccountActive(currentUser);
         // Tạo authentication với CustomGoogleUserDetails
         Authentication authentication = new UsernamePasswordAuthenticationToken(
                 userDetails,
