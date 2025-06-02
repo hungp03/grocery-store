@@ -94,13 +94,13 @@
         <tr th:each="item : ${items}">
           <td th:text="${item.productName}"></td>
           <td th:text="${item.quantity}"></td>
-          <td th:text="${#numbers.formatDecimal(item.unit_price, 0, 'COMMA', 0, 'POINT')} + ' đ'"></td>
+          <td th:text="${#numbers.formatDecimal(item.unitPrice, 0, 'COMMA', 0, 'POINT')} + ' đ'"></td>
         </tr>
         </tbody>
         <tfoot>
         <tr class="total-row">
           <td colspan="2">Tổng tiền</td>
-          <td th:text="${#numbers.formatDecimal(TOTAL_PRICE, 0, 'COMMA', 0, 'POINT')} + ' đ'"></td>
+          <td th:text="${#numbers.formatDecimal(TOTALPRICE, 0, 'COMMA', 0, 'POINT')} + ' đ'"></td>
         </tr>
         </tfoot>
       </table>

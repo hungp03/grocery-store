@@ -75,7 +75,7 @@ public class UserController {
     @PutMapping(value = "users/account")
     @ApiMessage("Update user information")
     public ResponseEntity<UpdateUserResponse> updateUser(
-            @RequestBody UpdateUserRequest request){
+            @Valid @RequestBody UpdateUserRequest request){
         return ResponseEntity.ok(this.userService.updateUser(request));
     }
 

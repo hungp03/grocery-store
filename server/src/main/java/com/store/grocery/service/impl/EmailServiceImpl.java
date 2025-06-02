@@ -80,7 +80,7 @@ public class EmailServiceImpl implements EmailService {
 
         Context context = new Context();
         context.setVariable("NAME", username);
-        context.setVariable("TOTAL_PRICE", totalPrice);
+        context.setVariable("TOTALPRICE", totalPrice);
         context.setVariable("customerName",username);
         context.setVariable("customerAddress",address);
         context.setVariable("customerPhone",phone);
