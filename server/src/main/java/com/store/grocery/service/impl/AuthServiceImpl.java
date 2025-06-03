@@ -130,6 +130,7 @@ public class AuthServiceImpl implements AuthService {
         final String email = loginDTO.getEmail();
         log.info("Login attempt for email: {}", email);
         User currentUserDB = this.userService.getUserByUsername(email);
+        userService.checkAccountActive(currentUserDB);
         log.info("User id={} | email={}", currentUserDB.getId(), currentUserDB.getEmail());
         if (currentUserDB.getPassword() == null || currentUserDB.getPassword().isEmpty()) {
             throw new ResourceInvalidException(
@@ -141,7 +142,6 @@ public class AuthServiceImpl implements AuthService {
         Authentication authentication = authenticationManagerBuilder.getObject().authenticate(authenticationToken);
         SecurityContextHolder.getContext().setAuthentication(authentication);
         log.info("Authentication successful for user: {}", email);
-
         UserLoginResponse res = buildLoginResponse(currentUserDB, authentication);
         String refreshToken = this.jwtService.createRefreshToken(email, res);
         log.info("Refresh token created for user: {}", email);
