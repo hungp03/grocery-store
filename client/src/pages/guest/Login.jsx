@@ -1,5 +1,6 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { InputField, Button, ForgotPassword } from "@/components";
+import { useSelector } from "react-redux";
 import Swal from 'sweetalert2';
 import { apiLogin, apiRegister, apiLoginGoogle } from "@/apis";
 import { useNavigate, Link } from "react-router-dom";
@@ -14,6 +15,13 @@ import { RESPONSE_STATUS } from "@/utils/responseStatus";
 const Login = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const { isLoggedIn } = useSelector(state => state.user);
+
+  useEffect(() => {
+    if (isLoggedIn) {
+      navigate(`/${path.HOME}`);
+    }
+  }, []);
 
   const [payload, setPayload] = useState({
     email: "",
