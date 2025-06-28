@@ -1,11 +1,6 @@
-/upload
-docker-compose.yml
-client/Dockerfile
-server/Dockerfile
 **/.git/
-
-docker-compose.yml
-mysql/init.sql
-nginx/nginx.conf
-readme.md
+SOA_1306.pdf
+mysql/init_1.sql
 redis.acl
+e-commerce-nodejs/
+.idea/
