@@ -1,6 +1,6 @@
 # Grocery Store E-commerce System
 
-A full-featured e-commerce platform specializing in grocery items, developed for the Service-Oriented Software Development course. This project demonstrates a robust, scalable, and maintainable system using modern web technologies and a service-oriented architecture (SOA).
+This is a simple e-commerce platform developed for learning purposes, with a focus on grocery items. Created as part of the Service Oriented Software Development course, the project introduces a basic  system that applies web technologies and service-oriented architecture (SOA) principles in a clear and accessible way.
 
 ## Table of Contents
 
@@ -21,7 +21,7 @@ A full-featured e-commerce platform specializing in grocery items, developed for
 
 ## About the Project
 
-This project builds a complete e-commerce system for grocery items, following a service-oriented architecture (SOA) and communicating via RESTful APIs. The design ensures flexibility, scalability, and ease of maintenance. The platform is packaged with Docker for simplified deployment and environment consistency.
+This project builds a complete e-commerce system for grocery items, following a service-oriented architecture (SOA) and communicating via RESTful APIs. 
 
 ## Features
 
